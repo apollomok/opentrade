@@ -26,11 +26,12 @@ struct Position : public PositionValue {
   double total_outstanding_buy_qty = 0;
   double total_outstanding_sell_qty = 0;
 
-  void HandleNew(bool is_buy, double qty, double price, double multiplier);
+  void HandleNew(bool is_buy, double qty, double price, double multiplier,
+                 bool is_fx);
   void HandleTrade(bool is_buy, double qty, double price, double price0,
-                   double multiplier, bool is_bust, bool is_otc);
+                   double multiplier, bool is_bust, bool is_otc, bool is_fx);
   void HandleFinish(bool is_buy, double leaves_qty, double price0,
-                    double multiplier);
+                    double multiplier, bool is_fx);
 };
 
 struct Bod {
