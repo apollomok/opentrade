@@ -125,7 +125,7 @@ class SecurityManager : public Singleton<SecurityManager> {
   tbb::concurrent_unordered_map<Exchange::IdType, Exchange*> exchanges_;
   tbb::concurrent_unordered_map<std::string, Exchange*> exchange_of_name_;
   SecurityMap securities_;
-  const char* check_sum_;
+  const char* check_sum_ = "";
 };
 
 }  // namespace opentrade

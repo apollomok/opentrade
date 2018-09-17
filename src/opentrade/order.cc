@@ -257,16 +257,17 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
           conn->Send(cm, true);
           continue;
         }
-        if (IsDupExecId(exec_id)) {  // not only double check, but also insert
-                                     // into exec_ids_
-          LOG_ERROR("Duplicate exec id " << exec_id << " on confirmation line #"
-                                         << ln);
-          continue;
-        }
         auto ord = Get(id);
         if (!ord) {
           LOG_ERROR("Unknown order id " << id << " on confirmation line #"
                                         << ln);
+          continue;
+        }
+        if (IsDupExecId(id,
+                        exec_id)) {  // not only double check, but also insert
+                                     // into exec_ids_
+          LOG_ERROR("Duplicate exec id " << exec_id << " of ClOrdId " << id
+                                         << " on confirmation line #" << ln);
           continue;
         }
         auto cm = std::make_shared<Confirmation>();

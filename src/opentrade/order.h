@@ -134,8 +134,8 @@ class GlobalOrderBook : public Singleton<GlobalOrderBook> {
  public:
   static void Initialize();
   uint32_t NewOrderId() { return ++order_id_counter_; }
-  bool IsDupExecId(const std::string& exec_id) {
-    return !exec_ids_.insert(exec_id).second;
+  bool IsDupExecId(Order::IdType id, const std::string& exec_id) {
+    return !exec_ids_.emplace(id, exec_id).second;
   }
   Order* Get(Order::IdType id) {
     auto it = orders_.find(id);
@@ -152,7 +152,8 @@ class GlobalOrderBook : public Singleton<GlobalOrderBook> {
   tbb::concurrent_unordered_map<Order::IdType, Order*> orders_;
   std::atomic<uint32_t> order_id_counter_ = 0;
   uint32_t seq_counter_ = 0;
-  tbb::concurrent_unordered_set<std::string> exec_ids_;
+  tbb::concurrent_unordered_set<std::pair<Order::IdType, std::string>>
+      exec_ids_;
   std::ofstream of_;
 };
 

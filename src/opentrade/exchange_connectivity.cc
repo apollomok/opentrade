@@ -231,7 +231,7 @@ void ExchangeConnectivityAdapter::HandlePendingNew(Order::IdType id,
 void ExchangeConnectivityAdapter::HandleFill(
     Order::IdType id, double qty, double price, const std::string& exec_id,
     int64_t transaction_time, bool is_partial, ExecTransType exec_trans_type) {
-  if (GlobalOrderBook::Instance().IsDupExecId(exec_id)) {
+  if (GlobalOrderBook::Instance().IsDupExecId(id, exec_id)) {
     LOG_DEBUG(name() << ": Duplicate exec id: " << exec_id << ", ignored");
     return;
   }
