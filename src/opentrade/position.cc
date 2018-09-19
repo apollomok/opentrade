@@ -298,8 +298,6 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
   }
 }
 
-static TaskPool kPnlTaskPool;
-
 void PositionManager::UpdatePnl() {
   auto tm = time(nullptr);
   std::map<SubAccount::IdType, std::pair<double, double>> pnls;
@@ -343,7 +341,7 @@ void PositionManager::UpdatePnl() {
               << std::endl;
   }
 
-  kPnlTaskPool.AddTask([this]() { this->UpdatePnl(); }, pt::seconds(5));
+  kSharedTaskPool.AddTask([this]() { this->UpdatePnl(); }, pt::seconds(5));
 }
 
 }  // namespace opentrade

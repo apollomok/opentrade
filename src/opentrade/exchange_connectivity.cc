@@ -1,5 +1,7 @@
 #include "exchange_connectivity.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "logger.h"
 #include "risk.h"
 
@@ -183,25 +185,19 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
   return ok;
 }
 
-bool ExchangeConnectivityManager::Cancel(const Order& orig_ord) {
+static inline bool Cancel(Order* cancel_order) {
   kRiskError.clear();
-  assert(orig_ord.sub_account);
-  assert(orig_ord.sec);
-  assert(orig_ord.user);
-  assert(orig_ord.broker_account);
-  if (!orig_ord.IsLive()) return false;
-  if (!orig_ord.sub_account) return false;
-  if (!orig_ord.sec) return false;
-  if (!orig_ord.user) return false;
-  if (!orig_ord.broker_account) return false;
-  auto adapter = orig_ord.broker_account->adapter;
-  auto name = orig_ord.broker_account->adapter_name;
-  auto cancel_order = new Order(orig_ord);
-  cancel_order->orig_id = orig_ord.id;
-  cancel_order->status = kUnconfirmedCancel;
   cancel_order->tm = NowUtcInMicro();
-  if (!CheckAdapter(adapter, name) ||
-      !RiskManager::Instance().CheckMsgRate(orig_ord)) {
+  if (!RiskManager::Instance().CheckMsgRate(*cancel_order)) {
+    HandleConfirmation(cancel_order, kRiskRejected, kRiskError);
+    kSharedTaskPool.AddTask(
+        [cancel_order]() { Cancel(cancel_order); },
+        boost::posix_time::milliseconds(1000 + rand() % 1000));
+    return false;
+  }
+  auto adapter = cancel_order->broker_account->adapter;
+  auto name = cancel_order->broker_account->adapter_name;
+  if (!CheckAdapter(adapter, name)) {
     HandleConfirmation(cancel_order, kRiskRejected, kRiskError);
     return false;
   }
@@ -212,8 +208,24 @@ bool ExchangeConnectivityManager::Cancel(const Order& orig_ord) {
   if (!ok)
     HandleConfirmation(cancel_order, kRiskRejected, kRiskError);
   else
-    UpdateThrottle(orig_ord);
+    UpdateThrottle(*cancel_order);
   return ok;
+}
+
+bool ExchangeConnectivityManager::Cancel(const Order& orig_ord) {
+  assert(orig_ord.sub_account);
+  assert(orig_ord.sec);
+  assert(orig_ord.user);
+  assert(orig_ord.broker_account);
+  if (!orig_ord.IsLive()) return false;
+  if (!orig_ord.sub_account) return false;
+  if (!orig_ord.sec) return false;
+  if (!orig_ord.user) return false;
+  if (!orig_ord.broker_account) return false;
+  auto cancel_order = new Order(orig_ord);
+  cancel_order->orig_id = orig_ord.id;
+  cancel_order->status = kUnconfirmedCancel;
+  return opentrade::Cancel(cancel_order);
 }
 
 void ExchangeConnectivityAdapter::HandleNew(Order::IdType id,

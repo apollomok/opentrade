@@ -5,6 +5,8 @@
 #include <cassert>
 #include <string>
 
+#include "task_pool.h"
+
 namespace opentrade {
 
 static inline const std::string kEmptyStr;
@@ -119,6 +121,8 @@ inline void PositionValue::HandleFinish(bool is_buy, double leaves_qty,
   }
 }
 
+inline TaskPool kSharedTaskPool;
+inline TaskPool kWriteTaskPool;
 }  // namespace opentrade
 
 #endif  // OPENTRADE_COMMON_H_

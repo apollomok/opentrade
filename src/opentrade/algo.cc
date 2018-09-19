@@ -9,14 +9,12 @@
 #include "exchange_connectivity.h"
 #include "logger.h"
 #include "server.h"
-#include "task_pool.h"
 
 namespace fs = boost::filesystem;
 
 namespace opentrade {
 
 static auto kPath = fs::path(".") / "store" / "algos";
-extern TaskPool kWriteTaskPool;
 static thread_local std::string kError;
 
 inline void AlgoRunner::operator()() {

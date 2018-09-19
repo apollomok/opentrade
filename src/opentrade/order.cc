@@ -14,14 +14,10 @@
 #include "logger.h"
 #include "position.h"
 #include "server.h"
-#include "task_pool.h"
 
 namespace fs = boost::filesystem;
 
 namespace opentrade {
-
-static TaskPool kReadTaskPool;
-TaskPool kWriteTaskPool;
 
 static auto kPath = fs::path(".") / "store" / "confirmations";
 
