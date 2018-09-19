@@ -190,9 +190,10 @@ static inline bool Cancel(Order* cancel_order) {
   cancel_order->tm = NowUtcInMicro();
   if (!RiskManager::Instance().CheckMsgRate(*cancel_order)) {
     HandleConfirmation(cancel_order, kRiskRejected, kRiskError);
+    static uint32_t seed;
     kSharedTaskPool.AddTask(
         [cancel_order]() { Cancel(cancel_order); },
-        boost::posix_time::milliseconds(1000 + rand() % 1000));
+        boost::posix_time::milliseconds(1000 + rand_r(&seed) % 1000));
     return false;
   }
   auto adapter = cancel_order->broker_account->adapter;
