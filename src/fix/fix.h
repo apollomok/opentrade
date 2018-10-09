@@ -124,7 +124,6 @@ class Fix : public FIX::Application,
         OnPendingCancel(msg);
         break;
       case FIX::ExecType_NEW:
-      case FIX::ExecType_SUSPENDED:
         OnNew(msg);
         break;
       case FIX::ExecType_PARTIAL_FILL:
@@ -141,6 +140,10 @@ class Fix : public FIX::Application,
         OnReplaced(msg, text);
         break;
       case FIX::ExecType_REJECTED:
+        OnRejected(msg, text);
+        break;
+      case FIX::ExecType_SUSPENDED:
+        if (text.empty()) text = "Suspended";
         OnRejected(msg, text);
         break;
       case FIX::ExecType_RESTATED:
