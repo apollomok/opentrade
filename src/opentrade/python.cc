@@ -125,7 +125,7 @@ static void RegisterFunc(PyMethodDef *def, PyObject *obj) {
 
 template <typename T>
 void SetValue(const char *name, T v, PyObject *obj) {
-  auto pValue = PyLong_FromLong((long)v);
+  auto pValue = PyLong_FromLong((int64_t)v);
   PyObject_SetAttrString(obj, name, pValue);
   Py_XDECREF(pValue);
 }
@@ -146,7 +146,7 @@ void SetValue(const char *name, double v, PyObject *obj) {
 
 template <>
 void SetValue(const char *name, float v, PyObject *obj) {
-  SetValue(name, (double)v, obj);
+  SetValue(name, static_cast<double>(v), obj);
 }
 
 template <>
@@ -158,7 +158,7 @@ void SetValue(const char *name, const char *v, PyObject *obj) {
 
 template <typename T>
 void SetItem(const char *name, T v, PyObject *obj) {
-  auto pValue = PyLong_FromLong((long)v);
+  auto pValue = PyLong_FromLong((int64_t)v);
   PyDict_SetItemString(obj, name, pValue);
   Py_XDECREF(pValue);
 }
@@ -172,7 +172,7 @@ void SetItem(const char *name, double v, PyObject *obj) {
 
 template <>
 void SetItem(const char *name, float v, PyObject *obj) {
-  SetItem(name, (double)v, obj);
+  SetItem(name, static_cast<double>(v), obj);
 }
 
 template <>
@@ -196,13 +196,15 @@ void *GetNativePtr(PyObject *self, const char *name = "__native__") {
   return algo;
 }
 
-Algo *GetNative(PyObject *self) { return (Algo *)GetNativePtr(self); }
+Algo *GetNative(PyObject *self) {
+  return reinterpret_cast<Algo *>(GetNativePtr(self));
+}
 
 namespace security_methods {}
 
 static PyObject *CreateSecurity(Security *sec) {
   auto obj = CreateObject();
-  SetValue("__native__", (void *)sec, obj);
+  SetValue("__native__", sec, obj);
   return obj;
 }
 
@@ -210,7 +212,7 @@ namespace instrument_methods {}
 
 static PyObject *CreateInstrument(Instrument *inst) {
   auto obj = CreateObject();
-  SetValue("__native__", (void *)inst, obj);
+  SetValue("__native__", inst, obj);
   return obj;
 }
 
@@ -232,14 +234,15 @@ static PyMethodDef stop_def = {"stop", stop, METH_VARARGS, "stop()"};
 static PyObject *subscribe(PyObject *self, PyObject *args) {
   PyErr_Clear();
   PyObject *sec;
-  long src = 0;
+  auto src = 0l;
   if (!PyArg_ParseTuple(args, "o|l", &sec, src)) {
     PrintPyError();
     Py_RETURN_NONE;
   }
   auto algo = GetNative(self);
   if (algo) {
-    auto inst = algo->Subscribe(*(Security *)GetNativePtr(sec), src);
+    auto inst =
+        algo->Subscribe(*reinterpret_cast<Security *>(GetNativePtr(sec)), src);
     if (!inst) {
       Py_RETURN_NONE;
     }
@@ -255,7 +258,7 @@ static PyMethodDef subscribe_def = {"subscribe", subscribe, METH_VARARGS,
 
 static PyObject *CreateAlgo(Algo *algo) {
   auto obj = CreateObject();
-  SetValue("__native__", (void *)algo, obj);
+  SetValue("__native__", algo, obj);
   RegisterFunc(&algo_methods::stop_def, obj);
   RegisterFunc(&algo_methods::subscribe_def, obj);
   return obj;
