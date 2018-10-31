@@ -20,7 +20,8 @@ class Adapter {
   void set_name(const std::string& name) { name_ = name; }
   void set_config(const StrMap& config) { config_ = config; }
   int GetVersion() const { return kApiVersion; }
-  typedef Adapter* (*Func)();
+  typedef Adapter* (*CFunc)();
+  typedef std::function<Adapter*()> Func;
   Func create_func() { return create_func_; }
   const StrMap& config() const { return config_; }
   std::string config(const std::string& name) const {
@@ -32,7 +33,7 @@ class Adapter {
  protected:
   std::string name_;
   StrMap config_;
-  Func create_func_ = nullptr;
+  Func create_func_;
 };
 
 class NetworkAdapter : public Adapter {

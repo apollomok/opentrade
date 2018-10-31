@@ -8,7 +8,7 @@ RUN apt-get update \
     clang-format \
     clang \
     python \
-    python-dev \
+    python3-dev \
     vim \
     exuberant-ctags \
     git \

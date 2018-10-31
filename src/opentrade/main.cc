@@ -13,6 +13,7 @@
 #include "logger.h"
 #include "market_data.h"
 #include "position.h"
+#include "python.h"
 #include "security.h"
 #include "server.h"
 
@@ -100,6 +101,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  opentrade::InitalizePy();
   opentrade::Database::Initialize(db_url, db_pool_size, db_create_tables);
   opentrade::SecurityManager::Initialize();
   AlgoManager::Initialize();

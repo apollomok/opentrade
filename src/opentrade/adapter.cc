@@ -16,14 +16,14 @@ Adapter* Adapter::Load(const std::string& sofile) {
     return nullptr;
   }
 
-  auto create_func = (Func)dlsym(handle, "create");
+  auto create_func = (CFunc)dlsym(handle, "create");
   if (!create_func) {
     LOG_FATAL(dlerror());
     return nullptr;
   }
 
-  auto out = (*create_func)();
-  if (out) out->create_func_ = create_func;
+  auto out = create_func();
+  if (out) out->create_func_ = [=]() { return create_func(); };
   return out;
 }
 
