@@ -57,10 +57,8 @@ inline static const std::string kOption = "OPT";
 inline static const std::string kIndex = "IND";
 inline static const std::string kFutureOption = "FOP";
 inline static const std::string kCombo = "BAG";
-inline static const std::string KWarrant = "WAR";
+inline static const std::string kWarrant = "WAR";
 inline static const std::string kBond = "BOND";
-inline static const std::string kMutualFund = "FUND";
-inline static const std::string kNews = "NEWS";
 
 struct Security {
   typedef uint32_t IdType;

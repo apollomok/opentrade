@@ -11,3 +11,5 @@ log.conf
 ticks.txt
 bbgids.txt
 core
+__pycache__
+__create_object__.py

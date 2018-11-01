@@ -141,6 +141,29 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  auto algo_path = fs::path(".") / "algos";
+  LOG_INFO("Loading python algos from " << algo_path);
+  auto npy = 0;
+  if (fs::is_directory(algo_path)) {
+    for (auto &entry :
+         boost::make_iterator_range(fs::directory_iterator(algo_path), {})) {
+      auto tmp = entry.path();
+      if (tmp.extension() == ".py") {
+        auto fn = tmp.filename().string();
+        fn = fn.substr(0, fn.length() - 3);
+        auto adapter = opentrade::Python::Load(fn);
+        if (!adapter) {
+          LOG_ERROR("Failed to load " << tmp);
+        } else {
+          adapter->set_name(fn);
+          AlgoManager::Instance().Add(adapter);
+          npy++;
+        }
+      }
+    }
+  }
+  LOG_INFO(npy << " python algos loaded");
+
   opentrade::AccountManager::Initialize();
   PositionManager::Initialize();
   opentrade::GlobalOrderBook::Initialize();

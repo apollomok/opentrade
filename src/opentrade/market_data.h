@@ -40,7 +40,7 @@ struct MarketData {
     }
   };
 
-  static const size_t kDepthSize = 5;
+  static inline const size_t kDepthSize = 5;
   typedef Quote Depth[kDepthSize];
 
   const Quote& quote() const { return depth[0]; }

@@ -58,7 +58,7 @@ class Algo : public Adapter {
   void Stop();
   void SetTimeout(std::function<void()> func, uint32_t milliseconds);
   Order* Place(const Contract& contract, Instrument* inst);
-  bool Cancel(const Order& ord);
+  static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept = 0;
   virtual void OnStop() noexcept = 0;
