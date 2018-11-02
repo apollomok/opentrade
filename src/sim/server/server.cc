@@ -110,7 +110,12 @@ void SimServer::Start() noexcept {
   fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
   threaded_socket_acceptor_.reset(new FIX::ThreadedSocketAcceptor(
       *this, *fix_store_factory_, *fix_settings_, *fix_log_factory_));
-  threaded_socket_acceptor_->start();
+  try {
+    threaded_socket_acceptor_->start();
+  } catch (FIX::RuntimeError& err) {
+    LOG_ERROR("Failed to start simulator: " << err.what());
+    return;
+  }
 
   connected_ = 1;
 

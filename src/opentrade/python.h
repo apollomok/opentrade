@@ -29,13 +29,14 @@ class Python : public Algo {
                      const MarketData& md0) noexcept override;
   void OnConfirmation(const Confirmation& cm) noexcept override;
   const ParamDefs& GetParamDefs() noexcept override;
-  void AddOrder(Order::IdType id, PyObject* obj) { orders_[id] = obj; }
+  void AddObj(const void* native, PyObject* obj) { objs_[native] = obj; }
+  PyObject* GetObj(const void* native) { return objs_[native]; }
 
  private:
   PyModule py_;
   ParamDefs def_;
   PyObject* obj_ = nullptr;
-  std::map<Order::IdType, PyObject*> orders_;
+  std::map<const void*, PyObject*> objs_;
 };
 
 void InitalizePy();

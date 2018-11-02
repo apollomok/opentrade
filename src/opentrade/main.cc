@@ -96,6 +96,11 @@ int main(int argc, char *argv[]) {
     fs::create_directory(path);
   }
 
+  path = fs::path(".") / "algos";
+  if (!fs::exists(path)) {
+    fs::create_directory(path);
+  }
+
   if (db_url.empty()) {
     LOG_ERROR("db_url not configured");
     return 1;
@@ -141,15 +146,15 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  auto algo_path = fs::path(".") / "algos";
-  LOG_INFO("Loading python algos from " << algo_path);
+  path = fs::path(".") / "algos";
+  LOG_INFO("Loading python algos from " << path);
   auto npy = 0;
-  if (fs::is_directory(algo_path)) {
+  if (fs::is_directory(path)) {
     for (auto &entry :
-         boost::make_iterator_range(fs::directory_iterator(algo_path), {})) {
+         boost::make_iterator_range(fs::directory_iterator(path), {})) {
       auto tmp = entry.path();
-      if (tmp.extension() == ".py") {
-        auto fn = tmp.filename().string();
+      auto fn = tmp.filename().string();
+      if (tmp.extension() == ".py" && fn[0] != '_' && fn[0] != '.') {
         fn = fn.substr(0, fn.length() - 3);
         auto adapter = opentrade::Python::Load(fn);
         if (!adapter) {

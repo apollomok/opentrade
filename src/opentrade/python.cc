@@ -63,14 +63,18 @@ static void PrintPyError() {
   std::stringstream str;
   auto text = GetString(pvalue);
   const char *lineno_names[] = {"tb_lineno"};
-  auto lineno = GetAttrString(ptraceback, lineno_names,
-                              sizeof(lineno_names) / sizeof(*lineno_names));
-  const char *filename_names[] = {"tb_frame", "f_code", "co_filename"};
-  auto filename =
-      GetAttrString(ptraceback, filename_names,
-                    sizeof(filename_names) / sizeof(*filename_names));
+  std::stringstream ss;
+  if (ptraceback) {
+    auto lineno = GetAttrString(ptraceback, lineno_names,
+                                sizeof(lineno_names) / sizeof(*lineno_names));
+    const char *filename_names[] = {"tb_frame", "f_code", "co_filename"};
+    auto filename =
+        GetAttrString(ptraceback, filename_names,
+                      sizeof(filename_names) / sizeof(*filename_names));
+    ss << " on line " << lineno << " of file " << filename;
+  }
   PyErr_Restore(ptype, pvalue, ptraceback);  // does not increase ref
-  LOG_ERROR(text << " on line " << lineno << " of file " << filename);
+  LOG_ERROR(text << ss.str());
   PyErr_Print();
 }
 
@@ -143,9 +147,9 @@ void InitalizePy() {
   std::string path = tmp ? tmp : "";
   setenv("PYTHONPATH", ("./algos:./algos/revisions:" + path).c_str(), 1);
   Py_InitializeEx(0);  // no signal registration
-  std::ofstream of("./__create_object__.py");
+  std::ofstream of("./algos/__create_object__.py");
   if (!of.good()) {
-    LOG_ERROR("Failed to write ./__create_object__.py");
+    LOG_ERROR("Failed to write ./algos/__create_object__.py");
   }
   of << kRawPy;
   of.close();
@@ -383,24 +387,25 @@ void *GetNativePtr(PyObject *self, const char *name = "__native__") {
   return algo;
 }
 
-Algo *GetNative(PyObject *self) {
-  return reinterpret_cast<Algo *>(GetNativePtr(self));
+Python *GetNative(PyObject *self) {
+  return reinterpret_cast<Python *>(GetNativePtr(self));
 }
 
 namespace security_methods {
 
 static PyObject *get_tick_size(PyObject *self, PyObject *args) {
   PyErr_Clear();
-  if (!PyArg_ParseTuple(args, "")) {
+  double px;
+  if (!PyArg_ParseTuple(args, "d", &px)) {
     PrintPyError();
     Py_RETURN_NONE;
   }
   auto sec = reinterpret_cast<Security *>(GetNativePtr(self));
-  return PyFloat_FromDouble(sec->tick_size);
+  return PyFloat_FromDouble(sec->GetTickSize(px));
 }
 
 static PyMethodDef get_tick_size_def = {"get_tick_size", get_tick_size,
-                                        METH_VARARGS, "get_tick_size()"};
+                                        METH_VARARGS, "get_tick_size(px)"};
 
 static PyObject *is_in_trade_period(PyObject *self, PyObject *args) {
   PyErr_Clear();
@@ -477,9 +482,17 @@ static PyObject *CreateParamsDict(const Algo::ParamMap &params) {
       auto src = std::get<0>(st);
       SetValue("src", DataSrc::GetStr(src), tmp);
       auto sec = std::get<1>(st);
-      if (sec) SetValue("security", CreateSecurity(sec), tmp);
+      if (sec) {
+        auto obj = CreateSecurity(sec);
+        PyObject_SetAttrString(tmp, "security", obj);
+        Py_XDECREF(obj);
+      }
       auto acc = std::get<2>(st);
-      if (acc) SetValue("account", CreateSubAccount(acc), tmp);
+      if (acc) {
+        auto obj = CreateSubAccount(acc);
+        PyObject_SetAttrString(tmp, "account", obj);
+        Py_XDECREF(obj);
+      }
       auto side = std::get<3>(st);
       SetValue("side", side, tmp);
       auto qty = std::get<4>(st);
@@ -813,10 +826,10 @@ static PyObject *place(PyObject *self, PyObject *args) {
   c.sub_account = reinterpret_cast<SubAccount *>(GetNativePtr(account));
   auto order = algo->Place(c, instrument);
   if (!order) Py_RETURN_NONE;
-  auto porder = CreateOrder(order, self, account);
-  algo->AddOrder(order->id, porder);
-  Py_XINCREF(porder);
-  return porder;
+  auto obj = CreateOrder(order, self, account);
+  algo->AddObj(order, obj);
+  Py_XINCREF(obj);
+  return obj;
 }
 
 static PyMethodDef place_def = {
@@ -917,13 +930,42 @@ static PyMethodDef outstanding_sell_qty_def = {
     "get_outstanding_sell", outstanding_sell_qty, METH_VARARGS,
     "get_outstanding_sell()"};
 
+static PyObject *get_active_orders(PyObject *self, PyObject *args) {
+  PyErr_Clear();
+  if (!PyArg_ParseTuple(args, "")) {
+    PrintPyError();
+    Py_RETURN_NONE;
+  }
+  auto algo = reinterpret_cast<Python *>(GetNativePtr(self, "__native_algo__"));
+  if (!algo) Py_RETURN_NONE;
+  auto inst = reinterpret_cast<Instrument *>(GetNativePtr(self));
+  if (inst) {
+    auto &orders = inst->active_orders();
+    auto obj = PyTuple_New(orders.size());
+    auto i = 0;
+    for (auto o : orders) {
+      auto obj2 = algo->GetObj(o);
+      PyTuple_SetItem(obj, i++, obj2);
+      Py_XINCREF(obj2);
+    }
+    return obj;
+  }
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef get_active_orders_def = {"get_active_orders",
+                                            get_active_orders, METH_VARARGS,
+                                            "get_active_orders()"};
+
 }  // namespace instrument_methods
 
 static PyObject *CreateInstrument(Algo *algo, const Instrument *inst,
                                   PyObject *sec, const char *src) {
   auto obj = CreateObject(inst, "instrument");
-  PyObject_SetAttrString(obj, "md", CreateMd(&inst->md()));
-  PyObject_SetAttrString(obj, "sec", sec);
+  auto md = CreateMd(&inst->md());
+  PyObject_SetAttrString(obj, "md", md);
+  Py_XDECREF(md);
+  PyObject_SetAttrString(obj, "security", sec);
   SetValue("__native_algo__", algo, obj);
   SetValue("src", src, obj);
   RegisterFunc(&instrument_methods::total_qty_def, obj);
@@ -934,10 +976,86 @@ static PyObject *CreateInstrument(Algo *algo, const Instrument *inst,
   RegisterFunc(&instrument_methods::outstanding_buy_qty_def, obj);
   RegisterFunc(&instrument_methods::outstanding_sell_qty_def, obj);
   RegisterFunc(&instrument_methods::place_def, obj);
+  RegisterFunc(&instrument_methods::get_active_orders_def, obj);
   return obj;
 }
 
 namespace algo_methods {
+
+static PyObject *log_info(PyObject *self, PyObject *args) {
+  PyErr_Clear();
+  const char *s;
+  if (PyArg_ParseTuple(args, "s", &s)) {
+    LOG_INFO(s);
+  } else {
+    PrintPyError();
+  }
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef log_info_def = {"log_info", log_info, METH_VARARGS,
+                                   "log_info(msg)"};
+
+static PyObject *log_debug(PyObject *self, PyObject *args) {
+  PyErr_Clear();
+  const char *s;
+  if (PyArg_ParseTuple(args, "s", &s)) {
+    LOG_DEBUG(s);
+  } else {
+    PrintPyError();
+  }
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef log_debug_def = {"log_debug", log_debug, METH_VARARGS,
+                                    "log_debug(msg)"};
+
+static PyObject *log_error(PyObject *self, PyObject *args) {
+  PyErr_Clear();
+  const char *s;
+  if (PyArg_ParseTuple(args, "s", &s)) {
+    LOG_ERROR(s);
+  } else {
+    PrintPyError();
+  }
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef log_error_def = {"log_error", log_error, METH_VARARGS,
+                                    "log_error(msg)"};
+
+static PyObject *log_warn(PyObject *self, PyObject *args) {
+  PyErr_Clear();
+  const char *s;
+  if (PyArg_ParseTuple(args, "s", &s)) {
+    LOG_WARN(s);
+  } else {
+    PrintPyError();
+  }
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef log_warn_def = {"log_warn", log_warn, METH_VARARGS,
+                                   "log_warn(msg)"};
+
+static PyObject *is_active(PyObject *self, PyObject *args) {
+  PyErr_Clear();
+  if (!PyArg_ParseTuple(args, "")) {
+    PrintPyError();
+    Py_RETURN_NONE;
+  }
+  auto algo = GetNative(self);
+  if (algo) {
+    if (algo->is_active())
+      Py_RETURN_TRUE;
+    else
+      Py_RETURN_FALSE;
+  }
+  Py_RETURN_NONE;
+}
+
+static PyMethodDef is_active_def = {"is_active", is_active, METH_VARARGS,
+                                    "is_active()"};
 
 static PyObject *stop(PyObject *self, PyObject *args) {
   PyErr_Clear();
@@ -1001,7 +1119,10 @@ static PyObject *subscribe(PyObject *self, PyObject *args) {
     if (!inst) {
       Py_RETURN_NONE;
     }
-    return CreateInstrument(algo, inst, sec, src);
+    auto obj = CreateInstrument(algo, inst, sec, src);
+    algo->AddObj(inst, obj);
+    Py_XINCREF(obj);
+    return obj;
   }
   Py_RETURN_NONE;
 }
@@ -1015,8 +1136,15 @@ static PyObject *CreateAlgo(Algo *algo) {
   auto obj = CreateObject(algo, "algo");
   PyObject_SetAttrString(obj, "constants", kConstants);
   RegisterFunc(&algo_methods::stop_def, obj);
+  RegisterFunc(&algo_methods::is_active_def, obj);
   RegisterFunc(&algo_methods::subscribe_def, obj);
   RegisterFunc(&algo_methods::set_timeout_def, obj);
+  RegisterFunc(&algo_methods::log_debug_def, obj);
+  RegisterFunc(&algo_methods::log_info_def, obj);
+  RegisterFunc(&algo_methods::log_warn_def, obj);
+  RegisterFunc(&algo_methods::log_error_def, obj);
+  SetValue("name", algo->name().c_str(), obj);
+  SetValue("id", algo->id(), obj);
   return obj;
 }
 
@@ -1024,7 +1152,7 @@ Python::Python() { obj_ = CreateAlgo(this); }
 
 Python::~Python() {
   Py_XDECREF(obj_);
-  for (auto &pair : orders_) {
+  for (auto &pair : objs_) {
     Py_XDECREF(pair.second);
   }
 }
@@ -1082,7 +1210,9 @@ void Python::OnMarketTrade(const Instrument &inst, const MarketData &md,
   auto pargs = PyTuple_New(2);
   PyTuple_SetItem(pargs, 0, obj_);
   Py_XINCREF(obj_);
-  PyTuple_SetItem(pargs, 1, PyLong_FromLong(inst.sec().id));
+  auto obj = GetObj(&inst);
+  PyTuple_SetItem(pargs, 1, obj);
+  Py_XINCREF(obj);
   Py_XDECREF(PyObject_CallObject(py_.on_market_trade, pargs));
   PrintPyError();
   Py_XDECREF(pargs);
@@ -1096,7 +1226,9 @@ void Python::OnMarketQuote(const Instrument &inst, const MarketData &md,
   auto pargs = PyTuple_New(2);
   PyTuple_SetItem(pargs, 0, obj_);
   Py_XINCREF(obj_);
-  PyTuple_SetItem(pargs, 1, PyLong_FromLong(inst.sec().id));
+  auto obj = GetObj(&inst);
+  PyTuple_SetItem(pargs, 1, obj);
+  Py_XINCREF(obj);
   Py_XDECREF(PyObject_CallObject(py_.on_market_quote, pargs));
   PrintPyError();
   Py_XDECREF(pargs);
@@ -1110,9 +1242,7 @@ void Python::OnConfirmation(const Confirmation &cm) noexcept {
   PyTuple_SetItem(pargs, 0, obj_);
   Py_XINCREF(obj_);
   auto dict = PyDict_New();
-  assert(cm.order);
-  auto order = orders_[cm.order->id];
-  if (order) PyObject_SetAttrString(dict, "order", order);
+  PyObject_SetAttrString(dict, "order", GetObj(cm.order));
   SetItem("order_id", cm.order_id.c_str(), dict);
   SetItem("exec_id", cm.exec_id.c_str(), dict);
   SetItem("text", cm.text.c_str(), dict);
