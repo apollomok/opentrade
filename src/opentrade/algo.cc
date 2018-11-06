@@ -75,7 +75,7 @@ Algo* AlgoManager::Spawn(std::shared_ptr<Algo::ParamMap> params,
                          const std::string& token) {
   auto adapter = GetAdapter(name);
   if (!adapter) return nullptr;
-  auto algo = static_cast<Algo*>(adapter->create_func()());
+  auto algo = static_cast<Algo*>(adapter->Clone());
   algo->set_name(adapter->name());
   algo->set_config(adapter->config());
   algo->id_ = ++algo_id_counter_;

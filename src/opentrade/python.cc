@@ -7,7 +7,6 @@ namespace opentrade {
 static PyObject *kConstants;
 static PyObject *kCreateObjectPyFunc;
 static PyObject *kSecurityTuple;
-static PyObject *kEmptyArgs;
 static const char *kRawPy = R"(# do not modify me
 class Object: pass
 def create_object(): return Object())";
@@ -27,6 +26,7 @@ static inline std::string GetString(PyObject *obj, bool convert2str = false) {
 }
 
 static inline bool IsType(PyObject *obj, const char *type) {
+  if (!PyObject_HasAttrString(obj, "__type__")) return false;
   auto p = PyObject_GetAttrString(obj, "__type__");
   auto out = GetString(p) == type;
   Py_XDECREF(p);
@@ -41,8 +41,8 @@ static inline double GetDouble(PyObject *obj) {
 
 static inline std::string GetAttrString(PyObject *obj, const char **names,
                                         size_t n) {
+  if (!PyObject_HasAttrString(obj, names[0])) return {};
   auto tmp = PyObject_GetAttrString(obj, names[0]);
-  if (!tmp) return {};
   if (n > 1) {
     auto out = GetAttrString(tmp, names + 1, n - 1);
     Py_XDECREF(tmp);
@@ -53,18 +53,18 @@ static inline std::string GetAttrString(PyObject *obj, const char **names,
   return out;
 }
 
-static void PrintPyError() {
-  if (!PyErr_Occurred()) return;
-  PyObject *ptype = NULL;
-  PyObject *pvalue = NULL;
-  PyObject *ptraceback = NULL;
+static bool PrintPyError() {
+  if (!PyErr_Occurred()) return false;
+  PyObject *ptype = nullptr;
+  PyObject *pvalue = nullptr;
+  PyObject *ptraceback = nullptr;
   PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-  if (!pvalue) return;
+  assert(pvalue);
   std::stringstream str;
   auto text = GetString(pvalue);
-  const char *lineno_names[] = {"tb_lineno"};
   std::stringstream ss;
   if (ptraceback) {
+    const char *lineno_names[] = {"tb_lineno"};
     auto lineno = GetAttrString(ptraceback, lineno_names,
                                 sizeof(lineno_names) / sizeof(*lineno_names));
     const char *filename_names[] = {"tb_frame", "f_code", "co_filename"};
@@ -76,6 +76,7 @@ static void PrintPyError() {
   PyErr_Restore(ptype, pvalue, ptraceback);  // does not increase ref
   LOG_ERROR(text << ss.str());
   PyErr_Print();
+  return true;
 }
 
 static void RegisterFunc(PyMethodDef *def, PyObject *obj) {
@@ -88,12 +89,13 @@ static void RegisterFunc(PyMethodDef *def, PyObject *obj) {
 }
 
 static inline PyObject *GetCallable(PyObject *m, const char *name) {
+  if (!PyObject_HasAttrString(m, name)) return nullptr;
   auto pfunc = PyObject_GetAttrString(m, name);
-  if (!pfunc || !PyCallable_Check(pfunc)) {
+  if (!PyCallable_Check(pfunc)) {
     Py_XDECREF(pfunc);
-    return NULL;
+    return nullptr;
   }
-  LOG_INFO("Loaded callback " << name);
+  LOG_INFO("Loaded python function " << name);
   return pfunc;
 }
 
@@ -132,7 +134,8 @@ void SetValue(const char *name, const char *v, PyObject *obj) {
 
 static inline PyObject *CreateObject(const void *native = nullptr,
                                      const char *type = nullptr) {
-  auto out = PyObject_CallObject(kCreateObjectPyFunc, kEmptyArgs);
+  auto out = PyObject_CallObject(kCreateObjectPyFunc, nullptr);
+  PrintPyError();
   if (native) {
     SetValue("__native__", native, out);
   }
@@ -142,11 +145,19 @@ static inline PyObject *CreateObject(const void *native = nullptr,
   return out;
 }
 
+struct LockGIL {
+  LockGIL() { m.lock(); }
+  ~LockGIL() { m.unlock(); }
+  std::mutex m;
+};
+
 void InitalizePy() {
   auto tmp = getenv("PYTHONPATH");
   std::string path = tmp ? tmp : "";
   setenv("PYTHONPATH", ("./algos:./algos/revisions:" + path).c_str(), 1);
   Py_InitializeEx(0);  // no signal registration
+  if (!PyEval_ThreadsInitialized()) PyEval_InitThreads();
+  LockGIL lock;
   std::ofstream of("./algos/__create_object__.py");
   if (!of.good()) {
     LOG_ERROR("Failed to write ./algos/__create_object__.py");
@@ -158,8 +169,8 @@ void InitalizePy() {
   Py_XDECREF(pname);
   PrintPyError();
   kCreateObjectPyFunc = GetCallable(pmodule, "create_object");
-  kSecurityTuple = PyTuple_New(0);
-  kEmptyArgs = PyTuple_New(0);
+  Py_XDECREF(pmodule);
+  kSecurityTuple = CreateObject(nullptr, "security_tuple");
   PrintPyError();
   LOG_INFO("Python initialized");
   LOG_INFO("Python PATH: " << getenv("PYTHONPATH"));
@@ -217,12 +228,6 @@ void InitalizePy() {
   }
 }
 
-struct LockGIL {
-  LockGIL() { kGILMutex.lock(); }
-  ~LockGIL() { kGILMutex.unlock(); }
-  static inline std::mutex kGILMutex;
-};
-
 PyModule LoadPyModule(const std::string &module_name) {
   PyModule m;
   if (!kCreateObjectPyFunc) {
@@ -260,7 +265,7 @@ PyModule LoadPyModule(const std::string &module_name) {
 
 template <typename T>
 static inline bool GetValueScalar(PyObject *pvalue, T *out) {
-  if (pvalue == kSecurityTuple) {
+  if (IsType(pvalue, "security_tuple")) {
     *out = SecurityTuple{};
   } else if (PyFloat_Check(pvalue)) {
     *out = PyFloat_AsDouble(pvalue);
@@ -281,8 +286,8 @@ static inline bool GetValueScalar(PyObject *pvalue, T *out) {
 
 static inline bool ParseParamDef(PyObject *item, ParamDef *out) {
   // (name, default_value, required, min_value, max_value, precision)
-  PyObject *pvalue = NULL;
-  PyObject *tmp = NULL;
+  PyObject *pvalue = nullptr;
+  PyObject *tmp = nullptr;
   ParamDef::ValueVector value_vector;
   auto n2 = PyTuple_Size(item);
   size_t n3;
@@ -339,8 +344,7 @@ static ParamDefs ParseParamDefs(PyObject *pyfunc) {
   Py_XINCREF(kConstants);
   auto out = PyObject_CallObject(pyfunc, pargs);
   Py_XDECREF(pargs);
-  if (PyErr_Occurred()) {
-    PrintPyError();
+  if (PrintPyError()) {
     return {};
   }
   if (!out || !PyTuple_Check(out)) {
@@ -374,15 +378,14 @@ static inline PyObject *CreateSubAccount(const SubAccount *acc) {
 }
 
 void *GetNativePtr(PyObject *self, const char *name = "__native__") {
+  if (PyObject_HasAttrString(self, name)) return nullptr;
   auto native = PyObject_GetAttrString(self, name);
-  if (!native) {
-    PrintPyError();
-    return NULL;
+  if (!PyLong_Check(native)) {
+    return nullptr;
   }
   auto algo = PyLong_AsVoidPtr(native);
-  if (PyErr_Occurred()) {
-    PrintPyError();
-    return NULL;
+  if (PrintPyError()) {
+    return nullptr;
   }
   return algo;
 }
@@ -1088,7 +1091,7 @@ static PyObject *set_timeout(PyObject *self, PyObject *args) {
     algo->SetTimeout(
         [pfunc]() {
           LockGIL lock;
-          Py_XDECREF(PyObject_CallObject(pfunc, kEmptyArgs));
+          Py_XDECREF(PyObject_CallObject(pfunc, nullptr));
           PrintPyError();
           Py_XDECREF(pfunc);
         },
@@ -1133,6 +1136,7 @@ static PyMethodDef subscribe_def = {"subscribe", subscribe, METH_VARARGS,
 }  // namespace algo_methods
 
 static PyObject *CreateAlgo(Algo *algo) {
+  LockGIL lock;
   auto obj = CreateObject(algo, "algo");
   PyObject_SetAttrString(obj, "constants", kConstants);
   RegisterFunc(&algo_methods::stop_def, obj);
@@ -1148,7 +1152,7 @@ static PyObject *CreateAlgo(Algo *algo) {
   return obj;
 }
 
-Python::Python() { obj_ = CreateAlgo(this); }
+Python::Python() {}
 
 Python::~Python() {
   Py_XDECREF(obj_);
@@ -1163,9 +1167,10 @@ Python *Python::Load(const std::string &module_name) {
   if (!m.get_param_defs) return nullptr;
   p->def_ = ParseParamDefs(m.get_param_defs);
   if (p->def_.empty()) return nullptr;
-  p->create_func_ = [p]() {
+  p->create_func_ = [m]() {
     auto p2 = new Python;
-    p2->py_ = p->py_;
+    p2->py_ = m;
+    p2->obj_ = CreateAlgo(p2);
     return p2;
   };
   return p;
@@ -1182,7 +1187,7 @@ std::string Python::OnStart(const ParamMap &params) noexcept {
   auto out = PyObject_CallObject(py_.on_start, pargs);
   PrintPyError();
   Py_XDECREF(pargs);
-  if (PyUnicode_Check(out)) {
+  if (out && PyUnicode_Check(out)) {
     Py_XDECREF(out);
     return GetString(out);
   }

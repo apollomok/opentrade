@@ -22,7 +22,7 @@ class Adapter {
   int GetVersion() const { return kApiVersion; }
   typedef Adapter* (*CFunc)();
   typedef std::function<Adapter*()> Func;
-  Func create_func() { return create_func_; }
+  Adapter* Clone() { return create_func_(); }
   const StrMap& config() const { return config_; }
   std::string config(const std::string& name) const {
     return FindInMap(config_, name);
