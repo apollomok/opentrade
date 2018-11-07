@@ -4,17 +4,9 @@
 
 namespace opentrade {
 
-struct SecurityTupleWrapper : SecurityTuple {
-  const DataSrc GetSrc() const { return std::get<0>(*this); }
-
-  const Security *GetSec() const { return std::get<1>(*this); }
-
-  const SubAccount *GetAcc() const { return std::get<2>(*this); }
-
-  const OrderSide GetSide() const { return std::get<3>(*this); }
-
-  const double GetQty() const { return std::get<4>(*this); }
-};
+static thread_local const Python *kCurrentAlgo;
+static thread_local const Instrument *kCurrentInstrument;
+static thread_local const Confirmation *kCurrentConfirmation;
 
 BOOST_PYTHON_MODULE(opentrade) {
   bp::enum_<OrderSide>("OrderSide")
@@ -86,7 +78,8 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("desc", &Exchange::desc)
       .def_readonly("utc_time_offset", &Exchange::utc_time_offset)
       .def_readonly("country", &Exchange::country)
-      .def_readonly("odd_lot_allowed", &Exchange::odd_lot_allowed);
+      .def_readonly("odd_lot_allowed", &Exchange::odd_lot_allowed)
+      .add_property("now", &Exchange::GetTime);
 
   auto cls = bp::class_<Security>("Security");
   cls.def_readonly("id", &Security::id)
@@ -111,28 +104,41 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("lot_size", &Security::lot_size)
       .def("get_tick_size", &Security::GetTickSize)
       .def_readonly("type", &Security::type)
-      .add_property("exchange",
-                    bp::make_function(&Security::GetExchange,
-                                      bp::return_internal_reference<>()))
-      .add_property("underlying",
-                    bp::make_function(&Security::GetUnderlying,
-                                      bp::return_internal_reference<>()))
+      .add_property(
+          "exchange",
+          bp::make_function(+[](const Security &s) { return s.exchange; },
+                            bp::return_internal_reference<>()))
+      .add_property(
+          "underlying",
+          bp::make_function(+[](const Security &s) { return s.underlying; },
+                            bp::return_internal_reference<>()))
       .add_property("is_in_trade_period", &Security::IsInTradePeriod)
       .def_readonly("local_symbol", &Security::local_symbol);
 
-  bp::class_<SecurityTupleWrapper>("SecurityTuple")
-      .add_property("sec", bp::make_function(&SecurityTupleWrapper::GetSec,
-                                             bp::return_internal_reference<>()))
-      .add_property("acc", bp::make_function(&SecurityTupleWrapper::GetAcc,
-                                             bp::return_internal_reference<>()))
-      .add_property("side", &SecurityTupleWrapper::GetSide)
-      .add_property("qty", &SecurityTupleWrapper::GetQty)
-      .add_property("src", &SecurityTupleWrapper::GetSrc);
+  bp::class_<SecurityTuple>("SecurityTuple")
+      .add_property("src",
+                    +[](const SecurityTuple &st) { return std::get<0>(st); })
+      .add_property(
+          "sec", bp::make_function(
+                     +[](const SecurityTuple &st) { return std::get<1>(st); },
+                     bp::return_internal_reference<>()))
+      .add_property(
+          "acc", bp::make_function(
+                     +[](const SecurityTuple &st) { return std::get<2>(st); },
+                     bp::return_internal_reference<>()))
+      .add_property("side",
+                    +[](const SecurityTuple &st) { return std::get<3>(st); })
+      .add_property("qty",
+                    +[](const SecurityTuple &st) { return std::get<4>(st); });
 
   bp::class_<Contract>("Contract")
-      .def("is_buy", &Contract::IsBuy)
-      .def_readwrite("sec", &Contract::sec)
-      .def_readwrite("acc", &Contract::sub_account)
+      .add_property("is_buy", &Contract::IsBuy)
+      .add_property("sec",
+                    bp::make_function(+[](const Contract &c) { return c.sec; },
+                                      bp::return_internal_reference<>()))
+      .add_property("acc", bp::make_function(
+                               +[](const Contract &c) { return c.sub_account; },
+                               bp::return_internal_reference<>()))
       .def_readwrite("qty", &Contract::qty)
       .def_readwrite("price", &Contract::price)
       .def_readwrite("stop_price", &Contract::stop_price)
@@ -141,30 +147,54 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readwrite("type", &Contract::type);
 
   bp::class_<MarketData>("MarketData")
-      .add_property("open", &MarketData::open)
-      .add_property("high", &MarketData::low)
-      .add_property("low", &MarketData::low)
-      .add_property("close", &MarketData::close)
-      .add_property("qty", &MarketData::qty)
-      .add_property("volume", &MarketData::volume)
-      .add_property("vwap", &MarketData::vwap)
-      .add_property("ask_price", &MarketData::ask_price)
-      .add_property("bid_price", &MarketData::bid_price)
-      .add_property("ask_size", &MarketData::ask_size)
-      .add_property("bid_size", &MarketData::bid_size)
-      .def("get_ask_price", &MarketData::get_ask_price)
-      .def("get_bid_price", &MarketData::get_bid_price)
-      .def("get_ask_size", &MarketData::get_ask_size)
-      .def("get_bid_size", &MarketData::get_bid_size);
+      .def_readonly("tm", &MarketData::tm)
+      .add_property("open", +[](const MarketData &md) { return md.trade.open; })
+      .add_property("high", +[](const MarketData &md) { return md.trade.high; })
+      .add_property("low", +[](const MarketData &md) { return md.trade.low; })
+      .add_property("close",
+                    +[](const MarketData &md) { return md.trade.close; })
+      .add_property("qty", +[](const MarketData &md) { return md.trade.qty; })
+      .add_property("vwap", +[](const MarketData &md) { return md.trade.vwap; })
+      .add_property("volume",
+                    +[](const MarketData &md) { return md.trade.volume; })
+      .add_property("ask_price",
+                    +[](const MarketData &md) { return md.quote().ask_price; })
+      .add_property("bid_price",
+                    +[](const MarketData &md) { return md.quote().bid_price; })
+      .add_property("ask_size",
+                    +[](const MarketData &md) { return md.quote().ask_size; })
+      .add_property("bid_size",
+                    +[](const MarketData &md) { return md.quote().bid_size; })
+      .def("get_ask_price",
+           +[](const MarketData &md, size_t i) {
+             return md.depth[std::min(i, MarketData::kDepthSize - 1)].ask_price;
+           })
+      .def("get_bid_price",
+           +[](const MarketData &md, size_t i) {
+             return md.depth[std::min(i, MarketData::kDepthSize - 1)].bid_price;
+           })
+      .def("get_ask_size",
+           +[](const MarketData &md, size_t i) {
+             return md.depth[std::min(i, MarketData::kDepthSize - 1)].ask_size;
+           })
+      .def("get_bid_size", +[](const MarketData &md, size_t i) {
+        return md.depth[std::min(i, MarketData::kDepthSize - 1)].bid_size;
+      });
 
   bp::class_<Confirmation>("Confirmation")
+      .add_property("order", bp::make_function(
+                                 +[](const Confirmation &c) { return c.order; },
+                                 bp::return_internal_reference<>()))
       .add_property("exec_id", &Confirmation::exec_id)
       .add_property("order_id", &Confirmation::order_id)
       .add_property("text", &Confirmation::text)
       .add_property("exec_type", &Confirmation::exec_type)
       .add_property("exec_trans_type", &Confirmation::exec_trans_type)
       .add_property("last_shares", &Confirmation::last_shares)
-      .add_property("last_px", &Confirmation::last_px);
+      .add_property("last_px", &Confirmation::last_px)
+      .def("__current__", +[]() { return kCurrentConfirmation; },
+           bp::return_value_policy<bp::reference_existing_object>())
+      .staticmethod("__current__");
 
   bp::class_<Order, bp::bases<Contract>>("Order")
       .def_readonly("status", &Order::status)
@@ -191,7 +221,10 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_outstanding_qty", &Instrument::total_outstanding_qty)
       .add_property("total_exposure", &Instrument::total_exposure)
       .add_property("net_qty", &Instrument::net_qty)
-      .add_property("total_qty", &Instrument::total_qty);
+      .add_property("total_qty", &Instrument::total_qty)
+      .def("__current__", +[]() { return kCurrentInstrument; },
+           bp::return_value_policy<bp::reference_existing_object>())
+      .staticmethod("__current__");
 
   bp::class_<Python>("Algo")
       .def("subscribe", &Algo::Subscribe, bp::return_internal_reference<>())
@@ -203,10 +236,11 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("log_warn", &Python::log_warn)
       .def("log_error", &Python::log_error)
       .add_property("id", &Algo::id)
-      .add_property(
-          "name",
-          bp::make_function(&Adapter::name, bp::return_internal_reference<>()))
-      .add_property("is_active", &Algo::is_active);
+      .add_property("name", +[](const Python &algo) { return algo.name(); })
+      .add_property("is_active", &Algo::is_active)
+      .def("__current__", +[]() { return kCurrentAlgo; },
+           bp::return_value_policy<bp::reference_existing_object>())
+      .staticmethod("__current__");
 }
 
 void PrintPyError() {
@@ -320,7 +354,7 @@ static inline bool GetValueScalar(const bp::object &value, T *out) {
     *out = bp::extract<std::string>(value);
   } else {
     try {
-      *out = bp::extract<SecurityTupleWrapper>(value);
+      *out = bp::extract<SecurityTuple &>(value);
       return true;
     } catch (const bp::error_already_set &err) {
       return false;
@@ -395,7 +429,6 @@ static bp::dict CreateParamsDict(const Algo::ParamMap &params) {
   for (auto &pair : params) {
     if (auto pval = std::get_if<bool>(&pair.second)) {
       obj[pair.first] = *pval;
-      continue;
     } else if (auto pval = std::get_if<int32_t>(&pair.second)) {
       obj[pair.first] = *pval;
     } else if (auto pval = std::get_if<int64_t>(&pair.second)) {
@@ -407,9 +440,7 @@ static bp::dict CreateParamsDict(const Algo::ParamMap &params) {
     } else if (auto pval = std::get_if<double>(&pair.second)) {
       obj[pair.first] = *pval;
     } else if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-      SecurityTupleWrapper tmp;
-      (SecurityTuple &)tmp = *pval;
-      obj[pair.first] = tmp;
+      obj[pair.first] = *pval;
     }
   }
   return obj;
@@ -417,7 +448,8 @@ static bp::dict CreateParamsDict(const Algo::ParamMap &params) {
 
 static bp::object CreateAlgo(Python *algo) {
   LockGIL lock;
-  return bp::object(algo);
+  kCurrentAlgo = algo;
+  return kOpentrade.attr("Algo").attr("__current__")();
 }
 
 Python *Python::Load(const std::string &module_name) {
@@ -467,7 +499,9 @@ void Python::OnMarketTrade(const Instrument &inst, const MarketData &md,
   if (!py_.on_market_trade) return;
   LockGIL locker;
   try {
-    py_.on_market_trade(obj_, &inst);
+    kCurrentInstrument = &inst;
+    py_.on_market_trade(obj_,
+                        kOpentrade.attr("Instrument").attr("__current__")());
   } catch (const bp::error_already_set &err) {
     PrintPyError();
   }
@@ -478,7 +512,9 @@ void Python::OnMarketQuote(const Instrument &inst, const MarketData &md,
   if (!py_.on_market_quote) return;
   LockGIL locker;
   try {
-    py_.on_market_quote(obj_, &inst);
+    kCurrentInstrument = &inst;
+    py_.on_market_quote(obj_,
+                        kOpentrade.attr("Instrument").attr("__current__")());
   } catch (const bp::error_already_set &err) {
     PrintPyError();
   }
@@ -488,7 +524,9 @@ void Python::OnConfirmation(const Confirmation &cm) noexcept {
   if (!py_.on_confirmation) return;
   LockGIL locker;
   try {
-    py_.on_confirmation(obj_, &cm);
+    kCurrentConfirmation = &cm;
+    py_.on_confirmation(obj_,
+                        kOpentrade.attr("Confirmation").attr("__current__")());
   } catch (const bp::error_already_set &err) {
     PrintPyError();
   }
