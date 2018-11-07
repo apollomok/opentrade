@@ -4,6 +4,7 @@
 #include <boost/python.hpp>
 
 #include "algo.h"
+#include "logger.h"
 
 namespace bp = boost::python;
 
@@ -29,14 +30,15 @@ class Python : public Algo {
                      const MarketData& md0) noexcept override;
   void OnConfirmation(const Confirmation& cm) noexcept override;
   const ParamDefs& GetParamDefs() noexcept override;
-  void AddObj(const void* native, bp::object obj) { objs_[native] = obj; }
-  bp::object GetObj(const void* native) { return objs_[native]; }
+  void log_info(const std::string& msg) const { LOG_INFO(msg); }
+  void log_debug(const std::string& msg) const { LOG_DEBUG(msg); }
+  void log_warn(const std::string& msg) const { LOG_WARN(msg); }
+  void log_error(const std::string& msg) const { LOG_ERROR(msg); }
 
  private:
   PyModule py_;
   ParamDefs def_;
   bp::object obj_;
-  std::map<const void*, bp::object> objs_;
 };
 
 void InitalizePy();

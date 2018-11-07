@@ -2,8 +2,6 @@
 
 #include <Python.h>
 
-#include "logger.h"
-
 namespace opentrade {
 
 struct SecurityTupleWrapper : SecurityTuple {
@@ -30,6 +28,34 @@ BOOST_PYTHON_MODULE(opentrade) {
       .value("stop", kStop)
       .value("stop_limit", kStopLimit)
       .value("otc", kOTC);
+
+  bp::enum_<ExecTransType>("ExecTransType")
+      .value("new", kTransNew)
+      .value("cancel", kTransCancel)
+      .value("correct", kTransCorrect)
+      .value("status", kTransStatus);
+
+  bp::enum_<OrderStatus>("OrderStatus")
+      .value("new", kNew)
+      .value("partially_filled", kPartiallyFilled)
+      .value("filled", kFilled)
+      .value("done_for_day", kDoneForDay)
+      .value("canceled", kCanceled)
+      .value("replace", kReplaced)
+      .value("pending_cancel", kPendingCancel)
+      .value("stopped", kStopped)
+      .value("rejected", kRejected)
+      .value("suspended", kSuspended)
+      .value("pending_new", kPendingNew)
+      .value("calculated", kCalculated)
+      .value("expired", kExpired)
+      .value("accept_for_bidding", kAcceptedForBidding)
+      .value("pending_replace", kPendingReplace)
+      .value("risk_rejected", kRiskRejected)
+      .value("unconfirmed_new", kUnconfirmedNew)
+      .value("unconfirmed_cancel", kUnconfirmedCancel)
+      .value("unconfirmed_replace", kUnconfirmedReplace)
+      .value("cancel_rejected", kCancelRejected);
 
   bp::enum_<TimeInForce>("TimeInForce")
       .value("day", kDay)
@@ -91,7 +117,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("underlying",
                     bp::make_function(&Security::GetUnderlying,
                                       bp::return_internal_reference<>()))
-      .def("is_in_trade_period", &Security::IsInTradePeriod)
+      .add_property("is_in_trade_period", &Security::IsInTradePeriod)
       .def_readonly("local_symbol", &Security::local_symbol);
 
   bp::class_<SecurityTupleWrapper>("SecurityTuple")
@@ -106,6 +132,7 @@ BOOST_PYTHON_MODULE(opentrade) {
   bp::class_<Contract>("Contract")
       .def("is_buy", &Contract::IsBuy)
       .def_readwrite("sec", &Contract::sec)
+      .def_readwrite("acc", &Contract::sub_account)
       .def_readwrite("qty", &Contract::qty)
       .def_readwrite("price", &Contract::price)
       .def_readwrite("stop_price", &Contract::stop_price)
@@ -113,8 +140,73 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readwrite("tif", &Contract::tif)
       .def_readwrite("type", &Contract::type);
 
-  bp::class_<Python>("Algo").def("subscribe", &Algo::Subscribe,
-                                 bp::return_internal_reference<>());
+  bp::class_<MarketData>("MarketData")
+      .add_property("open", &MarketData::open)
+      .add_property("high", &MarketData::low)
+      .add_property("low", &MarketData::low)
+      .add_property("close", &MarketData::close)
+      .add_property("qty", &MarketData::qty)
+      .add_property("volume", &MarketData::volume)
+      .add_property("vwap", &MarketData::vwap)
+      .add_property("ask_price", &MarketData::ask_price)
+      .add_property("bid_price", &MarketData::bid_price)
+      .add_property("ask_size", &MarketData::ask_size)
+      .add_property("bid_size", &MarketData::bid_size)
+      .def("get_ask_price", &MarketData::get_ask_price)
+      .def("get_bid_price", &MarketData::get_bid_price)
+      .def("get_ask_size", &MarketData::get_ask_size)
+      .def("get_bid_size", &MarketData::get_bid_size);
+
+  bp::class_<Confirmation>("Confirmation")
+      .add_property("exec_id", &Confirmation::exec_id)
+      .add_property("order_id", &Confirmation::order_id)
+      .add_property("text", &Confirmation::text)
+      .add_property("exec_type", &Confirmation::exec_type)
+      .add_property("exec_trans_type", &Confirmation::exec_trans_type)
+      .add_property("last_shares", &Confirmation::last_shares)
+      .add_property("last_px", &Confirmation::last_px);
+
+  bp::class_<Order, bp::bases<Contract>>("Order")
+      .def_readonly("status", &Order::status)
+      .def_readonly("algo_id", &Order::algo_id)
+      .def_readonly("id", &Order::id)
+      .def_readonly("orig_id", &Order::orig_id)
+      .def_readonly("avg_px", &Order::avg_px)
+      .def_readonly("cum_qty", &Order::cum_qty)
+      .def_readonly("leaves_qty", &Order::leaves_qty)
+      .add_property("is_live", &Order::IsLive);
+
+  bp::class_<Instrument>("Instrument",
+                         bp::init<Algo *, const Security &, DataSrc>())
+      .add_property("sec", bp::make_function(&Instrument::sec,
+                                             bp::return_internal_reference<>()))
+      .add_property("md", bp::make_function(&Instrument::md,
+                                            bp::return_internal_reference<>()))
+      .add_property("bought_qty", &Instrument::bought_qty)
+      .add_property("bought_qty", &Instrument::bought_qty)
+      .add_property("sold_qty", &Instrument::sold_qty)
+      .add_property("outstanding_buy_qty", &Instrument::outstanding_buy_qty)
+      .add_property("outstanding_sell_qty", &Instrument::outstanding_sell_qty)
+      .add_property("net_outstanding_qty", &Instrument::net_outstanding_qty)
+      .add_property("total_outstanding_qty", &Instrument::total_outstanding_qty)
+      .add_property("total_exposure", &Instrument::total_exposure)
+      .add_property("net_qty", &Instrument::net_qty)
+      .add_property("total_qty", &Instrument::total_qty);
+
+  bp::class_<Python>("Algo")
+      .def("subscribe", &Algo::Subscribe, bp::return_internal_reference<>())
+      .def("place", &Algo::Place, bp::return_internal_reference<>())
+      .def("cancel", &Algo::Cancel)
+      .def("stop", &Algo::Stop)
+      .def("log_info", &Python::log_info)
+      .def("log_debug", &Python::log_debug)
+      .def("log_warn", &Python::log_warn)
+      .def("log_error", &Python::log_error)
+      .add_property("id", &Algo::id)
+      .add_property(
+          "name",
+          bp::make_function(&Adapter::name, bp::return_internal_reference<>()))
+      .add_property("is_active", &Algo::is_active);
 }
 
 void PrintPyError() {
@@ -363,24 +455,43 @@ std::string Python::OnStart(const ParamMap &params) noexcept {
 void Python::OnStop() noexcept {
   if (!py_.on_stop) return;
   LockGIL locker;
-  py_.on_stop(obj_);
+  try {
+    py_.on_stop(obj_);
+  } catch (const bp::error_already_set &err) {
+    PrintPyError();
+  }
 }
 
 void Python::OnMarketTrade(const Instrument &inst, const MarketData &md,
                            const MarketData &md0) noexcept {
   if (!py_.on_market_trade) return;
   LockGIL locker;
+  try {
+    py_.on_market_trade(obj_, &inst);
+  } catch (const bp::error_already_set &err) {
+    PrintPyError();
+  }
 }
 
 void Python::OnMarketQuote(const Instrument &inst, const MarketData &md,
                            const MarketData &md0) noexcept {
   if (!py_.on_market_quote) return;
   LockGIL locker;
+  try {
+    py_.on_market_quote(obj_, &inst);
+  } catch (const bp::error_already_set &err) {
+    PrintPyError();
+  }
 }
 
 void Python::OnConfirmation(const Confirmation &cm) noexcept {
   if (!py_.on_confirmation) return;
   LockGIL locker;
+  try {
+    py_.on_confirmation(obj_, &cm);
+  } catch (const bp::error_already_set &err) {
+    PrintPyError();
+  }
 }
 
 const ParamDefs &Python::GetParamDefs() noexcept { return def_; }

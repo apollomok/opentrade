@@ -45,6 +45,24 @@ struct MarketData {
 
   const Quote& quote() const { return depth[0]; }
 
+  double open() const { return trade.open; }
+  double high() const { return trade.high; }
+  double low() const { return trade.low; }
+  double close() const { return trade.close; }
+  double qty() const { return trade.qty; }
+  double vwap() const { return trade.vwap; }
+  double volume() const { return trade.volume; }
+
+  double ask_price() const { return quote().ask_price; }
+  double ask_size() const { return quote().ask_size; }
+  double bid_price() const { return quote().bid_price; }
+  double bid_size() const { return quote().bid_size; }
+
+  double get_ask_price(size_t i) const { return depth[i].ask_price; }
+  double get_ask_size(size_t i) const { return depth[i].ask_size; }
+  double get_bid_price(size_t i) const { return depth[i].bid_price; }
+  double get_bid_size(size_t i) const { return depth[i].bid_size; }
+
   Trade trade;
   Depth depth;
 };
