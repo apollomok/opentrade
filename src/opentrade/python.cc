@@ -4,9 +4,11 @@
 
 namespace opentrade {
 
+static bp::object kOpentrade;
 static thread_local const Python *kCurrentAlgo;
 static thread_local const Instrument *kCurrentInstrument;
 static thread_local const Confirmation *kCurrentConfirmation;
+static thread_local const Order *kCurrentOrder;
 
 BOOST_PYTHON_MODULE(opentrade) {
   bp::enum_<OrderSide>("OrderSide")
@@ -204,7 +206,10 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("avg_px", &Order::avg_px)
       .def_readonly("cum_qty", &Order::cum_qty)
       .def_readonly("leaves_qty", &Order::leaves_qty)
-      .add_property("is_live", &Order::IsLive);
+      .add_property("is_live", &Order::IsLive)
+      .def("__current__", +[]() { return kCurrentOrder; },
+           bp::return_value_policy<bp::reference_existing_object>())
+      .staticmethod("__current__");
 
   bp::class_<Instrument>("Instrument",
                          bp::init<Algo *, const Security &, DataSrc>())
@@ -222,6 +227,17 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_exposure", &Instrument::total_exposure)
       .add_property("net_qty", &Instrument::net_qty)
       .add_property("total_qty", &Instrument::total_qty)
+      .add_property(
+          "active_orders",
+          +[](const Instrument &inst) {
+            auto &orders = inst.active_orders();
+            bp::list out;
+            for (auto o : orders) {
+              kCurrentOrder = o;
+              out.append(kOpentrade.attr("Order").attr("__current__")());
+            }
+            return bp::make_tuple(out);
+          })
       .def("__current__", +[]() { return kCurrentInstrument; },
            bp::return_value_policy<bp::reference_existing_object>())
       .staticmethod("__current__");
@@ -275,8 +291,6 @@ void PrintPyError() {
   PyErr_Restore(ptype, pvalue, ptraceback);
   LOG_ERROR("\n" << result);
 }
-
-static bp::object kOpentrade;
 
 static inline double GetDouble(const bp::object &obj) {
   auto ptr = obj.ptr();
