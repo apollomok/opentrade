@@ -27,8 +27,8 @@ namespace opentrade {
 
 class Instrument;
 
-typedef std::tuple<DataSrc::IdType, const Security*, const SubAccount*,
-                   OrderSide, double>
+typedef std::tuple<DataSrc, const Security*, const SubAccount*, OrderSide,
+                   double>
     SecurityTuple;
 
 struct ParamDef {
@@ -54,7 +54,7 @@ class Algo : public Adapter {
   typedef uint32_t IdType;
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
 
-  Instrument* Subscribe(const Security& sec, DataSrc::IdType src = 0);
+  Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{});
   void Stop();
   void SetTimeout(std::function<void()> func, uint32_t milliseconds);
   Order* Place(const Contract& contract, Instrument* inst);
@@ -90,11 +90,11 @@ class Algo : public Adapter {
 class Instrument {
  public:
   typedef std::set<Order*> Orders;
-  Instrument(Algo* algo, const Security& sec, DataSrc::IdType src)
+  Instrument(Algo* algo, const Security& sec, DataSrc src)
       : algo_(algo), sec_(sec), src_(src) {}
   Algo& algo() { return *algo_; }
   const Security& sec() const { return sec_; }
-  DataSrc::IdType src() const { return src_; }
+  DataSrc src() const { return src_; }
   const MarketData& md() const { return *md_; }
   const Orders& active_orders() const { return active_orders_; }
   double bought_qty() const { return bought_qty_; }
@@ -117,7 +117,7 @@ class Instrument {
   Algo* algo_ = nullptr;
   const Security& sec_;
   const MarketData* md_ = nullptr;
-  const DataSrc::IdType src_;
+  const DataSrc src_;
   Orders active_orders_;
   double bought_qty_ = 0;
   double sold_qty_ = 0;

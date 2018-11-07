@@ -283,10 +283,10 @@ void AlgoManager::LoadStore(uint32_t seq0, Connection* conn) {
   }
 }
 
-Instrument* Algo::Subscribe(const Security& sec, DataSrc::IdType src) {
+Instrument* Algo::Subscribe(const Security& sec, DataSrc src) {
   auto adapter = MarketDataManager::Instance().Subscribe(sec, src);
   assert(adapter);
-  auto inst = new Instrument(this, sec, adapter->src());
+  auto inst = new Instrument(this, sec, DataSrc(adapter->src()));
   inst->md_ = &MarketDataManager::Instance().Get(sec, adapter->src());
   instruments_.insert(inst);
   AlgoManager::Instance().Register(inst);

@@ -95,6 +95,8 @@ struct Security {
     return exchange->GetTickSize(px);
   }
   bool IsInTradePeriod() const { return exchange->IsInTradePeriod(); }
+  const Exchange* GetExchange() const { return exchange; }      // for python
+  const Security* GetUnderlying() const { return underlying; }  // for python
 };
 
 class SecurityManager : public Singleton<SecurityManager> {

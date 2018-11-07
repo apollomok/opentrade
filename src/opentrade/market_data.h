@@ -52,6 +52,14 @@ struct MarketData {
 struct DataSrc {
   typedef uint32_t IdType;
 
+  IdType value = 0;
+  DataSrc() : value(0) {}
+  explicit DataSrc(IdType v) : value(v) {}
+  explicit DataSrc(const char* src) : value(GetId(src)) {}
+  operator IdType() const { return value; }
+  const char* str() const { return GetStr(value); }
+  const IdType operator()() { return value; }
+
   static constexpr IdType GetId(const char* src) {
     if (!src || !*src) return 0;
     return strlen(src) == 1 ? *src : (GetId(src + 1) << 8) + *src;

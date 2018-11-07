@@ -1,10 +1,17 @@
 import time
 import math
+from opentrade import *
+a = Contract()
+a.side = OrderSide.buy
+a.qty = 10
+a.qty = 10
+print(a.tif)
+a.d= 1
 
 
-def get_param_defs(constants):
+def get_param_defs():
   return (
-      ('Security', constants.security_tuple, True),
+      ('Security', SecurityTuple(), True),
       ('Price', 0.0, False, 0, 10000000, 7),
       ('ValidSeconds', 300, True, 60),
       ('MinSize', 0, False, 0, 10000000),
@@ -14,12 +21,13 @@ def get_param_defs(constants):
 
 
 def is_buy(self):
-  return self.security_tuple.side == self.constants.order_side_buy
+  return self.sec_tuple.side == self.constants.order_side_buy
 
 
 def on_start(self, params):
-  self.security_tuple = st = params['Security']
-  self.instrument = self.subscribe(st.security, st.src)
+  print(self, params)
+  self.sec_tuple = st = params['Security']
+  self.instrument = self.subscribe(st.sec, st.src)
   seconds = params.get('ValidSeconds', 0)
   if seconds < 60:
     return 'Too short ValidSeconds, must be >= 60'
@@ -27,9 +35,9 @@ def on_start(self, params):
   self.end_time = self.begin_time + seconds
   self.price = params.get('Price', 0.)
   min_size = params.get('MinSize', 0)
-  lot_size = st.security.lot_size
+  lot_size = st.sec.lot_size
   if min_size <= 0 and lot_size <= 0:
-    return 'MinSize required for security without lot size'
+    return 'MinSize required for sec without lot size'
   if min_size > 0 and lot_size > 0:
     min_size = math.round(min_size / lot_size) * lot_size
   self.min_size = min_size
@@ -47,7 +55,7 @@ def on_stop(self):
 
 def on_market_trade(self, instrument):
   md = instrument.md
-  self.log_debug(instrument.security.symbol + ' trade: ' + str(md.get_open()) +
+  self.log_debug(instrument.sec.symbol + ' trade: ' + str(md.get_open()) +
                  ' ' + str(md.get_high()) + ' ' + str(md.get_low()) + ' ' +
                  str(md.get_close()) + ' ' + str(md.get_qty()) + ' ' + str(
                      md.get_vwap()) + ' ' + str(md.get_volume()))
@@ -56,7 +64,7 @@ def on_market_trade(self, instrument):
 
 def on_market_quote(self, instrument):
   md = instrument.md
-  self.log_debug(instrument.security.symbol + ' quote: ' +
+  self.log_debug(instrument.sec.symbol + ' quote: ' +
                  str(md.get_ask_price()) + ' ' + str(md.get_ask_size()) + ' ' +
                  str(md.get_bid_price()) + ' ' + str(md.get_bid_size()))
 
@@ -68,13 +76,13 @@ def on_confirmation(self, confirmation):
 def timer(self):
   if not self.is_active(): return
   inst = self.instrument
-  st = self.security_tuple
+  st = self.sec_tuple
   now = time.time()
   if now > self.end_time:
     self.stop()
     return
   self.set_timeout(lambda: timer(self), 1000)
-  if not self.instrument.security.is_in_trade_period(): return
+  if not self.instrument.sec.is_in_trade_period(): return
 
   md = self.instrument.md
   bid = md.get_bid_price()
@@ -83,7 +91,7 @@ def timer(self):
   mid_px = 0.
   if ask > bid and bid > 0:
     mid_px = (ask + bid) / 2
-    tick_size = self.instrument.security.get_tick_size(mid_px)
+    tick_size = self.instrument.sec.get_tick_size(mid_px)
     if tick_size > 0:
       if is_buy(self):
         mid_px = math.ceil(mid_px / tick_size) * tick_size
@@ -109,8 +117,8 @@ def timer(self):
   leaves = expect - inst.get_total_exposure()
   if leaves <= 0: return
   total_leaves = st.qty - inst.get_total_exposure()
-  lot_size = math.max(1, inst.security.get_lot_size())
-  max_qty = total_leaves if inst.security.odd_lot_allowed else math.floor(
+  lot_size = math.max(1, inst.sec.get_lot_size())
+  max_qty = total_leaves if inst.sec.odd_lot_allowed else math.floor(
       total_leaves / lot_size) * lot_size
   if max_qty <= 0: return
   would_qty = math.ceil(leaves / lot_size) * lot_size

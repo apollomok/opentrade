@@ -73,7 +73,7 @@ else()
   endif()
 endif()
 
-find_package(Boost REQUIRED COMPONENTS system program_options date_time filesystem iostreams) 
+find_package(Boost REQUIRED COMPONENTS system program_options date_time filesystem iostreams python3) 
 include_directories(${Boost_INCLUDE_DIRS})
 
 add_subdirectory(opentrade)
