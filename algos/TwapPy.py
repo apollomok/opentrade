@@ -62,10 +62,10 @@ def on_market_quote(self, instrument):
 
 
 def on_confirmation(self, confirmation):
-  self.log_debug("exec_id=" + str(confirmation.exec_id) + ", order_id=" + str(
-      confirmation.order_id) + ", exec_type=" + str(confirmation.exec_type) +
-                 ", last_shares=" + str(confirmation.last_shares) +
-                 ", last_px=" + str(confirmation.last_px))
+  self.log_debug('exec_id=' + str(confirmation.exec_id) + ', order_id=' + str(
+      confirmation.order_id) + ', exec_type=' + str(confirmation.exec_type) +
+                 ', last_shares=' + str(confirmation.last_shares) +
+                 ', last_px=' + str(confirmation.last_px))
   if self.instrument.total_qty >= self.st.qty: self.stop()
 
 
