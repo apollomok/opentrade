@@ -112,6 +112,7 @@ class Instrument {
   double total_exposure() const {
     return total_qty() + total_outstanding_qty();
   }
+  size_t id() const { return id_; }
 
  private:
   Algo* algo_ = nullptr;
@@ -123,8 +124,10 @@ class Instrument {
   double sold_qty_ = 0;
   double outstanding_buy_qty_ = 0;
   double outstanding_sell_qty_ = 0;
+  size_t id_ = 0;
   friend class AlgoManager;
   friend class Algo;
+  static inline std::atomic<size_t> kIdCounter = 0;
 };
 
 class AlgoRunner {

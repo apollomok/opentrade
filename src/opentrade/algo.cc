@@ -288,6 +288,7 @@ Instrument* Algo::Subscribe(const Security& sec, DataSrc src) {
   assert(adapter);
   auto inst = new Instrument(this, sec, DataSrc(adapter->src()));
   inst->md_ = &MarketDataManager::Instance().Get(sec, adapter->src());
+  inst->id_ = ++Instrument::kIdCounter;
   instruments_.insert(inst);
   AlgoManager::Instance().Register(inst);
   return inst;
@@ -322,8 +323,8 @@ void AlgoManager::SetTimeout(Algo::IdType id, std::function<void()> func,
 }
 
 Order* Algo::Place(const Contract& contract, Instrument* inst) {
-  if (!is_active_) return nullptr;
   assert(inst);
+  if (!is_active_ || !inst) return nullptr;
   auto ord = new Order{};
   (Contract&)* ord = contract;
   ord->algo_id = id_;

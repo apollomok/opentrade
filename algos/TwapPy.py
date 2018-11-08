@@ -13,7 +13,6 @@ def get_param_defs():
       ('Aggression', ('Low', 'Medium', 'High', 'Highest'), True),
   )
 
-
 def is_buy(self):
   return self.st.side == OrderSide.buy
 
@@ -62,7 +61,11 @@ def on_market_quote(self, instrument):
 
 
 def on_confirmation(self, confirmation):
-  self.log_debug(confirmation)
+  self.log_debug("exec_id=" + str(confirmation.exec_id) + ", order_id=" + str(
+      confirmation.order_id) + ", exec_type=" + str(confirmation.exec_type) +
+                 ", last_shares=" + str(confirmation.last_shares) +
+                 ", last_px=" + str(confirmation.last_px))
+  if self.instrument.total_qty >= self.st.qty: self.stop()
 
 
 def timer(self):
@@ -150,8 +153,8 @@ def timer(self):
         return
   else:
     type = OrderType.market
-  if c.price > 0 and ((is_buy(self) and c.price > self.price) or
-                      ((not is_buy(self)) and c.price < self.price)):
+  if self.price > 0 and ((is_buy(self) and c.price > self.price) or
+                         ((not is_buy(self)) and c.price < self.price)):
     return
   c.acc = st.acc
   c.qty = st.qty

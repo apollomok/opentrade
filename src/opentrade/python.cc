@@ -141,9 +141,13 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("sec",
                     bp::make_function(+[](const Contract &c) { return c.sec; },
                                       bp::return_internal_reference<>()))
-      .add_property("acc", bp::make_function(
-                               +[](const Contract &c) { return c.sub_account; },
-                               bp::return_internal_reference<>()))
+      .add_property(
+          "acc",
+          bp::make_function(+[](const Contract &c) { return c.sub_account; },
+                            bp::return_internal_reference<>()),
+          +[](Contract &c, const SubAccount *sub_account) {
+            c.sub_account = sub_account;
+          })
       .def_readwrite("qty", &Contract::qty)
       .def_readwrite("price", &Contract::price)
       .def_readwrite("stop_price", &Contract::stop_price)
@@ -190,15 +194,19 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("order", bp::make_function(
                                  +[](const Confirmation &c) { return c.order; },
                                  bp::return_internal_reference<>()))
-      .add_property("exec_id", &Confirmation::exec_id)
-      .add_property("order_id", &Confirmation::order_id)
-      .add_property("text", &Confirmation::text)
-      .add_property("exec_type", &Confirmation::exec_type)
-      .add_property("exec_trans_type", &Confirmation::exec_trans_type)
-      .add_property("last_shares", &Confirmation::last_shares)
-      .add_property("last_px", &Confirmation::last_px);
+      .def_readonly("exec_id", &Confirmation::exec_id)
+      .def_readonly("transaction_time", &Confirmation::transaction_time)
+      .def_readonly("order_id", &Confirmation::order_id)
+      .def_readonly("text", &Confirmation::text)
+      .def_readonly("exec_type", &Confirmation::exec_type)
+      .def_readonly("exec_trans_type", &Confirmation::exec_trans_type)
+      .def_readonly("last_shares", &Confirmation::last_shares)
+      .def_readonly("last_px", &Confirmation::last_px);
 
   bp::class_<Order, bp::bases<Contract>>("Order")
+      .add_property("instrument",
+                    bp::make_function(+[](const Order &o) { return o.inst; },
+                                      bp::return_internal_reference<>()))
       .def_readonly("status", &Order::status)
       .def_readonly("algo_id", &Order::algo_id)
       .def_readonly("id", &Order::id)
@@ -224,6 +232,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_exposure", &Instrument::total_exposure)
       .add_property("net_qty", &Instrument::net_qty)
       .add_property("total_qty", &Instrument::total_qty)
+      .add_property("id", &Instrument::id)
       .add_property("active_orders", +[](const Instrument &inst) {
         auto &orders = inst.active_orders();
         bp::list out;
@@ -236,7 +245,11 @@ BOOST_PYTHON_MODULE(opentrade) {
   bp::class_<Python>("Algo")
       .def("subscribe", &Algo::Subscribe, bp::return_internal_reference<>())
       .def("place", &Algo::Place, bp::return_internal_reference<>())
-      .def("cancel", &Algo::Cancel)
+      .def("cancel",
+           +[](Python &algo, const Order *ord) {
+             if (ord) return algo.Cancel(*ord);
+             return false;
+           })
       .def("stop", &Algo::Stop)
       .def("log_info", &Python::log_info)
       .def("log_debug", &Python::log_debug)
@@ -259,6 +272,14 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("name", +[](const Python &algo) { return algo.name(); })
       .add_property("is_active", &Algo::is_active);
 }
+
+#if PY_MAJOR_VERSION >= 3
+#define INIT_MODULE PyInit_opentrade
+extern "C" PyObject *INIT_MODULE();
+#else
+#define INIT_MODULE initopentrade
+extern "C" void INIT_MODULE();
+#endif
 
 void PrintPyError(const char *from) {
   PyObject *ptype, *pvalue, *ptraceback;
@@ -286,10 +307,12 @@ void PrintPyError(const char *from) {
       for (auto i = 0; i < offset - 1; ++i) space[i] = ' ';
       errstr += "\n" + text + space + "^";
     } catch (const bp::error_already_set &err) {
+      PyErr_Clear();
     }
     result = typestr + ": " + errstr;
   }
   PyErr_Restore(ptype, pvalue, ptraceback);
+  PyErr_Clear();
   LOG_ERROR(from << "\n" << result);
 }
 
@@ -297,6 +320,9 @@ static inline double GetDouble(const bp::object &obj) {
   auto ptr = obj.ptr();
   if (PyFloat_Check(ptr)) return PyFloat_AsDouble(ptr);
   if (PyLong_Check(ptr)) return PyLong_AsLong(ptr);
+#if PY_MAJOR_VERSION < 3
+  if (PyInt_Check(ptr)) return PyInt_AsLong(ptr);
+#endif
   return 0;
 }
 
@@ -314,7 +340,7 @@ void InitalizePy() {
   auto tmp = getenv("PYTHONPATH");
   std::string path = tmp ? tmp : "";
   setenv("PYTHONPATH", ("./algos:./algos/revisions:" + path).c_str(), 1);
-  PyImport_AppendInittab(const_cast<char *>("opentrade"), PyInit_opentrade);
+  PyImport_AppendInittab(const_cast<char *>("opentrade"), INIT_MODULE);
   Py_InitializeEx(0);  // no signal registration
   if (!PyEval_ThreadsInitialized()) PyEval_InitThreads();
   LockGIL lock;
@@ -355,18 +381,27 @@ static inline bool GetValueScalar(const bp::object &value, T *out) {
     *out = PyFloat_AsDouble(ptr);
   } else if (PyLong_Check(ptr)) {
     *out = PyLong_AsLong(ptr);
+#if PY_MAJOR_VERSION < 3
+  } else if (PyInt_Check(ptr)) {
+    *out = PyInt_AsLong(ptr);
+#endif
   } else if (ptr == Py_True) {
     *out = true;
   } else if (ptr == Py_False) {
     *out = false;
-  } else if (PyUnicode_Check(ptr)) {
-    *out = bp::extract<std::string>(value);
   } else {
     try {
-      *out = bp::extract<SecurityTuple &>(value);
+      *out = bp::extract<std::string>(value);
       return true;
     } catch (const bp::error_already_set &err) {
-      return false;
+      PyErr_Clear();
+      try {
+        *out = bp::extract<SecurityTuple &>(value);
+        return true;
+      } catch (const bp::error_already_set &err) {
+        PyErr_Clear();
+        return false;
+      }
     }
   }
   return true;
@@ -484,6 +519,7 @@ std::string Python::OnStart(const ParamMap &params) noexcept {
     try {
       return bp::extract<std::string>(out);
     } catch (const bp::error_already_set &err) {
+      PyErr_Clear();
     }
   } catch (const bp::error_already_set &err) {
     PrintPyError("on_start");
