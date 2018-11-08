@@ -13,6 +13,7 @@ def get_param_defs():
       ('Aggression', ('Low', 'Medium', 'High', 'Highest'), True),
   )
 
+
 def is_buy(self):
   return self.st.side == OrderSide.buy
 
