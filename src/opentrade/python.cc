@@ -5,10 +5,13 @@
 namespace opentrade {
 
 static bp::object kOpentrade;
-static thread_local const Python *kCurrentAlgo;
-static thread_local const Instrument *kCurrentInstrument;
-static thread_local const Confirmation *kCurrentConfirmation;
-static thread_local const Order *kCurrentOrder;
+static void PrintPyError(const char *);
+
+struct LockGIL {
+  LockGIL() { m.lock(); }
+  ~LockGIL() { m.unlock(); }
+  static inline std::mutex m;
+};
 
 BOOST_PYTHON_MODULE(opentrade) {
   bp::enum_<OrderSide>("OrderSide")
@@ -193,10 +196,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("exec_type", &Confirmation::exec_type)
       .add_property("exec_trans_type", &Confirmation::exec_trans_type)
       .add_property("last_shares", &Confirmation::last_shares)
-      .add_property("last_px", &Confirmation::last_px)
-      .def("__current__", +[]() { return kCurrentConfirmation; },
-           bp::return_value_policy<bp::reference_existing_object>())
-      .staticmethod("__current__");
+      .add_property("last_px", &Confirmation::last_px);
 
   bp::class_<Order, bp::bases<Contract>>("Order")
       .def_readonly("status", &Order::status)
@@ -206,10 +206,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("avg_px", &Order::avg_px)
       .def_readonly("cum_qty", &Order::cum_qty)
       .def_readonly("leaves_qty", &Order::leaves_qty)
-      .add_property("is_live", &Order::IsLive)
-      .def("__current__", +[]() { return kCurrentOrder; },
-           bp::return_value_policy<bp::reference_existing_object>())
-      .staticmethod("__current__");
+      .add_property("is_live", &Order::IsLive);
 
   bp::class_<Instrument>("Instrument",
                          bp::init<Algo *, const Security &, DataSrc>())
@@ -227,20 +224,14 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_exposure", &Instrument::total_exposure)
       .add_property("net_qty", &Instrument::net_qty)
       .add_property("total_qty", &Instrument::total_qty)
-      .add_property(
-          "active_orders",
-          +[](const Instrument &inst) {
-            auto &orders = inst.active_orders();
-            bp::list out;
-            for (auto o : orders) {
-              kCurrentOrder = o;
-              out.append(kOpentrade.attr("Order").attr("__current__")());
-            }
-            return bp::make_tuple(out);
-          })
-      .def("__current__", +[]() { return kCurrentInstrument; },
-           bp::return_value_policy<bp::reference_existing_object>())
-      .staticmethod("__current__");
+      .add_property("active_orders", +[](const Instrument &inst) {
+        auto &orders = inst.active_orders();
+        bp::list out;
+        for (auto o : orders) {
+          out.append(bp::ptr(o));
+        }
+        return out;
+      });
 
   bp::class_<Python>("Algo")
       .def("subscribe", &Algo::Subscribe, bp::return_internal_reference<>())
@@ -251,15 +242,25 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("log_debug", &Python::log_debug)
       .def("log_warn", &Python::log_warn)
       .def("log_error", &Python::log_error)
+      .def("set_timeout",
+           +[](Python &algo, bp::object func, size_t milliseconds) {
+             algo.SetTimeout(
+                 [func]() {
+                   LockGIL lock;
+                   try {
+                     func();
+                   } catch (const bp::error_already_set &err) {
+                     PrintPyError("set_timeout");
+                   }
+                 },
+                 milliseconds);
+           })
       .add_property("id", &Algo::id)
       .add_property("name", +[](const Python &algo) { return algo.name(); })
-      .add_property("is_active", &Algo::is_active)
-      .def("__current__", +[]() { return kCurrentAlgo; },
-           bp::return_value_policy<bp::reference_existing_object>())
-      .staticmethod("__current__");
+      .add_property("is_active", &Algo::is_active);
 }
 
-void PrintPyError() {
+void PrintPyError(const char *from) {
   PyObject *ptype, *pvalue, *ptraceback;
   PyErr_Fetch(&ptype, &pvalue, &ptraceback);
   PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -289,7 +290,7 @@ void PrintPyError() {
     result = typestr + ": " + errstr;
   }
   PyErr_Restore(ptype, pvalue, ptraceback);
-  LOG_ERROR("\n" << result);
+  LOG_ERROR(from << "\n" << result);
 }
 
 static inline double GetDouble(const bp::object &obj) {
@@ -308,12 +309,6 @@ static inline bp::object GetCallable(const bp::object &m, const char *name) {
   LOG_INFO("Loaded python function " << name);
   return func;
 }
-
-struct LockGIL {
-  LockGIL() { m.lock(); }
-  ~LockGIL() { m.unlock(); }
-  static inline std::mutex m;
-};
 
 void InitalizePy() {
   auto tmp = getenv("PYTHONPATH");
@@ -334,7 +329,7 @@ PyModule LoadPyModule(const std::string &module_name) {
   try {
     m = bp::import(module_name.c_str());
   } catch (const bp::error_already_set &err) {
-    PrintPyError();
+    PrintPyError("load python");
     return {};
   }
   LOG_INFO(module_name + " loaded");
@@ -433,7 +428,7 @@ static ParamDefs ParseParamDefs(const bp::object &func) {
     }
     return defs;
   } catch (const bp::error_already_set &err) {
-    PrintPyError();
+    PrintPyError("parse param defs");
     return {};
   }
 }
@@ -462,8 +457,7 @@ static bp::dict CreateParamsDict(const Algo::ParamMap &params) {
 
 static bp::object CreateAlgo(Python *algo) {
   LockGIL lock;
-  kCurrentAlgo = algo;
-  return kOpentrade.attr("Algo").attr("__current__")();
+  return bp::object(bp::ptr(algo));
 }
 
 Python *Python::Load(const std::string &module_name) {
@@ -492,7 +486,7 @@ std::string Python::OnStart(const ParamMap &params) noexcept {
     } catch (const bp::error_already_set &err) {
     }
   } catch (const bp::error_already_set &err) {
-    PrintPyError();
+    PrintPyError("on_start");
     return {};
   }
   return {};
@@ -504,7 +498,7 @@ void Python::OnStop() noexcept {
   try {
     py_.on_stop(obj_);
   } catch (const bp::error_already_set &err) {
-    PrintPyError();
+    PrintPyError("on_stop");
   }
 }
 
@@ -513,11 +507,9 @@ void Python::OnMarketTrade(const Instrument &inst, const MarketData &md,
   if (!py_.on_market_trade) return;
   LockGIL locker;
   try {
-    kCurrentInstrument = &inst;
-    py_.on_market_trade(obj_,
-                        kOpentrade.attr("Instrument").attr("__current__")());
+    py_.on_market_trade(obj_, bp::ptr(&inst));
   } catch (const bp::error_already_set &err) {
-    PrintPyError();
+    PrintPyError("on_market_trade");
   }
 }
 
@@ -526,11 +518,9 @@ void Python::OnMarketQuote(const Instrument &inst, const MarketData &md,
   if (!py_.on_market_quote) return;
   LockGIL locker;
   try {
-    kCurrentInstrument = &inst;
-    py_.on_market_quote(obj_,
-                        kOpentrade.attr("Instrument").attr("__current__")());
+    py_.on_market_quote(obj_, bp::ptr(&inst));
   } catch (const bp::error_already_set &err) {
-    PrintPyError();
+    PrintPyError("on_market_quote");
   }
 }
 
@@ -538,11 +528,9 @@ void Python::OnConfirmation(const Confirmation &cm) noexcept {
   if (!py_.on_confirmation) return;
   LockGIL locker;
   try {
-    kCurrentConfirmation = &cm;
-    py_.on_confirmation(obj_,
-                        kOpentrade.attr("Confirmation").attr("__current__")());
+    py_.on_confirmation(obj_, bp::ptr(&cm));
   } catch (const bp::error_already_set &err) {
-    PrintPyError();
+    PrintPyError("on_confirmation");
   }
 }
 

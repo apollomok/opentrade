@@ -32,14 +32,14 @@ def on_start(self, params):
   if min_size <= 0 and lot_size <= 0:
     return 'MinSize required for sec without lot size'
   if min_size > 0 and lot_size > 0:
-    min_size = math.round(min_size / lot_size) * lot_size
+    min_size = round(min_size / lot_size) * lot_size
   self.min_size = min_size
   self.max_pov = params.get('MaxPov', 0.0)
   if self.max_pov > 1: self.max_pov = 1
   self.agg = params.get('Aggression')
+  self.volume = 0
   timer(self)
   self.log_debug('[' + self.name + ' ' + str(self.id) + '] started')
-  self.volume = 0
 
 
 def on_stop(self):
@@ -51,7 +51,7 @@ def on_market_trade(self, instrument):
   self.log_debug(instrument.sec.symbol + ' trade: ' + str(md.open) + ' ' +
                  str(md.high) + ' ' + str(md.low) + ' ' + str(md.close) + ' ' +
                  str(md.qty) + ' ' + str(md.vwap) + ' ' + str(md.volume))
-  self.volume += md.get_qty
+  self.volume += md.qty
 
 
 def on_market_quote(self, instrument):
@@ -74,23 +74,23 @@ def timer(self):
     self.stop()
     return
   self.set_timeout(lambda: timer(self), 1000)
-  if not self.instrument.sec.is_in_trade_period: return
+  if not inst.sec.is_in_trade_period: return
 
-  md = self.instrument.md
-  bid = md.get_bid_price()
-  ask = md.get_ask_price()
-  last_px = md.get_close()
+  md = inst.md
+  bid = md.bid_price
+  ask = md.ask_price
+  last_px = md.close
   mid_px = 0.
   if ask > bid and bid > 0:
     mid_px = (ask + bid) / 2
-    tick_size = self.instrument.sec.get_tick_size(mid_px)
+    tick_size = inst.sec.get_tick_size(mid_px)
     if tick_size > 0:
       if is_buy(self):
         mid_px = math.ceil(mid_px / tick_size) * tick_size
       else:
         mid_px = math.floor(mid_px / tick_size) * tick_size
 
-  orders = self.instrument.active_orders
+  orders = inst.active_orders
   if orders:
     for ord in orders:
       if is_buy(self):
@@ -100,17 +100,17 @@ def timer(self):
     return
 
   if self.volume > 0 and self.max_pov > 0:
-    if inst.get_total_qty() > self.max_pov * self.volume:
+    if inst.total_qty > self.max_pov * self.volume:
       return
 
-  ratio = math.min(1., (now - self.begin_time + 1.) /
-                   (self.end_time - self.begin_time))
+  ratio = min(1.,
+              (now - self.begin_time + 1.) / (self.end_time - self.begin_time))
   expect = st.qty * ratio
   leaves = expect - inst.total_exposure
   if leaves <= 0: return
   total_leaves = st.qty - inst.total_exposure
-  lot_size = math.max(1, inst.sec.lot_size)
-  max_qty = total_leaves if inst.sec.odd_lot_allowed else math.floor(
+  lot_size = max(1, inst.sec.lot_size)
+  max_qty = total_leaves if inst.sec.exchange.odd_lot_allowed else math.floor(
       total_leaves / lot_size) * lot_size
   if max_qty <= 0: return
   would_qty = math.ceil(leaves / lot_size) * lot_size
@@ -150,10 +150,10 @@ def timer(self):
         return
   else:
     type = OrderType.market
-  if c.price_ > 0 and ((is_buy(self) and c.price > self.price) or
-                       ((not is_buy(self)) and c.price < self.price)):
+  if c.price > 0 and ((is_buy(self) and c.price > self.price) or
+                      ((not is_buy(self)) and c.price < self.price)):
     return
   c.acc = st.acc
   c.qty = st.qty
   c.side = st.side
-  self.place(c, self.instrument)
+  self.place(c, inst)
