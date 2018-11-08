@@ -19,6 +19,7 @@ RUN apt-get update \
     libboost-date-time-dev \
     libboost-filesystem-dev \
     libboost-iostreams-dev \
+    libboost-python-dev \
     libsoci-dev \
     libpq-dev \
     libquickfix-dev \
