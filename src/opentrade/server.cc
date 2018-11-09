@@ -147,7 +147,7 @@ static void ServeStatic() {
 
 void Server::Start(int port, int nthreads) {
   nthreads = std::min(1, nthreads);
-  LOG_INFO("web server nthreads=" << nthreads);
+  LOG_INFO("Web server nthreads=" << nthreads);
   kHttpServer.io_service = kIoService;
   kHttpServer.config.reuse_address = true;
   kHttpServer.config.port = port;
@@ -218,9 +218,9 @@ void Server::Start(int port, int nthreads) {
   try {
     kWsServer.start();
     kHttpServer.start();
-    LOG_INFO("http://0.0.0.0:" << port << " start to listen");
+    LOG_INFO("http://0.0.0.0:" << port << " starts to listen");
     LOG_INFO("ws://0.0.0.0:" << port << "/ot"
-                             << " start to listen");
+                             << " starts to listen");
     std::vector<std::thread> threads;
     for (auto i = 0; i < nthreads; ++i) {
       threads.emplace_back([]() { kIoService->run(); });

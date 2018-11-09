@@ -159,11 +159,14 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   if (pool_size < 2) pool_size = 2;
   pool_ = new soci::connection_pool(pool_size);
   static SqlLog log;
+  LOG_INFO("Database pool_size=" << (int)pool_size);
+  LOG_INFO("Connecting to database " << url);
   for (auto i = 0u; i < pool_size; ++i) {
     auto& sql = pool_->at(i);
     sql.open(soci::postgresql, url);
     sql.set_log_stream(&log);
   }
+  LOG_INFO("Database connected");
   if (create_tables) *Session() << create_tables_sql;
 }
 

@@ -83,9 +83,9 @@ Algo* AlgoManager::Spawn(std::shared_ptr<Algo::ParamMap> params,
   algo->token_ = token;
   algos_.emplace(algo->id_, algo);
   if (!token.empty()) algo_of_token_.emplace(token, algo);
-  Persist(*algo, "new", params_raw);
+  Persist(*algo, "new", params ? params_raw : "{\"test\":true}");
   strands_[algo->id_ % threads_.size()].post([params, algo]() {
-    kError = algo->OnStart(*params.get());
+    kError = params ? algo->OnStart(*params.get()) : algo->Test();
     if (!kError.empty()) {
       algo->Stop();
     }

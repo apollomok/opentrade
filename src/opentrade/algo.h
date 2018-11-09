@@ -69,6 +69,11 @@ class Algo : public Adapter {
   virtual void OnConfirmation(const Confirmation& cm) noexcept = 0;
   virtual const ParamDefs& GetParamDefs() noexcept = 0;
 
+  virtual std::string Test() noexcept {
+    assert(false);
+    return {};
+  }
+
   // called only once when app starts, you can load global data shared by all
   // algo instance here.
   void Start() noexcept override {}

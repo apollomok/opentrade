@@ -366,6 +366,7 @@ PyModule LoadPyModule(const std::string &module_name) {
   }
   PyModule out;
   out.get_param_defs = func;
+  out.test = GetCallable(m, "test");
   out.on_start = GetCallable(m, "on_start");
   out.on_stop = GetCallable(m, "on_stop");
   out.on_market_trade = GetCallable(m, "on_market_trade");
@@ -508,6 +509,30 @@ Python *Python::Load(const std::string &module_name) {
     return p2;
   };
   return p;
+}
+
+std::string Python::Test() noexcept {
+  test_ = true;
+  if (!py_.test) {
+    auto msg = "python function \"test\" is required for running test";
+    LOG_ERROR(msg);
+    return msg;
+  }
+  LockGIL locker;
+  try {
+    auto params = py_.test(obj_);
+    if (py_.on_start) {
+      auto out = py_.on_start(obj_, params);
+      try {
+        return bp::extract<std::string>(out);
+      } catch (const bp::error_already_set &err) {
+        PyErr_Clear();
+      }
+    }
+  } catch (const bp::error_already_set &err) {
+    PrintPyError("test");
+  }
+  return {};
 }
 
 std::string Python::OnStart(const ParamMap &params) noexcept {

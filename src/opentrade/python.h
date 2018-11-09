@@ -4,6 +4,7 @@
 #include <boost/python.hpp>
 
 #include "algo.h"
+#include "connection.h"
 #include "logger.h"
 
 namespace bp = boost::python;
@@ -16,6 +17,7 @@ struct PyModule {
   bp::object on_market_trade;
   bp::object on_market_quote;
   bp::object on_confirmation;
+  bp::object test;
   bp::object get_param_defs;
 };
 
@@ -23,6 +25,7 @@ class Python : public Algo {
  public:
   static Python* Load(const std::string& fn);
   std::string OnStart(const ParamMap& params) noexcept override;
+  std::string Test() noexcept override;
   void OnStop() noexcept override;
   void OnMarketTrade(const Instrument& inst, const MarketData& md,
                      const MarketData& md0) noexcept override;
@@ -39,6 +42,7 @@ class Python : public Algo {
   PyModule py_;
   ParamDefs def_;
   bp::object obj_;
+  bool test_;
 };
 
 void InitalizePy();
