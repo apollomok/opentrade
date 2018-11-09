@@ -21,6 +21,8 @@ namespace bpo = boost::program_options;
 namespace fs = boost::filesystem;
 using opentrade::AlgoManager;
 using opentrade::ExchangeConnectivityManager;
+using opentrade::kAlgoPath;
+using opentrade::kStorePath;
 using opentrade::MarketDataManager;
 using opentrade::PositionManager;
 
@@ -91,14 +93,12 @@ int main(int argc, char *argv[]) {
 
   opentrade::Logger::Initialize("opentrade", log_config_file_path);
 
-  auto path = fs::path(".") / "store";
-  if (!fs::exists(path)) {
-    fs::create_directory(path);
+  if (!fs::exists(kStorePath)) {
+    fs::create_directory(kStorePath);
   }
 
-  path = fs::path(".") / "algos";
-  if (!fs::exists(path)) {
-    fs::create_directory(path);
+  if (!fs::exists(kAlgoPath)) {
+    fs::create_directory(kAlgoPath);
   }
 
   if (db_url.empty()) {
@@ -146,12 +146,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  path = fs::path(".") / "algos";
-  LOG_INFO("Loading python algos from " << path);
+  LOG_INFO("Loading python algos from " << kAlgoPath);
   auto npy = 0;
-  if (fs::is_directory(path)) {
+  if (fs::is_directory(kAlgoPath)) {
     for (auto &entry :
-         boost::make_iterator_range(fs::directory_iterator(path), {})) {
+         boost::make_iterator_range(fs::directory_iterator(kAlgoPath), {})) {
       auto tmp = entry.path();
       auto fn = tmp.filename().string();
       if (tmp.extension() == ".py" && fn[0] != '_' && fn[0] != '.') {

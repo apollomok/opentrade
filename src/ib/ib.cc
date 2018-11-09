@@ -1,7 +1,5 @@
 #include "ib.h"
 
-#include <boost/filesystem.hpp>
-
 #include "jts/Contract.h"
 #include "jts/EClientSocket.h"
 #include "jts/Execution.h"
@@ -46,7 +44,7 @@ IB::~IB() {
 }
 
 void IB::Start() noexcept {
-  auto path = boost::filesystem::path(".") / "store" / (name() + "-session");
+  auto path = opentrade::kStorePath / (name() + "-session");
 
   std::ifstream ifs(path.c_str());
   if (ifs.good()) {

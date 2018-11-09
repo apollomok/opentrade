@@ -459,6 +459,22 @@ void Connection::OnMessage(const std::string& msg) {
             }
             self->Send(j.dump());
           }
+          json files;
+          if (fs::is_directory(kAlgoPath)) {
+            for (auto& entry : boost::make_iterator_range(
+                     fs::directory_iterator(kAlgoPath), {})) {
+              auto tmp = entry.path();
+              auto fn = tmp.filename().string();
+              if (fn[0] == '_' || fn[0] == '.') continue;
+              if (tmp.extension() == ".py" || tmp.extension() == ".txt") {
+                files.push_back(fn);
+              }
+            }
+          }
+          if (files.size() > 0) {
+            json j = {"algoFiles", files};
+            self->Send(j.dump());
+          }
         }
       } else if (action == "bod") {
         auto accs = self->user_->sub_accounts;
@@ -731,7 +747,7 @@ void Connection::OnMessage(const std::string& msg) {
           auto id = pair.first;
           auto sub_accounts = self->user_->sub_accounts;
           if (sub_accounts->find(id) == sub_accounts->end()) continue;
-          auto path = fs::path(".") / "store" / ("pnl-" + std::to_string(id));
+          auto path = kStorePath / ("pnl-" + std::to_string(id));
           std::ifstream f(path.c_str());
           const int LINE_LENGTH = 100;
           char str[LINE_LENGTH];
@@ -750,19 +766,13 @@ void Connection::OnMessage(const std::string& msg) {
             }
           }
           if (j2.size()) {
-            json j = {
-                "Pnl",
-                id,
-                j2,
-            };
+            json j = {"Pnl", id, j2};
             self->Send(j.dump());
           }
         }
         self->sub_pnl_ = true;
       } else if (action == "sub") {
-        json jout = {
-            "md",
-        };
+        json jout = {"md"};
         for (auto i = 1u; i < j.size(); ++i) {
           auto id = Get<int64_t>(j[i]);
           auto& s = self->subs_[id];
@@ -785,6 +795,42 @@ void Connection::OnMessage(const std::string& msg) {
           it->second.second -= 1;
           if (it->second.second <= 0) self->subs_.erase(it);
         }
+      } else if (action == "algoFile") {
+        auto fn = Get<std::string>(j[1]);
+        auto path = kAlgoPath / fn;
+        json j = {action, fn};
+        std::ifstream is(path.string());
+        if (is.good()) {
+          std::stringstream buffer;
+          buffer << is.rdbuf();
+          j.push_back(buffer.str());
+        } else {
+          j.push_back(nullptr);
+          j.push_back("Not found");
+        }
+        self->Send(j.dump());
+      } else if (action == "deleteAlgoFile") {
+        auto fn = Get<std::string>(j[1]);
+        auto path = kAlgoPath / fn;
+        json j = {action, fn};
+        try {
+          fs::remove(path);
+        } catch (const fs::filesystem_error& err) {
+          j.push_back(err.what());
+        }
+        self->Send(j.dump());
+      } else if (action == "saveAlgoFile") {
+        auto fn = Get<std::string>(j[1]);
+        auto text = Get<std::string>(j[2]);
+        auto path = kAlgoPath / fn;
+        json j = {action, fn};
+        std::ofstream os(path.string());
+        if (os.good()) {
+          os << text;
+        } else {
+          j.push_back("Can not write");
+        }
+        self->Send(j.dump());
       }
     } catch (nlohmann::detail::parse_error& e) {
       LOG_DEBUG(self->GetAddress() << ": invalid json string: " << msg);
@@ -795,22 +841,12 @@ void Connection::OnMessage(const std::string& msg) {
                 << ": json error: " << e.what() << ", " << msg);
       std::string error = "json error: ";
       error += e.what();
-      json j = {
-          "error",
-          "json",
-          msg,
-          error,
-      };
+      json j = {"error", "json", msg, error};
       self->Send(j.dump());
     } catch (std::exception& e) {
       LOG_DEBUG(self->GetAddress()
                 << ": Connection::OnMessage: " << e.what() << ", " << msg);
-      json j = {
-          "error",
-          "Connection::OnMessage",
-          msg,
-          e.what(),
-      };
+      json j = {"error", "Connection::OnMessage", msg, e.what()};
       self->Send(j.dump());
     }
   });

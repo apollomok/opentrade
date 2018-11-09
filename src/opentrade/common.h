@@ -2,6 +2,7 @@
 #define OPENTRADE_COMMON_H_
 
 #include <tbb/atomic.h>
+#include <boost/filesystem.hpp>
 #include <cassert>
 #include <string>
 
@@ -10,6 +11,9 @@
 namespace opentrade {
 
 static inline const std::string kEmptyStr;
+namespace fs = boost::filesystem;
+static inline const fs::path kAlgoPath = fs::path(".") / "algos";
+static inline const fs::path kStorePath = fs::path(".") / "store";
 
 template <typename V>
 class Singleton {

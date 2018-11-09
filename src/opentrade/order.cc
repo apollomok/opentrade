@@ -19,7 +19,7 @@ namespace fs = boost::filesystem;
 
 namespace opentrade {
 
-static auto kPath = fs::path(".") / "store" / "confirmations";
+static auto kPath = kStorePath / "confirmations";
 
 void GlobalOrderBook::Initialize() {
   auto& self = Instance();

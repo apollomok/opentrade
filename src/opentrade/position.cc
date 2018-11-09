@@ -2,7 +2,6 @@
 
 #include <postgresql/soci-postgresql.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/filesystem.hpp>
 #include <fstream>
 #include <mutex>
 
@@ -10,7 +9,6 @@
 #include "logger.h"
 #include "task_pool.h"
 
-namespace fs = boost::filesystem;
 namespace pt = boost::posix_time;
 
 namespace opentrade {
@@ -107,7 +105,7 @@ void PositionManager::Initialize() {
   auto sql = Database::Session();
 
   auto tm = pt::to_tm(pt::second_clock::universal_time());
-  auto path = fs::path(".") / "store" / "session";
+  auto path = kStorePath / "session";
   std::ifstream ifs(path.c_str());
   char buf[256] = {0};
   if (ifs.good()) {
@@ -333,8 +331,7 @@ void PositionManager::UpdatePnl() {
     pnl.realized = pair.second.first;
     pnl.unrealized = pair.second.second;
     if (!pnl.of) {
-      auto path =
-          fs::path(".") / "store" / ("pnl-" + std::to_string(pair.first));
+      auto path = kStorePath / ("pnl-" + std::to_string(pair.first));
       pnl.of = new std::ofstream(path.c_str(), std::ofstream::app);
     }
     (*pnl.of) << tm << ' ' << pnl.realized << ' ' << pnl.unrealized

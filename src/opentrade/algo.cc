@@ -14,7 +14,7 @@ namespace fs = boost::filesystem;
 
 namespace opentrade {
 
-static auto kPath = fs::path(".") / "store" / "algos";
+static auto kPath = kStorePath / "algos";
 static thread_local std::string kError;
 
 inline void AlgoRunner::operator()() {
