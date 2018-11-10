@@ -366,112 +366,7 @@ void Connection::OnMessage(const std::string& msg) {
       if (action.empty()) return;
       if (action != "login" && !self->user_) return;
       if (action == "login" || action == "validate_user") {
-        auto name = Get<std::string>(j[1]);
-        auto password = sha1(Get<std::string>(j[2]));
-        auto user = AccountManager::Instance().GetUser(name);
-        std::string state;
-        if (!user)
-          state = "unknown user";
-        else if (password != user->password)
-          state = "wrong password";
-        else if (user->is_disabled)
-          state = "disabled";
-        else
-          state = "ok";
-        if (action == "validate_user") {
-          auto token = Get<int64_t>(j[3]);
-          json j = {
-              "user_validation",
-              state == "ok" ? user->id : 0,
-              token,
-          };
-          self->Send(j.dump());
-          return;
-        }
-        if (state != "ok") {
-          json j = {
-              "connection",
-              state,
-          };
-          self->Send(j.dump());
-          return;
-        }
-        json j = {
-            "connection",
-            state,
-            {{"session", PositionManager::Instance().session()},
-             {"userId", user->id},
-             {"startTime", kStartTime},
-             {"securitiesCheckSum", SecurityManager::Instance().check_sum()}},
-        };
-        self->Send(j.dump());
-        if (!self->user_) {
-          self->user_ = user;
-          self->PublishMarketdata();
-          auto accs = user->sub_accounts;
-          for (auto& pair : *accs) {
-            json j = {
-                "sub_account",
-                pair.first,
-                pair.second->name,
-            };
-            self->Send(j.dump());
-          }
-          if (user->is_admin) {
-            for (auto& pair : AccountManager::Instance().users_) {
-              for (auto& pair2 : *pair.second->sub_accounts) {
-                json j = {
-                    "user_sub_account",
-                    pair.first,
-                    pair2.first,
-                    pair2.second->name,
-                };
-                self->Send(j.dump());
-              }
-            }
-          }
-          for (auto& pair : AccountManager::Instance().broker_accounts_) {
-            json j = {
-                "broker_account",
-                pair.first,
-                pair.second->name,
-            };
-            self->Send(j.dump());
-          }
-          for (auto& pair : AlgoManager::Instance().adapters()) {
-            auto& params = pair.second->GetParamDefs();
-            json j = {
-                "algo_def",
-                pair.second->name(),
-            };
-            for (auto& p : params) {
-              json j2 = {
-                  p.name,
-              };
-              Jsonify(p.default_value, &j2);
-              j2.push_back(p.required);
-              j2.push_back(p.min_value);
-              j2.push_back(p.max_value);
-              j2.push_back(p.precision);
-              j.push_back(j2);
-            }
-            self->Send(j.dump());
-          }
-          json files;
-          if (fs::is_directory(kAlgoPath)) {
-            for (auto& entry : boost::make_iterator_range(
-                     fs::directory_iterator(kAlgoPath), {})) {
-              auto tmp = entry.path();
-              auto fn = tmp.filename().string();
-              if (fn[0] == '_' || fn[0] == '.') continue;
-              files.push_back(fn);
-            }
-          }
-          if (files.size() > 0) {
-            json j = {"algoFiles", files};
-            self->Send(j.dump());
-          }
-        }
+        self->OnLogin(action, j);
       } else if (action == "bod") {
         auto accs = self->user_->sub_accounts;
         for (auto& pair : PositionManager::Instance().bods_) {
@@ -505,47 +400,7 @@ void Connection::OnMessage(const std::string& msg) {
           return;
         }
       } else if (action == "securities") {
-        LOG_DEBUG(self->GetAddress() << ": Securities requested");
-        auto& secs = SecurityManager::Instance().securities();
-        for (auto& pair : secs) {
-          auto s = pair.second;
-          if (self->user_->is_admin) {
-            json j = {
-                "security",
-                s->id,
-                s->symbol,
-                s->exchange->name,
-                s->type,
-                s->multiplier,
-                s->close_price,
-                s->rate,
-                s->currency,
-                s->adv20,
-                s->market_cap,
-                std::to_string(s->sector),
-                std::to_string(s->industry_group),
-                std::to_string(s->industry),
-                std::to_string(s->sub_industry),
-                s->local_symbol,
-                s->bbgid,
-                s->cusip,
-                s->sedol,
-                s->isin,
-            };
-            self->Send(j.dump());
-          } else {
-            json j = {
-                "security", s->id,       s->symbol,     s->exchange->name,
-                s->type,    s->lot_size, s->multiplier,
-            };
-            self->Send(j.dump());
-          }
-        }
-        json j = {
-            "securities",
-            "complete",
-        };
-        self->Send(j.dump());
+        self->OnSecurities(j);
       } else if (action == "offline") {
         if (j.size() > 2) {
           auto seq_algo = Get<int64_t>(j[2]);
@@ -609,83 +464,7 @@ void Connection::OnMessage(const std::string& msg) {
         }
         ExchangeConnectivityManager::Instance().Cancel(*ord);
       } else if (action == "order") {
-        auto security_id = Get<int64_t>(j[1]);
-        auto sub_account = Get<std::string>(j[2]);
-        auto acc = AccountManager::Instance().GetSubAccount(sub_account);
-        if (!acc) {
-          json j = {"error", "order", "sub_account",
-                    "Invalid sub_account: " + sub_account};
-          LOG_DEBUG(self->GetAddress() << ": " << j << '\n' << msg);
-          self->Send(j.dump());
-          return;
-        }
-        auto side_str = Get<std::string>(j[3]);
-        auto type_str = Get<std::string>(j[4]);
-        auto tif_str = Get<std::string>(j[5]);
-        auto qty = GetNum(j[6]);
-        auto px = GetNum(j[7]);
-        auto stop_price = GetNum(j[8]);
-        Contract c;
-        c.qty = qty;
-        c.price = px;
-        c.sec = SecurityManager::Instance().Get(security_id);
-        c.stop_price = stop_price;
-        if (!c.sec) {
-          json j = {
-              "error",
-              "order",
-              "security id",
-              "Invalid security id: " + security_id,
-          };
-          LOG_DEBUG(self->GetAddress() << ": " << j << '\n' << msg);
-          self->Send(j.dump());
-          return;
-        }
-        c.sub_account = acc;
-        if (!GetOrderSide(side_str, &c.side)) {
-          json j = {
-              "error",
-              "order",
-              "side",
-              "Invalid side: " + side_str,
-          };
-          LOG_DEBUG(self->GetAddress() << ": " << j << '\n' << msg);
-          self->Send(j.dump());
-          return;
-        }
-        if (!strcasecmp(type_str.c_str(), "market"))
-          c.type = kMarket;
-        else if (!strcasecmp(type_str.c_str(), "stop"))
-          c.type = kStop;
-        else if (!strcasecmp(type_str.c_str(), "stop limit"))
-          c.type = kStopLimit;
-        else if (!strcasecmp(type_str.c_str(), "otc"))
-          c.type = kOTC;
-        if (c.stop_price <= 0 && (c.type == kStop || c.type == kStopLimit)) {
-          json j = {
-              "error",
-              "order",
-              "stop price",
-              "Miss stop price for stop order",
-          };
-          LOG_DEBUG(self->GetAddress() << ": " << j << '\n' << msg);
-          self->Send(j.dump());
-          return;
-        }
-        if (!strcasecmp(tif_str.c_str(), "GTC"))
-          c.tif = kGoodTillCancel;
-        else if (!strcasecmp(tif_str.c_str(), "OPG"))
-          c.tif = kAtTheOpening;
-        else if (!strcasecmp(tif_str.c_str(), "IOC"))
-          c.tif = kImmediateOrCancel;
-        else if (!strcasecmp(tif_str.c_str(), "FOK"))
-          c.tif = kFillOrKill;
-        else if (!strcasecmp(tif_str.c_str(), "GTX"))
-          c.tif = kGoodTillCrossing;
-        auto ord = new Order{};
-        (Contract&)* ord = c;
-        ord->user = self->user_;
-        ExchangeConnectivityManager::Instance().Place(ord);
+        self->OnOrder(j, msg);
       } else if (action == "algo") {
         self->OnAlgo(j, msg);
       } else if (action == "pnl") {
@@ -997,18 +776,15 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
       AlgoManager::Instance().Stop(Get<std::string>(j[2]));
       return;
     }
-    auto algo_id = Get<int64_t>(j[2]);
-    AlgoManager::Instance().Stop(algo_id);
+    AlgoManager::Instance().Stop(Get<int64_t>(j[2]));
   } else if (action == "modify") {
     auto params = ParseParams(j[3]);
-    try {
-      auto token = Get<std::string>(j[2]);
-      AlgoManager::Instance().Modify(token, params);
-    } catch (const std::runtime_error& err) {
-      Algo::IdType id = Get<int64_t>(j[2]);
-      AlgoManager::Instance().Modify(id, params);
+    if (j[2].is_string()) {
+      AlgoManager::Instance().Modify(Get<std::string>(j[2]), params);
+      return;
     }
-  } else if (action == "new") {
+    AlgoManager::Instance().Modify(Get<int64_t>(j[2]), params);
+  } else if (action == "new" || action == "test") {
     auto algo_name = Get<std::string>(j[2]);
     auto token = Get<std::string>(j[3]);
     auto algo = AlgoManager::Instance().Get(token);
@@ -1024,14 +800,17 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
       return;
     }
     try {
-      auto params = ParseParams(j[4]);
-      for (auto& pair : *params) {
-        if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-          auto acc = pval->acc;
-          auto accs = user_->sub_accounts;
-          if (accs->find(acc->id) == accs->end()) {
-            throw std::runtime_error("No permission to trade with account: " +
-                                     std::string(acc->name));
+      Algo::ParamMapPtr params;
+      if (action == "new") {
+        params = ParseParams(j[4]);
+        for (auto& pair : *params) {
+          if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
+            auto acc = pval->acc;
+            auto accs = user_->sub_accounts;
+            if (accs->find(acc->id) == accs->end()) {
+              throw std::runtime_error("No permission to trade with account: " +
+                                       std::string(acc->name));
+            }
           }
         }
       }
@@ -1049,6 +828,236 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
   } else {
     json j = {"error", "algo", "invalid action", action};
     Send(j.dump());
+  }
+}
+
+void Connection::OnOrder(const json& j, const std::string& msg) {
+  auto security_id = Get<int64_t>(j[1]);
+  auto sub_account = Get<std::string>(j[2]);
+  auto acc = AccountManager::Instance().GetSubAccount(sub_account);
+  if (!acc) {
+    json j = {"error", "order", "sub_account",
+              "Invalid sub_account: " + sub_account};
+    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    Send(j.dump());
+    return;
+  }
+  auto side_str = Get<std::string>(j[3]);
+  auto type_str = Get<std::string>(j[4]);
+  auto tif_str = Get<std::string>(j[5]);
+  auto qty = GetNum(j[6]);
+  auto px = GetNum(j[7]);
+  auto stop_price = GetNum(j[8]);
+  Contract c;
+  c.qty = qty;
+  c.price = px;
+  c.sec = SecurityManager::Instance().Get(security_id);
+  c.stop_price = stop_price;
+  if (!c.sec) {
+    json j = {
+        "error",
+        "order",
+        "security id",
+        "Invalid security id: " + security_id,
+    };
+    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    Send(j.dump());
+    return;
+  }
+  c.sub_account = acc;
+  if (!GetOrderSide(side_str, &c.side)) {
+    json j = {
+        "error",
+        "order",
+        "side",
+        "Invalid side: " + side_str,
+    };
+    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    Send(j.dump());
+    return;
+  }
+  if (!strcasecmp(type_str.c_str(), "market"))
+    c.type = kMarket;
+  else if (!strcasecmp(type_str.c_str(), "stop"))
+    c.type = kStop;
+  else if (!strcasecmp(type_str.c_str(), "stop limit"))
+    c.type = kStopLimit;
+  else if (!strcasecmp(type_str.c_str(), "otc"))
+    c.type = kOTC;
+  if (c.stop_price <= 0 && (c.type == kStop || c.type == kStopLimit)) {
+    json j = {
+        "error",
+        "order",
+        "stop price",
+        "Miss stop price for stop order",
+    };
+    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    Send(j.dump());
+    return;
+  }
+  if (!strcasecmp(tif_str.c_str(), "GTC"))
+    c.tif = kGoodTillCancel;
+  else if (!strcasecmp(tif_str.c_str(), "OPG"))
+    c.tif = kAtTheOpening;
+  else if (!strcasecmp(tif_str.c_str(), "IOC"))
+    c.tif = kImmediateOrCancel;
+  else if (!strcasecmp(tif_str.c_str(), "FOK"))
+    c.tif = kFillOrKill;
+  else if (!strcasecmp(tif_str.c_str(), "GTX"))
+    c.tif = kGoodTillCrossing;
+  auto ord = new Order{};
+  (Contract&)* ord = c;
+  ord->user = user_;
+  ExchangeConnectivityManager::Instance().Place(ord);
+}
+
+void Connection::OnSecurities(const json& j) {
+  LOG_DEBUG(GetAddress() << ": Securities requested");
+  auto& secs = SecurityManager::Instance().securities();
+  for (auto& pair : secs) {
+    auto s = pair.second;
+    if (user_->is_admin) {
+      json j = {
+          "security",
+          s->id,
+          s->symbol,
+          s->exchange->name,
+          s->type,
+          s->multiplier,
+          s->close_price,
+          s->rate,
+          s->currency,
+          s->adv20,
+          s->market_cap,
+          std::to_string(s->sector),
+          std::to_string(s->industry_group),
+          std::to_string(s->industry),
+          std::to_string(s->sub_industry),
+          s->local_symbol,
+          s->bbgid,
+          s->cusip,
+          s->sedol,
+          s->isin,
+      };
+      Send(j.dump());
+    } else {
+      json j = {
+          "security", s->id,       s->symbol,     s->exchange->name,
+          s->type,    s->lot_size, s->multiplier,
+      };
+      Send(j.dump());
+    }
+  }
+  json out = {"securities", "complete"};
+  Send(out.dump());
+}
+
+void Connection::OnLogin(const std::string& action, const json& j) {
+  auto name = Get<std::string>(j[1]);
+  auto password = sha1(Get<std::string>(j[2]));
+  auto user = AccountManager::Instance().GetUser(name);
+  std::string state;
+  if (!user)
+    state = "unknown user";
+  else if (password != user->password)
+    state = "wrong password";
+  else if (user->is_disabled)
+    state = "disabled";
+  else
+    state = "ok";
+  if (action == "validate_user") {
+    auto token = Get<int64_t>(j[3]);
+    json j = {
+        "user_validation",
+        state == "ok" ? user->id : 0,
+        token,
+    };
+    Send(j.dump());
+    return;
+  }
+  if (state != "ok") {
+    json j = {
+        "connection",
+        state,
+    };
+    Send(j.dump());
+    return;
+  }
+  json out = {
+      "connection",
+      state,
+      {{"session", PositionManager::Instance().session()},
+       {"userId", user->id},
+       {"startTime", kStartTime},
+       {"securitiesCheckSum", SecurityManager::Instance().check_sum()}},
+  };
+  Send(out.dump());
+  if (!user_) {
+    user_ = user;
+    PublishMarketdata();
+    auto accs = user->sub_accounts;
+    for (auto& pair : *accs) {
+      json j = {
+          "sub_account",
+          pair.first,
+          pair.second->name,
+      };
+      Send(j.dump());
+    }
+    if (user->is_admin) {
+      for (auto& pair : AccountManager::Instance().users_) {
+        for (auto& pair2 : *pair.second->sub_accounts) {
+          json j = {
+              "user_sub_account",
+              pair.first,
+              pair2.first,
+              pair2.second->name,
+          };
+          Send(j.dump());
+        }
+      }
+    }
+    for (auto& pair : AccountManager::Instance().broker_accounts_) {
+      json j = {
+          "broker_account",
+          pair.first,
+          pair.second->name,
+      };
+      Send(j.dump());
+    }
+    for (auto& pair : AlgoManager::Instance().adapters()) {
+      auto& params = pair.second->GetParamDefs();
+      json j = {
+          "algo_def",
+          pair.second->name(),
+      };
+      for (auto& p : params) {
+        json j2 = {
+            p.name,
+        };
+        Jsonify(p.default_value, &j2);
+        j2.push_back(p.required);
+        j2.push_back(p.min_value);
+        j2.push_back(p.max_value);
+        j2.push_back(p.precision);
+        j.push_back(j2);
+      }
+      Send(j.dump());
+    }
+    json files;
+    if (fs::is_directory(kAlgoPath)) {
+      for (auto& entry :
+           boost::make_iterator_range(fs::directory_iterator(kAlgoPath), {})) {
+        auto tmp = entry.path();
+        auto fn = tmp.filename().string();
+        if (fn[0] == '_' || fn[0] == '.') continue;
+        files.push_back(fn);
+      }
+    }
+    if (files.size() > 0) {
+      json j = {"algoFiles", files};
+      Send(j.dump());
+    }
   }
 }
 

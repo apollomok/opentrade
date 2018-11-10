@@ -69,15 +69,14 @@ inline void AlgoManager::Register(Instrument* inst) {
   assert(std::this_thread::get_id() == runner.tid_);
 }
 
-void AlgoManager::Modify(Algo* algo, std::shared_ptr<Algo::ParamMap> params) {
+void AlgoManager::Modify(Algo* algo, Algo::ParamMapPtr params) {
   if (!algo || !params) return;
   strands_[algo->id_ % threads_.size()].post(
       [params, algo]() { algo->OnModify(*params.get()); });
 }
 
-Algo* AlgoManager::Spawn(std::shared_ptr<Algo::ParamMap> params,
-                         const std::string& name, const User& user,
-                         const std::string& params_raw,
+Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
+                         const User& user, const std::string& params_raw,
                          const std::string& token) {
   auto adapter = GetAdapter(name);
   if (!adapter) return nullptr;

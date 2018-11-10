@@ -58,6 +58,7 @@ class Algo : public Adapter {
  public:
   typedef uint32_t IdType;
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
+  typedef std::shared_ptr<ParamMap> ParamMapPtr;
 
   Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{});
   void Stop();
@@ -164,14 +165,14 @@ class Connection;
 class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
  public:
   static void Initialize();
-  Algo* Spawn(std::shared_ptr<Algo::ParamMap> params, const std::string& name,
+  Algo* Spawn(Algo::ParamMapPtr params, const std::string& name,
               const User& user, const std::string& params_raw,
               const std::string& token);
   template <typename T>
-  void Modify(const T& id, std::shared_ptr<Algo::ParamMap> params) {
+  void Modify(const T& id, Algo::ParamMapPtr params) {
     Modify(Get(id), params);
   }
-  void Modify(Algo* algo, std::shared_ptr<Algo::ParamMap> params);
+  void Modify(Algo* algo, Algo::ParamMapPtr params);
   void Run(int nthreads);
   void Update(DataSrc::IdType src, Security::IdType id);
   void Stop();
