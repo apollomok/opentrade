@@ -84,12 +84,11 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("utc_time_offset", &Exchange::utc_time_offset)
       .def_readonly("country", &Exchange::country)
       .def_readonly("odd_lot_allowed", &Exchange::odd_lot_allowed)
-      .add_property("get_security",
-                    bp::make_function(
-                        +[](const Exchange &self, const std::string &name) {
-                          return FindInMap(self.securities, name);
-                        },
-                        bp::return_internal_reference<>()))
+      .def("get_security",
+           +[](const Exchange &self, const std::string &name) {
+             return FindInMap(self.securities, name);
+           },
+           bp::return_internal_reference<>())
       .add_property("now", &Exchange::GetTime);
 
   bp::class_<Position>("Position")
