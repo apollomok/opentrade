@@ -59,6 +59,10 @@ struct DataSrc {
   operator IdType() const { return value; }
   const char* str() const { return GetStr(value); }
   const IdType operator()() { return value; }
+  DataSrc& operator=(IdType v) {
+    value = v;
+    return *this;
+  }
 
   static constexpr IdType GetId(const char* src) {
     if (!src || !*src) return 0;

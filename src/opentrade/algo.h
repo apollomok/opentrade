@@ -20,6 +20,7 @@
 #include "adapter.h"
 #include "market_data.h"
 #include "order.h"
+#include "position.h"
 #include "security.h"
 #include "utility.h"
 
@@ -27,9 +28,13 @@ namespace opentrade {
 
 class Instrument;
 
-typedef std::tuple<DataSrc, const Security*, const SubAccount*, OrderSide,
-                   double>
-    SecurityTuple;
+struct SecurityTuple {
+  DataSrc src;
+  const Security* sec = nullptr;
+  const SubAccount* acc = nullptr;
+  OrderSide side = kBuy;
+  double qty = 0;
+};
 
 struct ParamDef {
   typedef std::variant<std::string, const char*, bool, int64_t, int32_t, double,

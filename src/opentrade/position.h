@@ -47,14 +47,14 @@ class PositionManager : public Singleton<PositionManager> {
   static void Initialize();
   auto session() { return session_; }
   void Handle(Confirmation::Ptr cm, bool offline);
-  const Position& Get(const SubAccount& acc, const Security& sec) const {
-    return FindInMap(sub_positions_, std::make_pair(acc.id, sec.id));
+  const Position& Get(const SubAccount& acc, const Security& sec) {
+    return sub_positions_[std::make_pair(acc.id, sec.id)];
   }
-  const Position& Get(const BrokerAccount& acc, const Security& sec) const {
-    return FindInMap(broker_positions_, std::make_pair(acc.id, sec.id));
+  const Position& Get(const BrokerAccount& acc, const Security& sec) {
+    return broker_positions_[std::make_pair(acc.id, sec.id)];
   }
-  const Position& Get(const User& user, const Security& sec) const {
-    return FindInMap(user_positions_, std::make_pair(user.id, sec.id));
+  const Position& Get(const User& user, const Security& sec) {
+    return user_positions_[std::make_pair(user.id, sec.id)];
   }
   void UpdatePnl();
 

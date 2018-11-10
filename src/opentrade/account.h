@@ -39,6 +39,10 @@ struct SubAccount : public AccountBase {
   const char* name = "";
   typedef std::unordered_map<Exchange::IdType, BrokerAccount*> BrokerAccountMap;
   const BrokerAccountMap* broker_accounts = new BrokerAccountMap();
+
+  const BrokerAccount* GetBroker(const Security& sec) const {
+    return FindInMap(*broker_accounts, sec.id);
+  }
 };
 
 struct User : public AccountBase {

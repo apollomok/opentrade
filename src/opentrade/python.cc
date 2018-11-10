@@ -84,7 +84,25 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("utc_time_offset", &Exchange::utc_time_offset)
       .def_readonly("country", &Exchange::country)
       .def_readonly("odd_lot_allowed", &Exchange::odd_lot_allowed)
+      .add_property("get_security",
+                    bp::make_function(
+                        +[](const Exchange &self, const std::string &name) {
+                          return FindInMap(self.securities, name);
+                        },
+                        bp::return_internal_reference<>()))
       .add_property("now", &Exchange::GetTime);
+
+  bp::class_<Position>("Position")
+      .def_readonly("qty", &Position::qty)
+      .def_readonly("avg_price", &Position::avg_price)
+      .def_readonly("unrealized_pnl", &Position::unrealized_pnl)
+      .def_readonly("realized_pnl", &Position::realized_pnl)
+      .def_readonly("total_bought_qty", &Position::total_bought_qty)
+      .def_readonly("total_sold_qty", &Position::total_sold_qty)
+      .def_readonly("total_outstanding_buy_qty",
+                    &Position::total_outstanding_buy_qty)
+      .def_readonly("total_outstanding_sell_qty",
+                    &Position::total_outstanding_sell_qty);
 
   auto cls = bp::class_<Security>("Security");
   cls.def_readonly("id", &Security::id)
@@ -117,37 +135,47 @@ BOOST_PYTHON_MODULE(opentrade) {
           "underlying",
           bp::make_function(+[](const Security &s) { return s.underlying; },
                             bp::return_internal_reference<>()))
+      .def("get_position",
+           +[](const Security &sec, const SubAccount *acc) {
+             return acc ? &PositionManager::Instance().Get(*acc, sec) : nullptr;
+           },
+           bp::return_internal_reference<>())
+      .def("get_broker_position",
+           +[](const Security &sec, const SubAccount *acc) {
+             if (!acc) return (const Position *)nullptr;
+             auto broker = acc->GetBroker(sec);
+             if (!broker) return (const Position *)nullptr;
+             return acc ? &PositionManager::Instance().Get(*broker, sec)
+                        : nullptr;
+           },
+           bp::return_internal_reference<>())
       .add_property("is_in_trade_period", &Security::IsInTradePeriod)
       .def_readonly("local_symbol", &Security::local_symbol);
 
   bp::class_<SecurityTuple>("SecurityTuple")
-      .add_property("src",
-                    +[](const SecurityTuple &st) { return std::get<0>(st); })
+      .def_readwrite("src", &SecurityTuple::src)
+      .def_readwrite("side", &SecurityTuple::side)
+      .def_readwrite("qty", &SecurityTuple::qty)
       .add_property(
-          "sec", bp::make_function(
-                     +[](const SecurityTuple &st) { return std::get<1>(st); },
-                     bp::return_internal_reference<>()))
+          "sec",
+          bp::make_function(+[](const SecurityTuple &st) { return st.sec; },
+                            bp::return_internal_reference<>()),
+          +[](SecurityTuple &st, const Security *sec) { st.sec = sec; })
       .add_property(
-          "acc", bp::make_function(
-                     +[](const SecurityTuple &st) { return std::get<2>(st); },
-                     bp::return_internal_reference<>()))
-      .add_property("side",
-                    +[](const SecurityTuple &st) { return std::get<3>(st); })
-      .add_property("qty",
-                    +[](const SecurityTuple &st) { return std::get<4>(st); });
+          "acc",
+          bp::make_function(+[](const SecurityTuple &st) { return st.acc; },
+                            bp::return_internal_reference<>()),
+          +[](SecurityTuple &st, const SubAccount *acc) { st.acc = acc; });
 
   bp::class_<Contract>("Contract")
       .add_property("is_buy", &Contract::IsBuy)
       .add_property("sec",
                     bp::make_function(+[](const Contract &c) { return c.sec; },
                                       bp::return_internal_reference<>()))
-      .add_property(
-          "acc",
-          bp::make_function(+[](const Contract &c) { return c.sub_account; },
-                            bp::return_internal_reference<>()),
-          +[](Contract &c, const SubAccount *sub_account) {
-            c.sub_account = sub_account;
-          })
+      .add_property("acc",
+                    bp::make_function(+[](const Contract &c) { return c.acc; },
+                                      bp::return_internal_reference<>()),
+                    +[](Contract &c, const SubAccount *acc) { c.acc = acc; })
       .def_readwrite("qty", &Contract::qty)
       .def_readwrite("price", &Contract::price)
       .def_readwrite("stop_price", &Contract::stop_price)
@@ -271,6 +299,27 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("id", &Algo::id)
       .add_property("name", +[](const Python &algo) { return algo.name(); })
       .add_property("is_active", &Algo::is_active);
+
+  bp::def("get_security",
+          bp::make_function(
+              +[](Security::IdType id) {
+                return SecurityManager::Instance().Get(id);
+              },
+              bp::return_value_policy<bp::reference_existing_object>()));
+
+  bp::def("get_exchange",
+          bp::make_function(
+              +[](const std::string &name) {
+                return SecurityManager::Instance().GetExchange(name);
+              },
+              bp::return_value_policy<bp::reference_existing_object>()));
+
+  bp::def("get_account",
+          bp::make_function(
+              +[](const std::string &name) {
+                return AccountManager::Instance().GetSubAccount(name);
+              },
+              bp::return_value_policy<bp::reference_existing_object>()));
 }
 
 #if PY_MAJOR_VERSION >= 3

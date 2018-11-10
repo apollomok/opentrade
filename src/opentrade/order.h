@@ -78,7 +78,10 @@ struct Contract {
   double price = 0;
   double stop_price = 0;
   const Security* sec = nullptr;
-  const SubAccount* sub_account = nullptr;
+  union {
+    const SubAccount* sub_account = nullptr;
+    const SubAccount* acc;  // alias of sub_account
+  };
   std::map<std::string,
            std::variant<bool, int64_t, double, std::string, std::any>>*
       optional_ = nullptr;

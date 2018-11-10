@@ -91,7 +91,10 @@ void SecurityManager::LoadFromDatabase() {
     s->currency = Database::GetValue(*it, i++, "");
     auto exchange_id = Database::GetValue(*it, i++, 0);
     auto ex_it = exchanges_.find(exchange_id);
-    if (ex_it != exchanges_.end()) s->exchange = ex_it->second;
+    if (ex_it != exchanges_.end()) {
+      s->exchange = ex_it->second;
+      ex_it->second->securities[s->symbol] = s;
+    }
     auto underlying_id = Database::GetValue(*it, i++, Security::IdType());
     if (underlying_id > 0) {
       underlying_map[s] = underlying_id;

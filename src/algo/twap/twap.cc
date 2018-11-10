@@ -7,11 +7,11 @@ namespace opentrade {
 std::string TWAP::OnStart(const ParamMap& params) noexcept {
   SecurityTuple st{};
   st = GetParam(params, "Security", st);
-  auto src = std::get<0>(st);
-  auto sec = std::get<1>(st);
-  acc_ = std::get<2>(st);
-  side_ = std::get<3>(st);
-  qty_ = std::get<4>(st);
+  auto src = st.src;
+  auto sec = st.sec;
+  acc_ = st.acc;
+  side_ = st.side;
+  qty_ = st.qty;
   assert(sec);  // SecurityTuple already verified before onStart
   assert(acc_);
   assert(side_);

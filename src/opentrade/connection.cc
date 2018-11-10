@@ -97,7 +97,7 @@ static inline T ParseParamScalar(const json& j) {
   if (j.is_boolean()) return j.get<bool>();
   if (j.is_string()) return j.get<std::string>();
   if (j.is_object()) {
-    DataSrc::IdType src = 0;
+    DataSrc src;
     const Security* sec = nullptr;
     const SubAccount* acc = nullptr;
     OrderSide side = static_cast<OrderSide>(0);
@@ -718,7 +718,7 @@ void Connection::OnMessage(const std::string& msg) {
             auto params = ParseParams(j[4]);
             for (auto& pair : *params) {
               if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-                auto acc = std::get<2>(*pval);
+                auto acc = pval->acc;
                 auto accs = self->user_->sub_accounts;
                 if (accs->find(acc->id) == accs->end()) {
                   throw std::runtime_error(

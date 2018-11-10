@@ -9,6 +9,8 @@
 
 namespace opentrade {
 
+struct Security;
+
 struct Exchange {
   typedef uint16_t IdType;
   IdType id = 0;
@@ -45,6 +47,7 @@ struct Exchange {
     return (break_start <= 0 || (t < break_start || t > break_end)) &&
            (trade_start <= 0 || (t > trade_start && t < trade_end));
   }
+  tbb::concurrent_unordered_map<std::string, Security*> securities;
 };
 
 // follow IB
