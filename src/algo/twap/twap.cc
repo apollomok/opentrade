@@ -48,6 +48,10 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
   return {};
 }
 
+void TWAP::OnModify(const ParamMap& params) noexcept {
+  LOG_DEBUG('[' << name() << ' ' << id() << "] do nothing to OnModify");
+}
+
 void TWAP::OnStop() noexcept {
   LOG_DEBUG('[' << name() << ' ' << id() << "] stopped");
 }

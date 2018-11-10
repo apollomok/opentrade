@@ -66,6 +66,7 @@ class Algo : public Adapter {
   static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept = 0;
+  virtual void OnModify(const ParamMap& params) noexcept = 0;
   virtual void OnStop() noexcept = 0;
   virtual void OnMarketTrade(const Instrument& inst, const MarketData& md,
                              const MarketData& md0) noexcept = 0;
@@ -166,6 +167,11 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   Algo* Spawn(std::shared_ptr<Algo::ParamMap> params, const std::string& name,
               const User& user, const std::string& params_raw,
               const std::string& token);
+  template <typename T>
+  void Modify(const T& id, std::shared_ptr<Algo::ParamMap> params) {
+    Modify(Get(id), params);
+  }
+  void Modify(Algo* algo, std::shared_ptr<Algo::ParamMap> params);
   void Run(int nthreads);
   void Update(DataSrc::IdType src, Security::IdType id);
   void Stop();
@@ -181,6 +187,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   void Persist(const Algo& algo, const std::string& status,
                const std::string& body);
   void LoadStore(uint32_t seq0 = 0, Connection* conn = nullptr);
+  Algo* Get(const Algo::IdType& id) { return FindInMap(algos_, id); }
   Algo* Get(const std::string& token) {
     return FindInMap(algo_of_token_, token);
   }

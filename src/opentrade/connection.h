@@ -7,11 +7,14 @@
 #include <memory>
 #include <unordered_map>
 
+#include "3rd/json.hpp"
 #include "account.h"
 #include "algo.h"
 #include "market_data.h"
 #include "order.h"
 #include "security.h"
+
+using json = nlohmann::json;
 
 namespace opentrade {
 
@@ -28,6 +31,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
              std::shared_ptr<boost::asio::io_service> service);
   ~Connection();
   void OnMessage(const std::string&);
+  void OnAlgo(const json& j, const std::string& msg);
   void Send(Confirmation::Ptr cm);
   void Send(const Algo& algo, const std::string& status,
             const std::string& body, uint32_t seq);

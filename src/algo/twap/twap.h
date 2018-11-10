@@ -16,6 +16,7 @@ enum Aggression {
 class TWAP : public Algo {
  public:
   std::string OnStart(const ParamMap& params) noexcept override;
+  void OnModify(const ParamMap& params) noexcept override;
   void OnStop() noexcept override;
   void OnMarketTrade(const Instrument& inst, const MarketData& md,
                      const MarketData& md0) noexcept override;

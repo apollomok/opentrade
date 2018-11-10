@@ -13,6 +13,7 @@ namespace opentrade {
 
 struct PyModule {
   bp::object on_start;
+  bp::object on_modify;
   bp::object on_stop;
   bp::object on_market_trade;
   bp::object on_market_quote;
@@ -25,6 +26,7 @@ class Python : public Algo {
  public:
   static Python* Load(const std::string& fn);
   std::string OnStart(const ParamMap& params) noexcept override;
+  void OnModify(const ParamMap& params) noexcept override;
   std::string Test() noexcept override;
   void OnStop() noexcept override;
   void OnMarketTrade(const Instrument& inst, const MarketData& md,

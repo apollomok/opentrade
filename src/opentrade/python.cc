@@ -452,6 +452,7 @@ PyModule LoadPyModule(const std::string &module_name) {
   out.get_param_defs = func;
   out.test = GetCallable(m, "test");
   out.on_start = GetCallable(m, "on_start");
+  out.on_modify = GetCallable(m, "on_modify");
   out.on_stop = GetCallable(m, "on_stop");
   out.on_market_trade = GetCallable(m, "on_market_trade");
   out.on_market_quote = GetCallable(m, "on_market_quote");
@@ -635,6 +636,17 @@ std::string Python::OnStart(const ParamMap &params) noexcept {
     return {};
   }
   return {};
+}
+
+void Python::OnModify(const ParamMap &params) noexcept {
+  if (!py_.on_modify) return;
+  LockGIL locker;
+  auto tmp = CreateParamsDict(params);
+  try {
+    py_.on_modify(obj_, tmp);
+  } catch (const bp::error_already_set &err) {
+    PrintPyError("on_modify");
+  }
 }
 
 void Python::OnStop() noexcept {

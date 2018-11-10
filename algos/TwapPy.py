@@ -2,13 +2,14 @@ import time
 import math
 from opentrade import *
 
+
 def test(self):
   st = SecurityTuple()
   st.sec = get_exchange('FX').get_security('USDCAD')
   st.side = OrderSide.buy
   st.acc = get_account('SIM')
   st.qty = 10000
-  return {'Security': st, 'ValidSeconds': 300, 'MinSize': 1000 }
+  return {'Security': st, 'ValidSeconds': 300, 'MinSize': 1000}
 
 
 def get_param_defs():
@@ -48,6 +49,10 @@ def on_start(self, params):
   self.volume = 0
   timer(self)
   self.log_debug('[' + self.name + ' ' + str(self.id) + '] started')
+
+
+def on_modify(self, params):
+  pass
 
 
 def on_stop(self):

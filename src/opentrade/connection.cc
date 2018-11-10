@@ -5,7 +5,6 @@
 #include <boost/uuid/sha1.hpp>
 #include <thread>
 
-#include "3rd/json.hpp"
 #include "algo.h"
 #include "exchange_connectivity.h"
 #include "logger.h"
@@ -14,7 +13,6 @@
 #include "security.h"
 #include "server.h"
 
-using json = nlohmann::json;
 namespace fs = boost::filesystem;
 
 namespace opentrade {
@@ -689,54 +687,7 @@ void Connection::OnMessage(const std::string& msg) {
         ord->user = self->user_;
         ExchangeConnectivityManager::Instance().Place(ord);
       } else if (action == "algo") {
-        auto action = Get<std::string>(j[1]);
-        if (action == "cancel") {
-          if (j[2].is_string()) {
-            AlgoManager::Instance().Stop(Get<std::string>(j[2]));
-            return;
-          }
-          auto algo_id = Get<int64_t>(j[2]);
-          AlgoManager::Instance().Stop(algo_id);
-        } else {
-          auto algo_name = Get<std::string>(j[2]);
-          auto token = Get<std::string>(j[3]);
-          auto algo = AlgoManager::Instance().Get(token);
-          if (algo) {
-            json j = {
-                "error",
-                "algo",
-                "duplicate token",
-                token,
-            };
-            LOG_DEBUG(self->GetAddress() << ": " << j << '\n' << msg);
-            self->Send(j.dump());
-            return;
-          }
-          try {
-            auto params = ParseParams(j[4]);
-            for (auto& pair : *params) {
-              if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-                auto acc = pval->acc;
-                auto accs = self->user_->sub_accounts;
-                if (accs->find(acc->id) == accs->end()) {
-                  throw std::runtime_error(
-                      "No permission to trade with account: " +
-                      std::string(acc->name));
-                }
-              }
-            }
-            std::stringstream ss;
-            ss << j[4];
-            if (!AlgoManager::Instance().Spawn(params, algo_name, *self->user_,
-                                               ss.str(), token)) {
-              throw std::runtime_error("Unknown algo name: " + algo_name);
-            }
-          } catch (const std::runtime_error& err) {
-            LOG_DEBUG(self->GetAddress() << ": " << err.what() << '\n' << msg);
-            json j = {"error", "algo", "invalid params", token, err.what()};
-            self->Send(j.dump());
-          }
-        }
+        self->OnAlgo(j, msg);
       } else if (action == "pnl") {
         auto tm0 = 0l;
         if (j.size() >= 2) tm0 = Get<int64_t>(j[1]);
@@ -1037,6 +988,68 @@ void Connection::Send(const Confirmation& cm, bool offline) {
       break;
   }
   Send(j.dump());
+}
+
+void Connection::OnAlgo(const json& j, const std::string& msg) {
+  auto action = Get<std::string>(j[1]);
+  if (action == "cancel") {
+    if (j[2].is_string()) {
+      AlgoManager::Instance().Stop(Get<std::string>(j[2]));
+      return;
+    }
+    auto algo_id = Get<int64_t>(j[2]);
+    AlgoManager::Instance().Stop(algo_id);
+  } else if (action == "modify") {
+    auto params = ParseParams(j[3]);
+    try {
+      auto token = Get<std::string>(j[2]);
+      AlgoManager::Instance().Modify(token, params);
+    } catch (const std::runtime_error& err) {
+      Algo::IdType id = Get<int64_t>(j[2]);
+      AlgoManager::Instance().Modify(id, params);
+    }
+  } else if (action == "new") {
+    auto algo_name = Get<std::string>(j[2]);
+    auto token = Get<std::string>(j[3]);
+    auto algo = AlgoManager::Instance().Get(token);
+    if (algo) {
+      json j = {
+          "error",
+          "algo",
+          "duplicate token",
+          token,
+      };
+      LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+      Send(j.dump());
+      return;
+    }
+    try {
+      auto params = ParseParams(j[4]);
+      for (auto& pair : *params) {
+        if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
+          auto acc = pval->acc;
+          auto accs = user_->sub_accounts;
+          if (accs->find(acc->id) == accs->end()) {
+            throw std::runtime_error("No permission to trade with account: " +
+                                     std::string(acc->name));
+          }
+        }
+      }
+      std::stringstream ss;
+      ss << j[4];
+      if (!AlgoManager::Instance().Spawn(params, algo_name, *user_, ss.str(),
+                                         token)) {
+        throw std::runtime_error("Unknown algo name: " + algo_name);
+      }
+    } catch (const std::runtime_error& err) {
+      LOG_DEBUG(GetAddress() << ": " << err.what() << '\n' << msg);
+      json j = {"error", "algo", "invalid params", token, err.what()};
+      Send(j.dump());
+    }
+  } else {
+    json j = {"error", "algo", "invalid action", action};
+    Send(j.dump());
+  }
 }
 
 }  // namespace opentrade
