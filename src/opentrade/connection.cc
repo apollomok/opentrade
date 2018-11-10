@@ -466,9 +466,7 @@ void Connection::OnMessage(const std::string& msg) {
               auto tmp = entry.path();
               auto fn = tmp.filename().string();
               if (fn[0] == '_' || fn[0] == '.') continue;
-              if (tmp.extension() == ".py" || tmp.extension() == ".txt") {
-                files.push_back(fn);
-              }
+              files.push_back(fn);
             }
           }
           if (files.size() > 0) {

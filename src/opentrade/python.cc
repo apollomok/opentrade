@@ -67,10 +67,13 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("__str__", &DataSrc::str);
 
   bp::class_<SubAccount>("SubAccount")
+      .def("__str__",
+           +[](const SubAccount &acc) { return std::string(acc.name); })
       .def_readonly("id", &SubAccount::id)
       .def_readonly("name", &SubAccount::name);
 
   bp::class_<Exchange>("Exchange")
+      .def("__str__", +[](const Exchange &ex) { return std::string(ex.name); })
       .def_readonly("name", &Exchange::name)
       .def_readonly("mic", &Exchange::mic)
       .def_readonly("bb_name", &Exchange::bb_name)
@@ -92,6 +95,19 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("now", &Exchange::GetTime);
 
   bp::class_<Position>("Position")
+      .def("__str__",
+           +[](const Position &p) {
+             std::stringstream ss;
+             ss << "qty=" << p.qty << ", avg_price=" << p.avg_price
+                << ", total_bought_qty=" << p.total_bought_qty
+                << ", total_sold_qty=" << p.total_sold_qty
+                << ", total_outstanding_buy_qty=" << p.total_outstanding_buy_qty
+                << ", total_outstanding_sell_qty="
+                << p.total_outstanding_sell_qty
+                << ", unrealized_pnl=" << p.unrealized_pnl
+                << ", realized_pnl=" << p.realized_pnl;
+             return ss.str();
+           })
       .def_readonly("qty", &Position::qty)
       .def_readonly("avg_price", &Position::avg_price)
       .def_readonly("unrealized_pnl", &Position::unrealized_pnl)
@@ -105,6 +121,13 @@ BOOST_PYTHON_MODULE(opentrade) {
 
   auto cls = bp::class_<Security>("Security");
   cls.def_readonly("id", &Security::id)
+      .def("__str__",
+           +[](const Security &s) {
+             std::stringstream ss;
+             ss << "symbol=" << s.symbol
+                << ", exchange=" << (s.exchange ? s.exchange->name : "");
+             return ss.str();
+           })
       .def_readonly("symbol", &Security::symbol)
       .def_readonly("isin", &Security::isin)
       .def_readonly("cusip", &Security::cusip)
@@ -152,6 +175,19 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("local_symbol", &Security::local_symbol);
 
   bp::class_<SecurityTuple>("SecurityTuple")
+      .def("__str__",
+           +[](const SecurityTuple &st) {
+             std::stringstream ss;
+             ss << "src=" << st.src.str() << ", side="
+                << bp::extract<const char *>(
+                       bp::str(bp::object(bp::ptr(&st)).attr("side")))
+                << ", qty=" << st.qty << ", sec=("
+                << bp::extract<const char *>(
+                       bp::str(bp::object(bp::ptr(&st)).attr("sec")))
+                << ")"
+                << ", acc=" << (st.acc ? st.acc->name : "");
+             return ss.str();
+           })
       .def_readwrite("src", &SecurityTuple::src)
       .def_readwrite("side", &SecurityTuple::side)
       .def_readwrite("qty", &SecurityTuple::qty)

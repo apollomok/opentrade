@@ -146,6 +146,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  opentrade::AccountManager::Initialize();
+  PositionManager::Initialize();
+  opentrade::GlobalOrderBook::Initialize();
+
   LOG_INFO("Loading python algos from " << kAlgoPath);
   auto npy = 0;
   if (fs::is_directory(kAlgoPath)) {
@@ -168,9 +172,6 @@ int main(int argc, char *argv[]) {
   }
   LOG_INFO(npy << " python algos loaded");
 
-  opentrade::AccountManager::Initialize();
-  PositionManager::Initialize();
-  opentrade::GlobalOrderBook::Initialize();
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();
   }

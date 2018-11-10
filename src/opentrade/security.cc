@@ -68,6 +68,7 @@ void SecurityManager::LoadFromDatabase() {
     }
     std::atomic_thread_fence(std::memory_order_release);
     exchanges_.emplace(e->id, e);
+    exchange_of_name_.emplace(e->name, e);
   }
 
   std::unordered_map<Security*, Security::IdType> underlying_map;
@@ -93,7 +94,7 @@ void SecurityManager::LoadFromDatabase() {
     auto ex_it = exchanges_.find(exchange_id);
     if (ex_it != exchanges_.end()) {
       s->exchange = ex_it->second;
-      ex_it->second->securities[s->symbol] = s;
+      ex_it->second->securities.emplace(s->symbol, s);
     }
     auto underlying_id = Database::GetValue(*it, i++, Security::IdType());
     if (underlying_id > 0) {
