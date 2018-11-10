@@ -55,12 +55,16 @@ struct DataSrc {
   IdType value = 0;
   DataSrc() : value(0) {}
   explicit DataSrc(IdType v) : value(v) {}
-  explicit DataSrc(const char* src) : value(GetId(src)) {}
+  explicit DataSrc(const std::string& src) : value(GetId(src.c_str())) {}
   operator IdType() const { return value; }
   const char* str() const { return GetStr(value); }
   const IdType operator()() { return value; }
   DataSrc& operator=(IdType v) {
     value = v;
+    return *this;
+  }
+  DataSrc& operator=(const std::string& v) {
+    value = GetId(v.c_str());
     return *this;
   }
 

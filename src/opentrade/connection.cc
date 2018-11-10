@@ -109,7 +109,7 @@ static inline T ParseParamScalar(const json& j) {
           throw std::runtime_error("Unknown order side: " + side_str);
         }
       } else if (it.key() == "src") {
-        src = DataSrc::GetId(Get<std::string>(it.value()).c_str());
+        src = Get<std::string>(it.value());
       } else if (it.key() == "sec") {
         auto v = Get<int64_t>(it.value());
         sec = SecurityManager::Instance().Get(v);
