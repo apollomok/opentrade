@@ -8,6 +8,7 @@
 #include "connection.h"
 #include "exchange_connectivity.h"
 #include "logger.h"
+#include "python.h"
 #include "server.h"
 
 namespace fs = boost::filesystem;
@@ -78,11 +79,15 @@ void AlgoManager::Modify(Algo* algo, Algo::ParamMapPtr params) {
 Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
                          const User& user, const std::string& params_raw,
                          const std::string& token) {
-  auto adapter = GetAdapter(name);
-  if (!adapter) return nullptr;
-  auto algo = static_cast<Algo*>(adapter->Clone());
-  algo->set_name(adapter->name());
-  algo->set_config(adapter->config());
+  Algo* algo = nullptr;
+  if (params) {
+    auto adapter = GetAdapter(name);
+    if (!adapter) return nullptr;
+    algo = static_cast<Algo*>(adapter->Clone());
+  } else {
+    algo = Python::LoadTest(name, token);
+    if (!algo) return nullptr;
+  }
   algo->id_ = ++algo_id_counter_;
   algo->user_ = &user;
   algo->token_ = token;

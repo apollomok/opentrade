@@ -39,6 +39,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
   void Send(const Algo& algo, const std::string& status,
             const std::string& body, uint32_t seq);
   void Close() { closed_ = true; }
+  void SendTestMsg(const std::string& token, const std::string& msg,
+                   bool stopped);
 
  protected:
   void PublishMarketdata();
@@ -64,6 +66,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   boost::unordered_map<std::pair<SubAccount::IdType, Security::IdType>,
                        std::pair<double, double>>
       single_pnls_;
+  tbb::concurrent_unordered_set<std::string> test_algo_tokens_;
   bool sub_pnl_ = false;
   bool closed_ = false;
   friend class Server;

@@ -28,6 +28,8 @@ def is_buy(self):
 
 
 def on_start(self, params):
+  log_debug(str(params));
+  self.volume = 0
   self.st = st = params['Security']
   self.instrument = self.subscribe(st.sec, st.src)
   seconds = params.get('ValidSeconds', 0)
@@ -46,9 +48,8 @@ def on_start(self, params):
   self.max_pov = params.get('MaxPov', 0.0)
   if self.max_pov > 1: self.max_pov = 1
   self.agg = params.get('Aggression')
-  self.volume = 0
   timer(self)
-  self.log_debug('[' + self.name + ' ' + str(self.id) + '] started')
+  log_debug('[' + self.name + ' ' + str(self.id) + '] started')
 
 
 def on_modify(self, params):
@@ -56,29 +57,28 @@ def on_modify(self, params):
 
 
 def on_stop(self):
-  self.log_debug('[' + self.name + ' ' + str(self.id) + '] stopped')
+  log_debug('[' + self.name + ' ' + str(self.id) + '] stopped')
 
 
 def on_market_trade(self, instrument):
   md = instrument.md
-  self.log_debug(instrument.sec.symbol + ' trade: ' + str(md.open) + ' ' +
-                 str(md.high) + ' ' + str(md.low) + ' ' + str(md.close) + ' ' +
-                 str(md.qty) + ' ' + str(md.vwap) + ' ' + str(md.volume))
+  log_debug(instrument.sec.symbol + ' trade: ' + str(md.open) + ' ' +
+            str(md.high) + ' ' + str(md.low) + ' ' + str(md.close) + ' ' +
+            str(md.qty) + ' ' + str(md.vwap) + ' ' + str(md.volume))
   self.volume += md.qty
 
 
 def on_market_quote(self, instrument):
   md = instrument.md
-  self.log_debug(
-      instrument.sec.symbol + ' quote: ' + str(md.ask_price) + ' ' +
-      str(md.ask_size) + ' ' + str(md.bid_price) + ' ' + str(md.bid_size))
+  log_debug(instrument.sec.symbol + ' quote: ' + str(md.ask_price) + ' ' +
+            str(md.ask_size) + ' ' + str(md.bid_price) + ' ' + str(md.bid_size))
 
 
 def on_confirmation(self, confirmation):
-  self.log_debug('exec_id=' + str(confirmation.exec_id) + ', order_id=' + str(
+  log_debug('exec_id=' + str(confirmation.exec_id) + ', order_id=' + str(
       confirmation.order_id) + ', exec_type=' + str(confirmation.exec_type) +
-                 ', last_shares=' + str(confirmation.last_shares) +
-                 ', last_px=' + str(confirmation.last_px))
+            ', last_shares=' + str(confirmation.last_shares) + ', last_px=' +
+            str(confirmation.last_px))
   if self.instrument.total_qty >= self.st.qty: self.stop()
 
 

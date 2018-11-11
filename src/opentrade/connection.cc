@@ -813,11 +813,14 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
             }
           }
         }
+      } else if (token.size()) {
+        test_algo_tokens_.insert(token);
       }
       std::stringstream ss;
       ss << j[4];
       if (!AlgoManager::Instance().Spawn(params, algo_name, *user_, ss.str(),
-                                         token)) {
+                                         token) &&
+          params) {
         throw std::runtime_error("Unknown algo name: " + algo_name);
       }
     } catch (const std::runtime_error& err) {
@@ -1059,6 +1062,20 @@ void Connection::OnLogin(const std::string& action, const json& j) {
       Send(j.dump());
     }
   }
+}
+
+void Connection::SendTestMsg(const std::string& token, const std::string& msg,
+                             bool stopped) {
+  if (test_algo_tokens_.find(token) == test_algo_tokens_.end()) return;
+  auto self = shared_from_this();
+  strand_.post([self, msg, stopped, token]() {
+    json j = {"test_msg", msg};
+    self->Send(j.dump());
+    if (stopped) {
+      json out = {"test_done", token};
+      self->Send(out.dump());
+    }
+  });
 }
 
 }  // namespace opentrade

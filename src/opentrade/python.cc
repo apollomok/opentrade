@@ -1,6 +1,12 @@
 #include "python.h"
 
 #include <Python.h>
+#include <boost/filesystem.hpp>
+
+#include "logger.h"
+#include "server.h"
+
+namespace fs = boost::filesystem;
 
 namespace opentrade {
 
@@ -8,10 +14,38 @@ static bp::object kOpentrade;
 static void PrintPyError(const char *);
 
 struct LockGIL {
-  LockGIL() { m.lock(); }
-  ~LockGIL() { m.unlock(); }
+  LockGIL(const std::string &token = "") {
+    m.lock();
+    test_token = token;
+  }
+  ~LockGIL() {
+    test_token = "";
+    m.unlock();
+  }
   static inline std::mutex m;
+  static inline std::string test_token;
 };
+
+#define LOCK() LockGIL lock(test_token_)
+
+#define PUBLISH_TEST_MSG(msg)                              \
+  if (LockGIL::test_token.size()) {                        \
+    std::stringstream os;                                  \
+    os << msg;                                             \
+    Server::PublishTestMsg(LockGIL::test_token, os.str()); \
+  }
+#define LOG2_DEBUG(msg)  \
+  PUBLISH_TEST_MSG(msg); \
+  LOG_DEBUG(msg)
+#define LOG2_INFO(msg)   \
+  PUBLISH_TEST_MSG(msg); \
+  LOG_INFO(msg)
+#define LOG2_WARN(msg)   \
+  PUBLISH_TEST_MSG(msg); \
+  LOG_WARN(msg)
+#define LOG2_ERROR(msg)  \
+  PUBLISH_TEST_MSG(msg); \
+  LOG_ERROR(msg)
 
 BOOST_PYTHON_MODULE(opentrade) {
   bp::enum_<OrderSide>("OrderSide")
@@ -314,23 +348,7 @@ BOOST_PYTHON_MODULE(opentrade) {
              return false;
            })
       .def("stop", &Algo::Stop)
-      .def("log_info", &Python::log_info)
-      .def("log_debug", &Python::log_debug)
-      .def("log_warn", &Python::log_warn)
-      .def("log_error", &Python::log_error)
-      .def("set_timeout",
-           +[](Python &algo, bp::object func, size_t milliseconds) {
-             algo.SetTimeout(
-                 [func]() {
-                   LockGIL lock;
-                   try {
-                     func();
-                   } catch (const bp::error_already_set &err) {
-                     PrintPyError("set_timeout");
-                   }
-                 },
-                 milliseconds);
-           })
+      .def("set_timeout", &Python::SetTimeout)
       .add_property("id", &Algo::id)
       .add_property("name", +[](const Python &algo) { return algo.name(); })
       .add_property("is_active", &Algo::is_active);
@@ -355,6 +373,14 @@ BOOST_PYTHON_MODULE(opentrade) {
                 return AccountManager::Instance().GetSubAccount(name);
               },
               bp::return_value_policy<bp::reference_existing_object>()));
+
+  bp::def("log_debug", +[](const std::string &msg) { LOG2_DEBUG(msg); });
+
+  bp::def("log_info", +[](const std::string &msg) { LOG2_INFO(msg); });
+
+  bp::def("log_warn", +[](const std::string &msg) { LOG2_WARN(msg); });
+
+  bp::def("log_error", +[](const std::string &msg) { LOG2_ERROR(msg); });
 }
 
 #if PY_MAJOR_VERSION >= 3
@@ -397,7 +423,7 @@ void PrintPyError(const char *from) {
   }
   PyErr_Restore(ptype, pvalue, ptraceback);
   PyErr_Clear();
-  LOG_ERROR(from << "\n" << result);
+  LOG2_ERROR(from << "\n" << result);
 }
 
 static inline double GetDouble(const bp::object &obj) {
@@ -416,7 +442,7 @@ static inline bp::object GetCallable(const bp::object &m, const char *name) {
   if (!PyCallable_Check(func.ptr())) {
     return {};
   }
-  LOG_INFO("Loaded python function " << name);
+  LOG2_INFO("Loaded python function " << name);
   return func;
 }
 
@@ -429,12 +455,11 @@ void InitalizePy() {
   if (!PyEval_ThreadsInitialized()) PyEval_InitThreads();
   LockGIL lock;
   kOpentrade = bp::import("opentrade");
-  LOG_INFO("Python initialized");
-  LOG_INFO("Python PATH: " << getenv("PYTHONPATH"));
+  LOG2_INFO("Python initialized");
+  LOG2_INFO("Python PATH: " << getenv("PYTHONPATH"));
 }
 
 PyModule LoadPyModule(const std::string &module_name) {
-  LockGIL locker;
   bp::object m;
   try {
     m = bp::import(module_name.c_str());
@@ -442,10 +467,10 @@ PyModule LoadPyModule(const std::string &module_name) {
     PrintPyError("load python");
     return {};
   }
-  LOG_INFO(module_name + " loaded");
+  LOG2_INFO(module_name + " loaded");
   auto func = GetCallable(m, "get_param_defs");
   if (!func.ptr()) {
-    LOG_ERROR("Can not find function \"get_param_defs\" in " << module_name);
+    LOG2_ERROR("Can not find function \"get_param_defs\" in " << module_name);
     return {};
   }
   PyModule out;
@@ -529,11 +554,10 @@ static inline bool ParseParamDef(const bp::object &item, ParamDef *out) {
 }
 
 static ParamDefs ParseParamDefs(const bp::object &func) {
-  LockGIL locker;
   try {
     auto out = func();
     if (!out || !PyTuple_Check(out.ptr())) {
-      LOG_ERROR("get_param_defs must return tuple");
+      LOG2_ERROR("get_param_defs must return tuple");
       return {};
     }
     auto n = PyTuple_Size(out.ptr());
@@ -542,8 +566,8 @@ static ParamDefs ParseParamDefs(const bp::object &func) {
     for (auto i = 0; i < n; ++i) {
       bp::object item = out[i];
       if (!PyTuple_Check(item.ptr()) || !ParseParamDef(item, &defs[i])) {
-        LOG_ERROR("Invalid param definition \""
-                  << bp::extract<const char *>(bp::str(item)) << "\"");
+        LOG2_ERROR("Invalid param definition \""
+                   << bp::extract<const char *>(bp::str(item)) << "\"");
         return {};
       }
     }
@@ -576,34 +600,82 @@ static bp::dict CreateParamsDict(const Algo::ParamMap &params) {
   return obj;
 }
 
-static bp::object CreateAlgo(Python *algo) {
-  LockGIL lock;
-  return bp::object(bp::ptr(algo));
-}
-
-Python *Python::Load(const std::string &module_name) {
+Python *Python::LoadModule(const std::string &module_name) {
   auto p = new Python;
   auto m = LoadPyModule(module_name);
   if (!m.get_param_defs) return nullptr;
-  p->def_ = ParseParamDefs(m.get_param_defs);
-  if (p->def_.empty()) return nullptr;
-  p->create_func_ = [m]() {
+  auto def = ParseParamDefs(m.get_param_defs);
+  if (def.empty()) {
+    delete p;
+    return nullptr;
+  }
+  p->py_ = m;
+  p->def_ = std::move(def);
+  return p;
+}
+
+Python *Python::Load(const std::string &module_name) {
+  LockGIL lock;
+  auto p = LoadModule(module_name);
+  if (!p) return p;
+  p->create_func_ = [p]() {
     auto p2 = new Python;
-    p2->py_ = m;
-    p2->obj_ = CreateAlgo(p2);
+    LockGIL lock;
+    p2->py_ = p->py_;
+    p2->obj_ = bp::object(bp::ptr(p2));
     return p2;
   };
   return p;
 }
 
+Python *Python::LoadTest(const std::string &module_name,
+                         const std::string &token) {
+  LockGIL lock(token);
+  LOG2_DEBUG("test token " << token);
+  auto fn = kAlgoPath / (module_name + ".py");
+  auto module_name2 = "_" + module_name + "_" + token;
+  auto fn2 = kAlgoPath / (module_name2 + ".py");
+  try {
+    fs::copy_file(fn, fn2, fs::copy_option::overwrite_if_exists);
+  } catch (const fs::filesystem_error &err) {
+    LOG2_ERROR(err.what());
+    return nullptr;
+  }
+  auto p = LoadModule(module_name2);
+  try {
+    fs::remove(fn2);
+  } catch (const fs::filesystem_error &err) {
+  }
+  if (p) {
+    p->set_name(module_name);
+    p->test_token_ = token;
+    p->obj_ = bp::object(bp::ptr(p));
+  } else {
+    Server::PublishTestMsg(token, "test " + token + " done", true);
+  }
+  return p;
+}
+
+void Python::SetTimeout(bp::object func, size_t milliseconds) {
+  Algo::SetTimeout(
+      [this, func]() {
+        LockGIL lock;
+        try {
+          func();
+        } catch (const bp::error_already_set &err) {
+          PrintPyError("set_timeout");
+        }
+      },
+      milliseconds);
+}
+
 std::string Python::Test() noexcept {
-  test_ = true;
   if (!py_.test) {
     auto msg = "python function \"test\" is required for running test";
-    LOG_ERROR(msg);
+    LOG2_ERROR(msg);
     return msg;
   }
-  LockGIL locker;
+  LOCK();
   try {
     auto params = py_.test(obj_);
     if (py_.on_start) {
@@ -622,7 +694,7 @@ std::string Python::Test() noexcept {
 
 std::string Python::OnStart(const ParamMap &params) noexcept {
   if (!py_.on_start) return {};
-  LockGIL locker;
+  LOCK();
   auto tmp = CreateParamsDict(params);
   try {
     auto out = py_.on_start(obj_, tmp);
@@ -640,7 +712,7 @@ std::string Python::OnStart(const ParamMap &params) noexcept {
 
 void Python::OnModify(const ParamMap &params) noexcept {
   if (!py_.on_modify) return;
-  LockGIL locker;
+  LOCK();
   auto tmp = CreateParamsDict(params);
   try {
     py_.on_modify(obj_, tmp);
@@ -650,8 +722,11 @@ void Python::OnModify(const ParamMap &params) noexcept {
 }
 
 void Python::OnStop() noexcept {
+  if (test_token_.size()) {
+    Server::PublishTestMsg(test_token_, "test " + test_token_ + " done", true);
+  }
   if (!py_.on_stop) return;
-  LockGIL locker;
+  LOCK();
   try {
     py_.on_stop(obj_);
   } catch (const bp::error_already_set &err) {
@@ -662,7 +737,7 @@ void Python::OnStop() noexcept {
 void Python::OnMarketTrade(const Instrument &inst, const MarketData &md,
                            const MarketData &md0) noexcept {
   if (!py_.on_market_trade) return;
-  LockGIL locker;
+  LOCK();
   try {
     py_.on_market_trade(obj_, bp::ptr(&inst));
   } catch (const bp::error_already_set &err) {
@@ -673,7 +748,7 @@ void Python::OnMarketTrade(const Instrument &inst, const MarketData &md,
 void Python::OnMarketQuote(const Instrument &inst, const MarketData &md,
                            const MarketData &md0) noexcept {
   if (!py_.on_market_quote) return;
-  LockGIL locker;
+  LOCK();
   try {
     py_.on_market_quote(obj_, bp::ptr(&inst));
   } catch (const bp::error_already_set &err) {
@@ -683,7 +758,7 @@ void Python::OnMarketQuote(const Instrument &inst, const MarketData &md,
 
 void Python::OnConfirmation(const Confirmation &cm) noexcept {
   if (!py_.on_confirmation) return;
-  LockGIL locker;
+  LOCK();
   try {
     py_.on_confirmation(obj_, bp::ptr(&cm));
   } catch (const bp::error_already_set &err) {

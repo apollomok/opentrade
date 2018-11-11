@@ -5,7 +5,6 @@
 
 #include "algo.h"
 #include "connection.h"
-#include "logger.h"
 
 namespace bp = boost::python;
 
@@ -24,7 +23,10 @@ struct PyModule {
 
 class Python : public Algo {
  public:
-  static Python* Load(const std::string& fn);
+  static Python* LoadModule(const std::string& module_name);
+  static Python* Load(const std::string& module_name);
+  static Python* LoadTest(const std::string& module_name,
+                          const std::string& token);
   std::string OnStart(const ParamMap& params) noexcept override;
   void OnModify(const ParamMap& params) noexcept override;
   std::string Test() noexcept override;
@@ -35,16 +37,13 @@ class Python : public Algo {
                      const MarketData& md0) noexcept override;
   void OnConfirmation(const Confirmation& cm) noexcept override;
   const ParamDefs& GetParamDefs() noexcept override;
-  void log_info(const std::string& msg) const { LOG_INFO(msg); }
-  void log_debug(const std::string& msg) const { LOG_DEBUG(msg); }
-  void log_warn(const std::string& msg) const { LOG_WARN(msg); }
-  void log_error(const std::string& msg) const { LOG_ERROR(msg); }
+  void SetTimeout(bp::object func, size_t milliseconds);
 
  private:
   PyModule py_;
   ParamDefs def_;
   bp::object obj_;
-  bool test_;
+  std::string test_token_;
 };
 
 void InitalizePy();

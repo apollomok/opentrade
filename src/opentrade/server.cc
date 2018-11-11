@@ -62,6 +62,16 @@ void Server::Publish(Confirmation::Ptr cm) {
   });
 }
 
+void Server::PublishTestMsg(const std::string& token, const std::string& msg,
+                            bool stopped) {
+  kIoService->post([token, msg, stopped]() {
+    LockGuard lock(kMutex);
+    for (auto& pair : kSocketMap) {
+      pair.second->SendTestMsg(token, msg, stopped);
+    }
+  });
+}
+
 void Server::Publish(const Algo& algo, const std::string& status,
                      const std::string& body, uint32_t seq) {
   kIoService->post([&algo, status, body, seq]() {
