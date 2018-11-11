@@ -29,7 +29,7 @@ def is_buy(self):
 
 
 def on_start(self, params):
-  log_debug(str(params))
+  log_debug(params)
   self.volume = 0
   self.st = st = params['Security']
   self.instrument = self.subscribe(st.sec, st.src)
@@ -63,16 +63,15 @@ def on_stop(self):
 
 def on_market_trade(self, instrument):
   md = instrument.md
-  log_debug(instrument.sec.symbol + ' trade: ' + str(md.open) + ' ' +
-            str(md.high) + ' ' + str(md.low) + ' ' + str(md.close) + ' ' +
-            str(md.qty) + ' ' + str(md.vwap) + ' ' + str(md.volume))
+  log_debug(instrument.sec.symbol, 'trade:', md.open, md.high, md.low, md.close,
+            md.qty, md.vwap, md.volume)
   self.volume += md.qty
 
 
 def on_market_quote(self, instrument):
   md = instrument.md
-  log_debug(instrument.sec.symbol + ' quote: ' + str(md.ask_price) + ' ' +
-            str(md.ask_size) + ' ' + str(md.bid_price) + ' ' + str(md.bid_size))
+  log_debug(instrument.sec.symbol, 'quote:', md.ask_price, md.ask_size,
+            md.bid_price, md.bid_size)
 
 
 def on_confirmation(self, confirmation):

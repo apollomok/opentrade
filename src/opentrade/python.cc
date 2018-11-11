@@ -28,23 +28,33 @@ struct LockGIL {
 
 #define LOCK() LockGIL lock(test_token_)
 
-#define PUBLISH_TEST_MSG(msg)                              \
+static std::string Args2Str(bp::tuple args) {
+  auto n = bp::len(args);
+  std::stringstream ss;
+  for (auto i = 0u; i < n; ++i) {
+    if (i > 0) ss << ' ';
+    ss << bp::extract<const char *>(bp::str(args[i]));
+  }
+  return ss.str();
+}
+
+#define PUBLISH_TEST_MSG(type, msg)                        \
   if (LockGIL::test_token.size()) {                        \
     std::stringstream os;                                  \
-    os << msg;                                             \
+    os << type << " - " << msg;                            \
     Server::PublishTestMsg(LockGIL::test_token, os.str()); \
   }
-#define LOG2_DEBUG(msg)  \
-  PUBLISH_TEST_MSG(msg); \
+#define LOG2_DEBUG(msg)           \
+  PUBLISH_TEST_MSG("DEBUG", msg); \
   LOG_DEBUG(msg)
-#define LOG2_INFO(msg)   \
-  PUBLISH_TEST_MSG(msg); \
+#define LOG2_INFO(msg)           \
+  PUBLISH_TEST_MSG("INFO", msg); \
   LOG_INFO(msg)
-#define LOG2_WARN(msg)   \
-  PUBLISH_TEST_MSG(msg); \
+#define LOG2_WARN(msg)           \
+  PUBLISH_TEST_MSG("WARN", msg); \
   LOG_WARN(msg)
-#define LOG2_ERROR(msg)  \
-  PUBLISH_TEST_MSG(msg); \
+#define LOG2_ERROR(msg)           \
+  PUBLISH_TEST_MSG("ERROR", msg); \
   LOG_ERROR(msg)
 
 BOOST_PYTHON_MODULE(opentrade) {
@@ -374,13 +384,30 @@ BOOST_PYTHON_MODULE(opentrade) {
               },
               bp::return_value_policy<bp::reference_existing_object>()));
 
-  bp::def("log_debug", +[](const std::string &msg) { LOG2_DEBUG(msg); });
-
-  bp::def("log_info", +[](const std::string &msg) { LOG2_INFO(msg); });
-
-  bp::def("log_warn", +[](const std::string &msg) { LOG2_WARN(msg); });
-
-  bp::def("log_error", +[](const std::string &msg) { LOG2_ERROR(msg); });
+  bp::def("log_debug", bp::raw_function(
+                           +[](bp::tuple args, bp::dict kwargs) {
+                             LOG2_DEBUG(Args2Str(args));
+                             return bp::object{};
+                           },
+                           0));
+  bp::def("log_info", bp::raw_function(
+                          +[](bp::tuple args, bp::dict kwargs) {
+                            LOG2_INFO(Args2Str(args));
+                            return bp::object{};
+                          },
+                          0));
+  bp::def("log_warn", bp::raw_function(
+                          +[](bp::tuple args, bp::dict kwargs) {
+                            LOG2_WARN(Args2Str(args));
+                            return bp::object{};
+                          },
+                          0));
+  bp::def("log_error", bp::raw_function(
+                           +[](bp::tuple args, bp::dict kwargs) {
+                             LOG2_ERROR(Args2Str(args));
+                             return bp::object{};
+                           },
+                           0));
 }
 
 #if PY_MAJOR_VERSION >= 3
