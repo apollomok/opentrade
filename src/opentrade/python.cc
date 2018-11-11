@@ -686,7 +686,7 @@ Python *Python::LoadTest(const std::string &module_name,
 void Python::SetTimeout(bp::object func, size_t milliseconds) {
   Algo::SetTimeout(
       [this, func]() {
-        LockGIL lock;
+        LOCK();
         try {
           func();
         } catch (const bp::error_already_set &err) {

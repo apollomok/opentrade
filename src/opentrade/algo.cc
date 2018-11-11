@@ -184,6 +184,8 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
         break;
       case kPendingCancel:
       case kCancelRejected:
+      case kPendingNew:
+      case kNew:
         break;
       default:
         return;
@@ -207,6 +209,8 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
         break;
       case kPendingCancel:
       case kCancelRejected:
+      case kPendingNew:
+      case kNew:
         inst->algo().OnConfirmation(*cm.get());
         break;
       default:
