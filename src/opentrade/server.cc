@@ -39,9 +39,7 @@ struct WsSocketWrapper : public Transport {
   std::string GetAddress() const { return ws_->remote_endpoint_address(); }
 
   void Send(const std::string& msg) override {
-    auto send_stream = std::make_shared<WsServer::SendStream>();
-    *send_stream << msg;
-    ws_->send(send_stream, [](const SimpleWeb::error_code& e) {
+    ws_->send(msg, [](const SimpleWeb::error_code& e) {
       if (e) {
         LOG_DEBUG("GATEWAY Server: Error sending message. "
                   << "Error: " << e << ", error message: " << e.message());
@@ -168,7 +166,7 @@ void Server::Start(int port, int nthreads) {
   auto& endpoint = kWsServer.endpoint["^/ot[/]?$"];
 
   endpoint.on_message = [](WsConnPtr connection,
-                           std::shared_ptr<WsServer::Message> message) {
+                           std::shared_ptr<WsServer::InMessage> message) {
     Connection::Ptr p;
     {
       LockGuard lock(kMutex);

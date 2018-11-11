@@ -1066,6 +1066,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
 
 void Connection::SendTestMsg(const std::string& token, const std::string& msg,
                              bool stopped) {
+  if (closed_) return;
   if (test_algo_tokens_.find(token) == test_algo_tokens_.end()) return;
   auto self = shared_from_this();
   strand_.post([self, msg, stopped, token]() {
