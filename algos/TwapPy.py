@@ -13,6 +13,7 @@ def test(self):
 
 
 def get_param_defs():
+  #  name default_value required min_value max_value precision
   return (
       ('Security', SecurityTuple(), True),
       ('Price', 0.0, False, 0, 10000000, 7),
@@ -28,7 +29,7 @@ def is_buy(self):
 
 
 def on_start(self, params):
-  log_debug(str(params));
+  log_debug(str(params))
   self.volume = 0
   self.st = st = params['Security']
   self.instrument = self.subscribe(st.sec, st.src)
