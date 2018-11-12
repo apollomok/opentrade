@@ -13,8 +13,8 @@ struct Limits {
   double msg_rate_per_security = 0;  // per security per second
   double order_qty = 0;
   double order_value = 0;
-  double value = 0;  // per security
-  double turnover = 0;
+  double value = 0;     // per security
+  double turnover = 0;  // per security
   double total_value = 0;
   double total_turnover = 0;
 };
