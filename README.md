@@ -24,7 +24,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 
 ---
 
-![Algo Editor](https://github.com/opentradesolutions/opentrade/blob/master/imgs/algo-editor.png)
+[![Algo Editor](https://github.com/opentradesolutions/opentrade/blob/master/imgs/algo-editor.png)](http://opentradesolutions.com/images/algo-editor.png)
 
 ---
 
