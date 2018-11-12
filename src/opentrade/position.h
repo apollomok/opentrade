@@ -17,7 +17,7 @@ namespace opentrade {
 
 struct Position : public PositionValue {
   double qty = 0;
-  double avg_price = 0;
+  double avg_px = 0;
   double unrealized_pnl = 0;
   double realized_pnl = 0;
 
@@ -36,7 +36,7 @@ struct Position : public PositionValue {
 
 struct Bod {
   double qty = 0;
-  double avg_price = 0;
+  double avg_px = 0;
   double realized_pnl = 0;
   time_t tm = 0;
   BrokerAccount::IdType broker_account_id = 0;

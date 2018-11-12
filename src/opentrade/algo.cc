@@ -149,7 +149,6 @@ void AlgoManager::Run(int nthreads) {
 
 void AlgoManager::Handle(Confirmation::Ptr cm) {
   assert(cm->order->inst);
-  assert(cm->order->id > 0);
   auto inst = const_cast<Instrument*>(cm->order->inst);
   static std::mutex kMutex;
   {
@@ -182,10 +181,13 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
         else
           inst->outstanding_sell_qty_ -= cm->leaves_qty;
         break;
+      case kUnconfirmedNew:
+      case kUnconfirmedCancel:
       case kPendingCancel:
       case kCancelRejected:
       case kPendingNew:
       case kNew:
+      case kRiskRejected:
         break;
       default:
         return;
@@ -207,10 +209,13 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
         inst->active_orders_.erase(cm->order);
         inst->algo().OnConfirmation(*cm.get());
         break;
+      case kUnconfirmedNew:
+      case kUnconfirmedCancel:
       case kPendingCancel:
       case kCancelRejected:
       case kPendingNew:
       case kNew:
+      case kRiskRejected:
         inst->algo().OnConfirmation(*cm.get());
         break;
       default:

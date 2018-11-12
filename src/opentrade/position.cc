@@ -17,31 +17,31 @@ inline void HandlePnl(double qty, double price, double multiplier, bool is_fx,
                       Position* p) {
   const auto qty0 = p->qty;
   auto& realized_pnl = p->realized_pnl;
-  auto& avg_price = p->avg_price;
+  auto& avg_px = p->avg_px;
   auto adj = 1.;
   if (is_fx) {
-    if (avg_price == 0) {
+    if (avg_px == 0) {
       if (price != 0) adj = 1 / price;
     } else {
-      adj = 1 / avg_price;
+      adj = 1 / avg_px;
     }
   }
   if ((qty0 > 0) && (qty < 0)) {  // sell trade to cover position
     if (qty0 > -qty) {
-      realized_pnl += (price - avg_price) * adj * -qty * multiplier;
+      realized_pnl += (price - avg_px) * adj * -qty * multiplier;
     } else {
-      realized_pnl += (price - avg_price) * adj * qty0 * multiplier;
-      avg_price = price;
+      realized_pnl += (price - avg_px) * adj * qty0 * multiplier;
+      avg_px = price;
     }
   } else if ((qty0 < 0) && (qty > 0)) {  // buy trade to cover position
     if (-qty0 > qty) {
-      realized_pnl += (avg_price - price) * adj * qty * multiplier;
+      realized_pnl += (avg_px - price) * adj * qty * multiplier;
     } else {
-      realized_pnl += (avg_price - price) * adj * -qty0 * multiplier;
-      avg_price = price;
+      realized_pnl += (avg_px - price) * adj * -qty0 * multiplier;
+      avg_px = price;
     }
   } else {  // open position
-    avg_price = (qty0 * avg_price + qty * price) / (qty0 + qty);
+    avg_px = (qty0 * avg_px + qty * price) / (qty0 + qty);
   }
 }
 
@@ -130,7 +130,7 @@ void PositionManager::Initialize() {
   auto query = R"(
     select distinct on (sub_account_id, security_id)
       sub_account_id, broker_account_id, security_id,
-      qty, avg_price, realized_pnl, tm
+      qty, avg_px, realized_pnl, tm
     from position
     where tm < :tm
     order by sub_account_id, security_id, id desc
@@ -145,11 +145,11 @@ void PositionManager::Initialize() {
     auto sec = SecurityManager::Instance().Get(security_id);
     if (!sec) continue;
     p.qty = Database::GetValue(*it, i++, 0.);
-    p.avg_price = Database::GetValue(*it, i++, 0.);
+    p.avg_px = Database::GetValue(*it, i++, 0.);
     p.realized_pnl = Database::GetValue(*it, i++, 0.);
     Bod bod{};
     bod.qty = p.qty;
-    bod.avg_price = p.avg_price;
+    bod.avg_px = p.avg_px;
     bod.realized_pnl = p.realized_pnl;
     bod.broker_account_id = broker_account_id;
     tm = Database::GetValue(*it, i++, tm);
@@ -159,7 +159,7 @@ void PositionManager::Initialize() {
     auto& p2 =
         self.broker_positions_[std::make_pair(broker_account_id, security_id)];
     p2.realized_pnl += p.realized_pnl;
-    HandlePnl(p.qty, p.avg_price, sec->multiplier * sec->rate,
+    HandlePnl(p.qty, p.avg_px, sec->multiplier * sec->rate,
               sec->type == opentrade::kForexPair, &p2);
     p2.qty += p.qty;
   }
@@ -213,27 +213,27 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           static Security::IdType security_id;
           static BrokerAccount::IdType broker_account_id;
           static double qty;
-          static double avg_price;
+          static double avg_px;
           static double realized_pnl;
           static std::string desc;
           static const char* cmd = R"(
             insert into position(user_id, sub_account_id, security_id, 
-            broker_account_id, qty, avg_price, realized_pnl, tm, "desc") 
+            broker_account_id, qty, avg_px, realized_pnl, tm, "desc") 
             values(:user_id, :sub_account_id, :security_id, :broker_account_id,
-            :qty, :avg_price, :realized_pnl, now() at time zone 'utc', :desc)
+            :qty, :avg_px, :realized_pnl, now() at time zone 'utc', :desc)
         )";
           static soci::statement st =
               (this->sql_->prepare << cmd, soci::use(user_id),
                soci::use(sub_account_id), soci::use(security_id),
-               soci::use(broker_account_id), soci::use(qty),
-               soci::use(avg_price), soci::use(realized_pnl), soci::use(desc));
+               soci::use(broker_account_id), soci::use(qty), soci::use(avg_px),
+               soci::use(realized_pnl), soci::use(desc));
           auto ord = cm->order;
           user_id = ord->user->id;
           sub_account_id = ord->sub_account->id;
           security_id = ord->sec->id;
           broker_account_id = ord->broker_account->id;
           qty = pos.qty;
-          avg_price = pos.avg_price;
+          avg_px = pos.avg_px;
           realized_pnl = pos.realized_pnl;
           static std::stringstream os;
           os.str("");
@@ -312,15 +312,15 @@ void PositionManager::UpdatePnl() {
     auto price = sec->CurrentPrice();
     if (!price) continue;
     auto adj = 1.;
-    auto avg_price = pos.avg_price;
+    auto avg_px = pos.avg_px;
     if (sec->type == kForexPair) {
-      if (avg_price == 0) {
+      if (avg_px == 0) {
         if (price != 0) adj = 1 / price;
       } else {
-        adj = 1 / avg_price;
+        adj = 1 / avg_px;
       }
     }
-    pos.unrealized_pnl = pos.qty * (price - avg_price) * adj;
+    pos.unrealized_pnl = pos.qty * (price - avg_px) * adj;
     pnl.second += pos.unrealized_pnl;
   }
   for (auto& pair : pnls) {

@@ -380,7 +380,7 @@ void Connection::OnMessage(const std::string& msg) {
               acc,
               sec_id,
               pos.qty,
-              pos.avg_price,
+              pos.avg_px,
               pos.realized_pnl,
               pos.broker_account_id,
               pos.tm,

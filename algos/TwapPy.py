@@ -75,10 +75,12 @@ def on_market_quote(self, instrument):
 
 
 def on_confirmation(self, confirmation):
-  log_debug('exec_id=' + str(confirmation.exec_id) + ', order_id=' + str(
-      confirmation.order_id) + ', exec_type=' + str(confirmation.exec_type) +
-            ', last_shares=' + str(confirmation.last_shares) + ', last_px=' +
-            str(confirmation.last_px))
+  c = confirmation
+  o = c.order
+  log_debug('exec_id=', c.exec_id, 'order_id=', c.order_id, 'exec_type=',
+            c.exec_type, 'last_shares=', c.last_shares, 'last_px=', c.last_px,
+            'cum_qty=', o.cum_qty, 'avg_px=', o.avg_px, 'qty=', o.qty, 'price=',
+            o.price, 'type=', o.type, 'text=', c.text)
   if self.instrument.total_qty >= self.st.qty: self.stop()
 
 
@@ -166,11 +168,11 @@ def timer(self):
       else:
         return
   else:
-    type = OrderType.market
+    c.type = OrderType.market
   if self.price > 0 and ((is_buy(self) and c.price > self.price) or
                          ((not is_buy(self)) and c.price < self.price)):
     return
   c.acc = st.acc
-  c.qty = st.qty
+  c.qty = would_qty
   c.side = st.side
   self.place(c, inst)

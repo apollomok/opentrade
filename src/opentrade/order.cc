@@ -101,6 +101,7 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
   if (cm->order->id <= 0) {  // risk rejected
     assert(!offline);
     Server::Publish(cm);
+    AlgoManager::Instance().Handle(cm);
     return;
   }
   UpdateOrder(cm);

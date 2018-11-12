@@ -146,7 +146,7 @@ static const char create_tables_sql[] = R"(
     security_id int2 references security(id), -- on update cascade on delete cascade,
     tm timestamp not null,
     qty float8 not null,
-    avg_price float8 not null,
+    avg_px float8 not null,
     realized_pnl float8 not null,
     "desc" varchar(1000),
     primary key(id)

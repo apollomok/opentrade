@@ -142,7 +142,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("__str__",
            +[](const Position &p) {
              std::stringstream ss;
-             ss << "qty=" << p.qty << ", avg_price=" << p.avg_price
+             ss << "qty=" << p.qty << ", avg_px=" << p.avg_px
                 << ", total_bought_qty=" << p.total_bought_qty
                 << ", total_sold_qty=" << p.total_sold_qty
                 << ", total_outstanding_buy_qty=" << p.total_outstanding_buy_qty
@@ -153,7 +153,7 @@ BOOST_PYTHON_MODULE(opentrade) {
              return ss.str();
            })
       .def_readonly("qty", &Position::qty)
-      .def_readonly("avg_price", &Position::avg_price)
+      .def_readonly("avg_px", &Position::avg_px)
       .def_readonly("unrealized_pnl", &Position::unrealized_pnl)
       .def_readonly("realized_pnl", &Position::realized_pnl)
       .def_readonly("total_bought_qty", &Position::total_bought_qty)
