@@ -10,6 +10,7 @@
 #include "account.h"
 #include "common.h"
 #include "order.h"
+#include "position_value.h"
 #include "security.h"
 #include "utility.h"
 

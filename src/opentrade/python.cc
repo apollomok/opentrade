@@ -14,7 +14,7 @@ static bp::object kOpentrade;
 static void PrintPyError(const char *);
 
 struct LockGIL {
-  LockGIL(const std::string &token = "") {
+  explicit LockGIL(const std::string &token = "") {
     m.lock();
     test_token_saved = test_token;
     test_token = token;

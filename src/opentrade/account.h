@@ -5,7 +5,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "common.h"
+#include "position_value.h"
+#include "risk.h"
 #include "security.h"
 #include "utility.h"
 
