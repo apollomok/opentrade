@@ -125,6 +125,8 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
 }
 
 bool RiskManager::CheckMsgRate(const Order& ord) {
+  if (disabled_) return true;
+
   assert(ord.sub_account);
   assert(ord.sec);
   assert(ord.user);
@@ -143,6 +145,8 @@ bool RiskManager::CheckMsgRate(const Order& ord) {
 }
 
 bool RiskManager::Check(const Order& ord) {
+  if (disabled_) return true;
+
   assert(ord.sub_account);
   assert(ord.sec);
   assert(ord.user);

@@ -14,6 +14,10 @@ class RiskManager : public Singleton<RiskManager> {
  public:
   bool Check(const Order& ord);
   bool CheckMsgRate(const Order& ord);
+  void Disable() { disabled_ = true; }
+
+ private:
+  bool disabled_ = false;
 };
 
 }  // namespace opentrade

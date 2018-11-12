@@ -14,6 +14,7 @@
 #include "market_data.h"
 #include "position.h"
 #include "python.h"
+#include "risk.h"
 #include "security.h"
 #include "server.h"
 
@@ -149,6 +150,11 @@ int main(int argc, char *argv[]) {
   opentrade::AccountManager::Initialize();
   PositionManager::Initialize();
   opentrade::GlobalOrderBook::Initialize();
+
+  if (disable_rms) {
+    LOG_INFO("rms disabled");
+    opentrade::RiskManager::Instance().Disable();
+  }
 
   LOG_INFO("Loading python algos from " << kAlgoPath);
   auto npy = 0;
