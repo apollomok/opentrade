@@ -8,10 +8,7 @@ types = ('STK', 'CASH', 'CMDTY', 'FUT', 'OPT', 'IND', 'FOP', 'WAR', 'BOND',
 
 def main():
   conn = pg8000.connect(
-      host='127.0.0.1',
-      database='opentrade',
-      user='postgres',
-      password='test')
+      host='127.0.0.1', database='opentrade', user='postgres', password='test')
 
   cursor = conn.cursor()
   exchanges = {}
@@ -22,8 +19,7 @@ def main():
     if not m[0].startswith('USD'): continue
     cur = m[0][3:]
     val = 1 / m[1]
-    cursor.execute('update security set rate=%s where currency=%s',
-                   (val, cur))
+    cursor.execute('update security set rate=%s where currency=%s', (val, cur))
   conn.commit()
 
 

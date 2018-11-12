@@ -31,10 +31,7 @@ def main():
     return
 
   conn = pg8000.connect(
-      host='127.0.0.1',
-      database='opentrade',
-      user='postgres',
-      password='test')
+      host='127.0.0.1', database='opentrade', user='postgres', password='test')
 
   cursor = conn.cursor()
   exchanges = {}
