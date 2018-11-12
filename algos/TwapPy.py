@@ -58,7 +58,7 @@ def on_modify(self, params):
 
 
 def on_stop(self):
-  log_debug('[' + self.name + ' ' + str(self.id) + '] stopped')
+  log_debug('[', self.name, self.id, '] stopped')
 
 
 def on_market_trade(self, instrument):

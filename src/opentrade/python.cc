@@ -232,6 +232,10 @@ BOOST_PYTHON_MODULE(opentrade) {
                 << ", acc=" << (st.acc ? st.acc->name : "");
              return ss.str();
            })
+      .def("__repr__",
+           +[](const SecurityTuple &st) {
+             return bp::str(bp::object(bp::ptr(&st)));
+           })
       .def_readwrite("src", &SecurityTuple::src)
       .def_readwrite("side", &SecurityTuple::side)
       .def_readwrite("qty", &SecurityTuple::qty)
