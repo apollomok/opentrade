@@ -81,7 +81,12 @@ def on_confirmation(self, confirmation):
             c.exec_type, 'last_shares=', c.last_shares, 'last_px=', c.last_px,
             'cum_qty=', o.cum_qty, 'avg_px=', o.avg_px, 'qty=', o.qty, 'price=',
             o.price, 'type=', o.type, 'text=', c.text)
-  if self.instrument.total_qty >= self.st.qty: self.stop()
+  if c.last_shares > 0:
+    qty = self.instrument.total_qty
+    log_debug('finished', qty, 'leaves', self.st.qty - qty, 'time elapsed',
+              time.time() - self.begin_time, '/',
+              self.end_time - self.begin_time)
+    if qty >= self.st.qty: self.stop()
 
 
 def timer(self):

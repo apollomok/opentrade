@@ -16,14 +16,17 @@ static void PrintPyError(const char *);
 struct LockGIL {
   LockGIL(const std::string &token = "") {
     m.lock();
+    test_token_saved = test_token;
     test_token = token;
   }
   ~LockGIL() {
-    test_token = "";
+    test_token = test_token_saved;
     m.unlock();
   }
-  static inline std::mutex m;
+  static inline std::recursive_mutex
+      m;  // happens in calling Algo::Stop, to-do: will remove
   static inline std::string test_token;
+  static inline std::string test_token_saved;
 };
 
 #define LOCK() LockGIL lock(test_token_)
@@ -311,7 +314,13 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("text", &Confirmation::text)
       .def_readonly("exec_type", &Confirmation::exec_type)
       .def_readonly("exec_trans_type", &Confirmation::exec_trans_type)
-      .def_readonly("last_shares", &Confirmation::last_shares)
+      .add_property(
+          "last_shares",
+          +[](const Confirmation &c) {
+            if (c.exec_type == kFilled || c.exec_type == kPartiallyFilled)
+              return c.last_shares;
+            return 0.;
+          })
       .def_readonly("last_px", &Confirmation::last_px);
 
   bp::class_<Order, bp::bases<Contract>>("Order")
@@ -701,12 +710,12 @@ void Python::SetTimeout(bp::object func, size_t milliseconds) {
 }
 
 std::string Python::Test() noexcept {
+  LOCK();
   if (!py_.test) {
     auto msg = "python function \"test\" is required for running test";
     LOG2_ERROR(msg);
     return msg;
   }
-  LOCK();
   try {
     auto params = py_.test(obj_);
     if (py_.on_start) {
