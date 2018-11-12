@@ -12,7 +12,6 @@
 #include "order.h"
 #include "position_value.h"
 #include "security.h"
-#include "utility.h"
 
 namespace opentrade {
 

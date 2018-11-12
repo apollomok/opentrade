@@ -7,7 +7,6 @@
 
 #include "adapter.h"
 #include "security.h"
-#include "utility.h"
 
 namespace opentrade {
 

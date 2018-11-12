@@ -12,7 +12,6 @@
 #include <variant>
 
 #include "account.h"
-#include "common.h"
 #include "security.h"
 
 namespace opentrade {

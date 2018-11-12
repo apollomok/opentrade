@@ -3,7 +3,6 @@
 
 #include "adapter.h"
 #include "order.h"
-#include "utility.h"
 
 namespace opentrade {
 
