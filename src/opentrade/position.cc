@@ -99,6 +99,10 @@ inline void Position::HandleNew(bool is_buy, double qty, double price,
 }
 
 void PositionManager::Initialize() {
+#ifdef BACKTEST
+  return;
+#endif
+
   Instance().sql_ = Database::Session();
 
   auto& self = Instance();
@@ -206,6 +210,9 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       const_cast<User*>(ord->user)->position_value.HandleTrade(
           is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx);
       if (offline) return;
+#ifdef BACKTEST
+      return;
+#endif
       kDatabaseTaskPool.AddTask([this, pos, cm]() {
         try {
           static User::IdType user_id;

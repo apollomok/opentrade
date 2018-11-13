@@ -72,6 +72,9 @@ struct HttpWrapper : public Transport {
 };
 
 void Server::Publish(Confirmation::Ptr cm) {
+#ifdef BACKTEST
+  return;
+#endif
   kIoService->post([cm]() {
     LockGuard lock(kMutex);
     for (auto& pair : kSocketMap) {

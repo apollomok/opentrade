@@ -202,7 +202,14 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   std::vector<std::thread> threads_;
   boost::asio::io_service io_service_;
   std::unique_ptr<boost::asio::io_service::work> work_;
+#ifdef BACKTEST
+  struct StrandMock {
+    void post(std::function<void()> func) { func(); }
+  };
+  std::vector<StrandMock> strands_;
+#else
   std::vector<boost::asio::strand> strands_;
+#endif
   std::ofstream of_;
   uint32_t seq_counter_ = 0;
   friend class AlgoRunner;

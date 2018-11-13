@@ -108,6 +108,9 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
   PositionManager::Instance().Handle(cm, offline);
   if (cm->order->inst) AlgoManager::Instance().Handle(cm);
   if (offline) return;
+#ifdef BACKTEST
+  return;
+#endif
   kWriteTaskPool.AddTask([this, cm]() {
     cm->seq = ++seq_counter_;
     Server::Publish(cm);

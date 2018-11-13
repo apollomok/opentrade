@@ -135,6 +135,12 @@ void AlgoManager::Update(DataSrc::IdType src, Security::IdType id) {
 }
 
 void AlgoManager::Run(int nthreads) {
+#ifdef BACKTEST
+  threads_.resize(1);
+  strands_.resize(1);
+  runners_ = new AlgoRunner[1]{};
+  runners_[0].tid_ = std::this_thread::get_id();
+#else
   nthreads = std::max(1, nthreads);
   runners_ = new AlgoRunner[nthreads]{};
   LOG_INFO("algo_threads=" << nthreads);
@@ -145,6 +151,7 @@ void AlgoManager::Run(int nthreads) {
     strands_.emplace_back(io_service_);
     runners_[i].tid_ = threads_[i].get_id();
   }
+#endif
 }
 
 void AlgoManager::Handle(Confirmation::Ptr cm) {
@@ -245,6 +252,9 @@ void AlgoManager::Stop(const std::string& token) {
 
 void AlgoManager::Persist(const Algo& algo, const std::string& status,
                           const std::string& body) {
+#ifdef BACKTEST
+  return;
+#endif
   kWriteTaskPool.AddTask([this, &algo, status, body]() {
     std::stringstream ss;
     ss << time(nullptr) << ' ' << algo.name() << ' ' << status << ' ' << body;
@@ -333,12 +343,15 @@ void Algo::SetTimeout(std::function<void()> func, uint32_t milliseconds) {
 
 void AlgoManager::SetTimeout(Algo::IdType id, std::function<void()> func,
                              uint32_t milliseconds) {
+#ifdef BACKTEST
+#else
   auto t = new boost::asio::deadline_timer(
       io_service_, boost::posix_time::milliseconds(milliseconds));
   t->async_wait(strands_[id % threads_.size()].wrap([func, t](auto) {
     func();
     delete t;
   }));
+#endif
 }
 
 Order* Algo::Place(const Contract& contract, Instrument* inst) {

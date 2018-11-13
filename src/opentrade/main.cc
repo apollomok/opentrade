@@ -186,6 +186,11 @@ int main(int argc, char *argv[]) {
   }
 
   AlgoManager::Instance().Run(algo_threads);
+
+#ifdef BACKTEST
+  return 0;
+#endif
+
   PositionManager::Instance().UpdatePnl();
   opentrade::Server::Start(port, io_threads);
 
