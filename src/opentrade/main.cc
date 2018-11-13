@@ -185,8 +185,8 @@ int main(int argc, char *argv[]) {
     p.second->Start();
   }
 
-  PositionManager::Instance().UpdatePnl();
   AlgoManager::Instance().Run(algo_threads);
+  PositionManager::Instance().UpdatePnl();
   opentrade::Server::Start(port, io_threads);
 
   return 0;
