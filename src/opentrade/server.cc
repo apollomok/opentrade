@@ -17,6 +17,8 @@ namespace opentrade {
 using WsServer = SimpleWeb::SocketServer<SimpleWeb::WS>;
 using HttpServer = SimpleWeb::Server<SimpleWeb::HTTP>;
 typedef std::shared_ptr<WsServer::Connection> WsConnPtr;
+typedef std::shared_ptr<HttpServer::Response> ResponsePtr;
+typedef std::shared_ptr<HttpServer::Request> RequestPtr;
 typedef std::lock_guard<std::mutex> LockGuard;
 
 static HttpServer kHttpServer;
@@ -51,6 +53,24 @@ struct WsSocketWrapper : public Transport {
   WsConnPtr ws_;
 };
 
+struct HttpWrapper : public Transport {
+  explicit HttpWrapper(ResponsePtr res, RequestPtr req) : res_(res), req_(req) {
+    stateless = true;
+  }
+
+  std::string GetAddress() const { return req_->remote_endpoint_address(); }
+
+  void Send(const std::string& msg) override {
+    *res_ << "HTTP/1.1 200 OK\r\n"
+          << "Content-Length: " << msg.length() << "\r\n\r\n"
+          << msg;
+  }
+
+ private:
+  ResponsePtr res_;
+  RequestPtr req_;
+};
+
 void Server::Publish(Confirmation::Ptr cm) {
   kIoService->post([cm]() {
     LockGuard lock(kMutex);
@@ -81,76 +101,70 @@ void Server::Publish(const Algo& algo, const std::string& status,
 }
 
 static void ServeStatic() {
-  kHttpServer.default_resource["GET"] =
-      [](std::shared_ptr<HttpServer::Response> response,
-         std::shared_ptr<HttpServer::Request> request) {
-        try {
-          auto web_root_path = boost::filesystem::canonical("web");
-          auto path =
-              boost::filesystem::canonical(web_root_path / request->path);
-          // Check if path is within web_root_path
-          if (std::distance(web_root_path.begin(), web_root_path.end()) >
-                  std::distance(path.begin(), path.end()) ||
-              !std::equal(web_root_path.begin(), web_root_path.end(),
-                          path.begin()))
-            throw std::invalid_argument("path must be within root path");
-          if (boost::filesystem::is_directory(path)) path /= "index.html";
+  kHttpServer.default_resource["GET"] = [](ResponsePtr response,
+                                           RequestPtr request) {
+    try {
+      auto web_root_path = boost::filesystem::canonical("web");
+      auto path = boost::filesystem::canonical(web_root_path / request->path);
+      // Check if path is within web_root_path
+      if (std::distance(web_root_path.begin(), web_root_path.end()) >
+              std::distance(path.begin(), path.end()) ||
+          !std::equal(web_root_path.begin(), web_root_path.end(), path.begin()))
+        throw std::invalid_argument("path must be within root path");
+      if (boost::filesystem::is_directory(path)) path /= "index.html";
 
-          SimpleWeb::CaseInsensitiveMultimap header;
+      SimpleWeb::CaseInsensitiveMultimap header;
 
-          // Uncomment the following line to enable Cache-Control
-          // header.emplace("Cache-Control", "max-age=86400");
+      // Uncomment the following line to enable Cache-Control
+      // header.emplace("Cache-Control", "max-age=86400");
 
-          auto ifs = std::make_shared<std::ifstream>();
-          ifs->open(path.string(),
-                    std::ifstream::in | std::ios::binary | std::ios::ate);
+      auto ifs = std::make_shared<std::ifstream>();
+      ifs->open(path.string(),
+                std::ifstream::in | std::ios::binary | std::ios::ate);
 
-          if (*ifs) {
-            auto length = ifs->tellg();
-            ifs->seekg(0, std::ios::beg);
+      if (*ifs) {
+        auto length = ifs->tellg();
+        ifs->seekg(0, std::ios::beg);
 
-            header.emplace("Content-Length", std::to_string(length));
-            response->write(header);
+        header.emplace("Content-Length", std::to_string(length));
+        response->write(header);
 
-            // Trick to define a recursive function within this scope (for
-            // example purposes)
-            class FileServer {
-             public:
-              static void read_and_send(
-                  const std::shared_ptr<HttpServer::Response>& response,
-                  const std::shared_ptr<std::ifstream>& ifs) {
-                // Read and send 128 KB at a time
-                static std::vector<char> buffer(
-                    131072);  // Safe when server is running on one thread
-                std::streamsize read_length;
-                if ((read_length =
-                         ifs->read(&buffer[0],
-                                   static_cast<std::streamsize>(buffer.size()))
-                             .gcount()) > 0) {
-                  response->write(&buffer[0], read_length);
-                  if (read_length ==
-                      static_cast<std::streamsize>(buffer.size())) {
-                    response->send(
-                        [response, ifs](const SimpleWeb::error_code& ec) {
-                          if (!ec)
-                            read_and_send(response, ifs);
-                          else
-                            LOG_DEBUG("Http connection interrupted");
-                        });
-                  }
-                }
+        // Trick to define a recursive function within this scope (for
+        // example purposes)
+        class FileServer {
+         public:
+          static void read_and_send(ResponsePtr response,
+                                    const std::shared_ptr<std::ifstream> ifs) {
+            // Read and send 128 KB at a time
+            static std::vector<char> buffer(
+                131072);  // Safe when server is running on one thread
+            std::streamsize read_length;
+            if ((read_length =
+                     ifs->read(&buffer[0],
+                               static_cast<std::streamsize>(buffer.size()))
+                         .gcount()) > 0) {
+              response->write(&buffer[0], read_length);
+              if (read_length == static_cast<std::streamsize>(buffer.size())) {
+                response->send(
+                    [response, ifs](const SimpleWeb::error_code& ec) {
+                      if (!ec)
+                        read_and_send(response, ifs);
+                      else
+                        LOG_DEBUG("Http connection interrupted");
+                    });
               }
-            };
-            FileServer::read_and_send(response, ifs);
-          } else {
-            throw std::invalid_argument("could not read file");
+            }
           }
-        } catch (const std::exception& e) {
-          response->write(
-              SimpleWeb::StatusCode::client_error_bad_request,
-              "Could not open path " + request->path + ": " + e.what());
-        }
-      };
+        };
+        FileServer::read_and_send(response, ifs);
+      } else {
+        throw std::invalid_argument("could not read file");
+      }
+    } catch (const std::exception& e) {
+      response->write(SimpleWeb::StatusCode::client_error_bad_request,
+                      "Could not open path " + request->path + ": " + e.what());
+    }
+  };
 }
 
 void Server::Start(int port, int nthreads) {
@@ -172,14 +186,14 @@ void Server::Start(int port, int nthreads) {
       LockGuard lock(kMutex);
       p = kSocketMap[connection];
     }
-    if (p) p->OnMessage(message->string());
+    if (p) p->OnMessageAsync(message->string());
   };
 
   endpoint.on_open = [](WsConnPtr connection) {
     LOG_DEBUG("Websocket Server: Opened connection "
               << connection->remote_endpoint_address());
-    Connection::Ptr p(new Connection(
-        std::make_shared<WsSocketWrapper>(connection), kIoService));
+    auto p = std::make_shared<Connection>(
+        std::make_shared<WsSocketWrapper>(connection), kIoService);
     {
       LockGuard lock(kMutex);
       kSocketMap[connection] = p;
@@ -220,8 +234,18 @@ void Server::Start(int port, int nthreads) {
 
   ServeStatic();
 
-  kHttpServer.on_error = [](std::shared_ptr<HttpServer::Request> /*request*/,
-                            const SimpleWeb::error_code& /*ec*/) {};
+  kHttpServer.resource["^/api$"]["POST"] = [](ResponsePtr response,
+                                              RequestPtr request) {
+    auto sessionToken = FindInMap(request->header, "session-token");
+    std::make_shared<Connection>(
+        std::make_shared<HttpWrapper>(response, request), kIoService)
+        ->OnMessageSync(request->content.string(), sessionToken);
+  };
+
+  kHttpServer.on_error = [](RequestPtr /*request*/,
+                            const SimpleWeb::error_code& e) {
+    LOG_DEBUG("Http Server Error: " << e.message());
+  };
 
   try {
     kWsServer.start();

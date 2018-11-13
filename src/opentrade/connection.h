@@ -22,6 +22,7 @@ struct Transport {
   typedef std::shared_ptr<Transport> Ptr;
   virtual void Send(const std::string& msg) = 0;
   virtual std::string GetAddress() const = 0;
+  bool stateless = false;
 };
 
 class Connection : public std::enable_shared_from_this<Connection> {
@@ -30,10 +31,12 @@ class Connection : public std::enable_shared_from_this<Connection> {
   Connection(Transport::Ptr transport,
              std::shared_ptr<boost::asio::io_service> service);
   ~Connection();
-  void OnMessage(const std::string&);
+  void OnMessageAsync(const std::string&);
+  void OnMessageSync(const std::string&, const std::string& token = "");
   void OnAlgo(const json& j, const std::string& msg);
   void OnOrder(const json& j, const std::string& msg);
   void OnSecurities(const json& j);
+  void OnPosition(const json& j, const std::string& msg);
   void OnLogin(const std::string& action, const json& j);
   void Send(Confirmation::Ptr cm);
   void Send(const Algo& algo, const std::string& status,

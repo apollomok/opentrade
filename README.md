@@ -13,10 +13,11 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 * Strictly follows [Google C++ Style Guild](https://google.github.io/styleguide/cppguide.html)
 * Multi-level account functionality
 * Super simple API interfaces for market data adapter (C++), exchange connectivity (C++) and execution/alpha algo (C++ and Python)
+* **REST** and web socket interface
 * Multi-source market data support, e.g., different FX pricing sources
 * Pre-trade risk limits on multi-level accounts
 * Post-trade risk integrated with [OpenRisk](https://github.com/opentradesolutions/openrisk)
-* Edit and test Python algo online
+* Edit and test **Python** algo online
 * [Multi-theme web frontend](http://demo.opentradesolutions.com)
 * Fully thread-safe design, everything can be modified during runtime, e.g., reload symbol list, modify tick size table, lot-size, exchange timezone and trading/break period etc.
 * Built-in execution simulator
