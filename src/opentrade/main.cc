@@ -184,9 +184,6 @@ int main(int argc, char *argv[]) {
   for (auto &p : ExchangeConnectivityManager::Instance().adapters()) {
     p.second->Start();
   }
-  for (auto &p : AlgoManager::Instance().adapters()) {
-    p.second->Start();
-  }
 
   PositionManager::Instance().UpdatePnl();
   AlgoManager::Instance().Run(algo_threads);

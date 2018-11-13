@@ -81,8 +81,6 @@ class Algo : public Adapter {
     return {};
   }
 
-  // called only once when app starts, you can load global data shared by all
-  // algo instance here.
   void Start() noexcept override {}
 
   bool is_active() const { return is_active_; }
