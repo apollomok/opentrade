@@ -257,7 +257,7 @@ void AlgoManager::Persist(const Algo& algo, const std::string& status,
 #endif
   kWriteTaskPool.AddTask([this, &algo, status, body]() {
     std::stringstream ss;
-    ss << time(nullptr) << ' ' << algo.name() << ' ' << status << ' ' << body;
+    ss << Time() << ' ' << algo.name() << ' ' << status << ' ' << body;
     auto str = ss.str();
     auto seq = ++seq_counter_;
     Server::Publish(algo, status, body, seq);
@@ -344,6 +344,8 @@ void Algo::SetTimeout(std::function<void()> func, uint32_t milliseconds) {
 void AlgoManager::SetTimeout(Algo::IdType id, std::function<void()> func,
                              uint32_t milliseconds) {
 #ifdef BACKTEST
+  auto tm = kTime + milliseconds;
+  kTimers.emplace(tm, func);
 #else
   auto t = new boost::asio::deadline_timer(
       io_service_, boost::posix_time::milliseconds(milliseconds));

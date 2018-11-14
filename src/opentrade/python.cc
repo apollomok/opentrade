@@ -422,6 +422,13 @@ BOOST_PYTHON_MODULE(opentrade) {
                              return bp::object{};
                            },
                            0));
+
+  bp::def("get_time", +[]() { return NowUtcInMicro() / 1e6; });
+  bp::def("get_datetime", +[]() {
+    return bp::import("datetime")
+        .attr("datetime")
+        .attr("fromtimestamp")(NowUtcInMicro() / 1e6);
+  });
 }
 
 #if PY_MAJOR_VERSION >= 3

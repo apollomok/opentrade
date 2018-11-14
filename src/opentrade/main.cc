@@ -134,15 +134,17 @@ int main(int argc, char *argv[]) {
     }
     if (section_name.find("md_") == 0) {
       auto md = dynamic_cast<opentrade::MarketDataAdapter *>(adapter);
-      if (!md) LOG_FATAL("Failed to create MarketDataAdapter");
+      if (!md) LOG_FATAL("Failed to load MarketDataAdapter " << section_name);
       MarketDataManager::Instance().Add(md);
     } else if (section_name.find("ec_") == 0) {
       auto ec = dynamic_cast<opentrade::ExchangeConnectivityAdapter *>(adapter);
-      if (!ec) LOG_FATAL("Failed to create ExchangeConnectivityAdapter");
+      if (!ec)
+        LOG_FATAL("Failed to load ExchangeConnectivityAdapter "
+                  << section_name);
       ExchangeConnectivityManager::Instance().Add(ec);
     } else {
       auto algo = dynamic_cast<opentrade::Algo *>(adapter);
-      if (!algo) LOG_FATAL("Failed to create Algo");
+      if (!algo) LOG_FATAL("Failed to load Algo " << section_name);
       AlgoManager::Instance().Add(algo);
     }
   }
@@ -157,26 +159,33 @@ int main(int argc, char *argv[]) {
   }
 
   LOG_INFO("Loading python algos from " << kAlgoPath);
-  auto npy = 0;
   if (fs::is_directory(kAlgoPath)) {
     for (auto &entry :
          boost::make_iterator_range(fs::directory_iterator(kAlgoPath), {})) {
-      auto tmp = entry.path();
-      auto fn = tmp.filename().string();
-      if (tmp.extension() == ".py" && fn[0] != '_' && fn[0] != '.') {
-        fn = fn.substr(0, fn.length() - 3);
-        auto adapter = opentrade::Python::Load(fn);
-        if (!adapter) {
-          LOG_ERROR("Failed to load " << tmp);
-        } else {
-          adapter->set_name(fn);
-          AlgoManager::Instance().Add(adapter);
-          npy++;
+      auto path = entry.path();
+      auto fn = path.filename().string();
+      if (fn[0] == '_' && fn[0] == '.') continue;
+      opentrade::Algo *algo = nullptr;
+      auto algoname = fn.substr(0, fn.length() - 3);
+      if (path.extension() == ".py") {
+        algo = opentrade::Python::Load(algoname);
+      } else if (path.extension() == ".so") {
+        auto adapter = opentrade::Adapter::Load(path.string());
+        if (adapter->GetVersion() != opentrade::kApiVersion) {
+          LOG_FATAL("Version mismatch");
         }
+        algo = dynamic_cast<opentrade::Algo *>(adapter);
+      } else {
+        continue;
+      }
+      if (algo) {
+        algo->set_name(algoname);
+        AlgoManager::Instance().Add(algo);
+      } else {
+        LOG_ERROR("Failed to load algo file " << path);
       }
     }
   }
-  LOG_INFO(npy << " python algos loaded");
 
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();

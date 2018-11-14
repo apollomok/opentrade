@@ -1,4 +1,3 @@
-import time
 import math
 from opentrade import *
 
@@ -36,7 +35,7 @@ def on_start(self, params):
   seconds = params.get('ValidSeconds', 0)
   if seconds < 60:
     return 'Too short ValidSeconds, must be >= 60'
-  self.begin_time = time.time()
+  self.begin_time = get_time()
   self.end_time = self.begin_time + seconds
   self.price = params.get('Price', 0.)
   min_size = params.get('MinSize', 0)
@@ -84,7 +83,7 @@ def on_confirmation(self, confirmation):
   if c.last_shares > 0:
     qty = self.instrument.total_qty
     log_debug('finished', qty, 'leaves', self.st.qty - qty, 'time elapsed',
-              time.time() - self.begin_time, '/',
+              get_time() - self.begin_time, '/',
               self.end_time - self.begin_time)
     if qty >= self.st.qty: self.stop()
 
@@ -93,7 +92,7 @@ def timer(self):
   if not self.is_active: return
   inst = self.instrument
   st = self.st
-  now = time.time()
+  now = get_time()
   if now > self.end_time:
     self.stop()
     return

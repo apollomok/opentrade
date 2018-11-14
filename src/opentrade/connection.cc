@@ -20,7 +20,7 @@ namespace fs = boost::filesystem;
 
 namespace opentrade {
 
-static time_t kStartTime = time(nullptr);
+static time_t kStartTime = Time();
 static thread_local boost::uuids::random_generator kUuidGen;
 static tbb::concurrent_unordered_map<std::string, const User*> kTokens;
 
@@ -308,7 +308,7 @@ void Connection::PublishMarketdata() {
         pnl0.first = pnl.realized;
         pnl0.second = pnl.unrealized;
         json j = {
-            "Pnl", id, time(nullptr), pnl.realized, pnl.unrealized,
+            "Pnl", id, Time(), pnl.realized, pnl.unrealized,
         };
         self->Send(j.dump());
       }
@@ -482,7 +482,7 @@ void Connection::OnMessageSync(const std::string& msg,
     } else if (action == "pnl") {
       auto tm0 = 0l;
       if (j.size() >= 2) tm0 = Get<int64_t>(j[1]);
-      tm0 = std::max(time(nullptr) - 24 * 3600, tm0);
+      tm0 = std::max(Time() - 24 * 3600, tm0);
       for (auto& pair : PositionManager::Instance().pnls_) {
         auto id = pair.first;
         auto sub_accounts = user_->sub_accounts;
@@ -602,8 +602,8 @@ void Connection::Send(const Algo& algo, const std::string& status,
   if (!user_ || user_->id != algo.user().id) return;
   auto self = shared_from_this();
   strand_.post([self, &algo, status, body, seq]() {
-    self->Send(algo.id(), time(nullptr), algo.token(), algo.name(), status,
-               body, seq, false);
+    self->Send(algo.id(), Time(), algo.token(), algo.name(), status, body, seq,
+               false);
   });
 }
 

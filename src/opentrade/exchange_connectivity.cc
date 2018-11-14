@@ -8,7 +8,7 @@
 namespace opentrade {
 
 static inline void UpdateThrottle(const Order& ord) {
-  auto tm = time(nullptr);
+  auto tm = Time();
   const_cast<SubAccount*>(ord.sub_account)->throttle_in_sec.Update(tm);
   const_cast<BrokerAccount*>(ord.broker_account)->throttle_in_sec.Update(tm);
   const_cast<User*>(ord.user)->throttle_in_sec.Update(tm);

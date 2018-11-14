@@ -304,7 +304,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
 }
 
 void PositionManager::UpdatePnl() {
-  auto tm = time(nullptr);
+  auto tm = Time();
   std::map<SubAccount::IdType, std::pair<double, double>> pnls;
   auto& sm = SecurityManager::Instance();
   for (auto& pair : sub_positions_) {

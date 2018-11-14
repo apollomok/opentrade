@@ -6,6 +6,7 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <map>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -46,18 +47,39 @@ inline std::string GetParam(const M& var_map, const std::string& name,
   return GetParam<M, std::string>(var_map, name).value_or(default_value);
 }
 
+#ifdef BACKTEST
+inline uint64_t kTime;
+inline std::multimap<uint64_t, std::function<void()>> kTimers;
+#endif
+
+inline time_t Time() {
+#ifdef BACKTEST
+  return kTime / 1000000lu;
+#endif
+  return std::time(nullptr);
+}
+
+inline int GetTimeOfDay(struct timeval* out) {
+#ifdef BACKTEST
+  out->tv_sec = kTime / 1000000lu;
+  out->tv_usec = kTime % 1000000lu;
+  return 0;
+#endif
+  return gettimeofday(out, nullptr);
+}
+
 static inline int64_t NowUtcInMicro() {
   struct timeval now;
-  auto rc = gettimeofday(&now, nullptr);
+  auto rc = GetTimeOfDay(&now);
   if (rc)
-    return time(nullptr) * 1000000lu;
+    return Time() * 1000000lu;
   else
     return now.tv_sec * 1000000lu + now.tv_usec;
 }
 
 static inline const char* GetNowStr() {
   struct timeval tp;
-  gettimeofday(&tp, NULL);
+  GetTimeOfDay(&tp);
   struct tm tm_info;
   localtime_r(&tp.tv_sec, &tm_info);
   char buf[256];
@@ -73,7 +95,7 @@ static inline int GetUtcTimeOffset(const char* tz) {
   setenv("TZ", tz, 1);
   tzset();
   struct tm tm;
-  auto t = time(nullptr);
+  auto t = Time();
   localtime_r(&t, &tm);
   if (orig_tz)
     setenv("TZ", orig_tz, 1);
@@ -86,9 +108,7 @@ static inline int GetUtcTimeOffset(const char* tz) {
 static const int kSecondsOneDay = 3600 * 24;
 
 static inline int GetSeconds(int tm_gmtoff) {
-  time_t rawtime;
-  time(&rawtime);
-  rawtime += tm_gmtoff;
+  auto rawtime = Time() + tm_gmtoff;
   struct tm tm_info;
   gmtime_r(&rawtime, &tm_info);
   auto n = tm_info.tm_hour * 3600 + tm_info.tm_min * 60 + tm_info.tm_sec;
@@ -96,9 +116,7 @@ static inline int GetSeconds(int tm_gmtoff) {
 }
 
 static inline int GetDate(int tm_gmtoff) {
-  time_t rawtime;
-  time(&rawtime);
-  rawtime += tm_gmtoff;
+  auto rawtime = Time() + tm_gmtoff;
   struct tm tm_info;
   gmtime_r(&rawtime, &tm_info);
   return 10000 * (tm_info.tm_year + 1900) + 100 * (tm_info.tm_mon + 1) +

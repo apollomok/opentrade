@@ -15,6 +15,3 @@ sofile=./libsim_server.so
 bbgid_file=./bbgids.txt
 ticks_file=./ticks.txt
 config_file=sim.conf
-
-[TWAP]
-sofile=./libtwap.so
