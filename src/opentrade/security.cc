@@ -19,7 +19,7 @@ void SecurityManager::LoadFromDatabase() {
 
   auto query = R"(
     select id, "name", mic, "desc", country, ib_name, bb_name, tz, tick_size_table, 
-    odd_lot_allowed, trade_period, break_period from exchange
+    odd_lot_allowed, trade_period, break_period, half_day, half_days from exchange
   )";
   soci::rowset<soci::row> st = sql->prepare << query;
   for (auto it = st.begin(); it != st.end(); ++it) {
@@ -36,8 +36,8 @@ void SecurityManager::LoadFromDatabase() {
     e->bb_name = Database::GetValue(*it, i++, "");
     e->tz = Database::GetValue(*it, i++, "");
     if (*e->tz) e->utc_time_offset = GetUtcTimeOffset(e->tz);
-    auto tick_size_table = Database::GetValue(*it, i++, "");
-    if (*tick_size_table) {
+    auto tick_size_table = Database::GetValue(*it, i++, kEmptyStr);
+    if (tick_size_table.size()) {
       Exchange::TickSizeTable t;
       for (auto& str : Split(tick_size_table, "\n;|,")) {
         double low, up, value;
@@ -57,7 +57,7 @@ void SecurityManager::LoadFromDatabase() {
       auto start = trade_period / 10000;
       auto end = trade_period % 10000;
       e->trade_start = (start / 100) * 3600 + (start % 100) * 60;
-      e->trade_end = (end / 100) * 3600 + (end % 100) * 60;
+      e->set_trade_end((end / 100) * 3600 + (end % 100) * 60);
     }
     auto break_period = Database::GetValue(*it, i++, 0);
     if (break_period > 0) {
@@ -66,6 +66,20 @@ void SecurityManager::LoadFromDatabase() {
       e->break_start = (start / 100) * 3600 + (start % 100) * 60;
       e->break_end = (end / 100) * 3600 + (end % 100) * 60;
     }
+    auto half_day = Database::GetValue(*it, i++, 0);
+    if (half_day > 0) {
+      e->half_day = (half_day / 100) * 3600 + (half_day % 100) * 60;
+    }
+    auto half_days = Database::GetValue(*it, i++, kEmptyStr);
+    if (half_days.size()) {
+      for (auto& str : Split(half_days, "\n;|, \t")) {
+        auto i = atoi(str.c_str());
+        if (i > 0) {
+          e->half_days.insert(i);
+        }
+      }
+    }
+
     std::atomic_thread_fence(std::memory_order_release);
     exchanges_.emplace(e->id, e);
     exchange_of_name_.emplace(e->name, e);

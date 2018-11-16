@@ -3,6 +3,7 @@
 
 #include <tbb/concurrent_unordered_map.h>
 #include <string>
+#include <unordered_set>
 
 #include "common.h"
 #include "utility.h"
@@ -35,19 +36,34 @@ struct Exchange {
   double GetTickSize(double ref) const;
   const TickSizeTable* tick_size_table = nullptr;
   int trade_start = 0;  // seconds since midnight
-  int trade_end = 0;
   int break_start = 0;
   int break_end = 0;
+  int half_day = 0;
+  std::unordered_set<int> half_days;
 
-  int GetTime() const {  // seconds since midnight in exchange time zone
-    return GetUtcSinceMidNight(utc_time_offset);
+  int GetSeconds() const {  // seconds since midnight in exchange time zone
+    return opentrade::GetSeconds(utc_time_offset);
   }
+
+  int GetDate() const { return opentrade::GetDate(utc_time_offset); }
+
+  bool IsHalfDay() const {
+    return half_day && half_days.find(GetDate()) != half_days.end();
+  }
+
+  void set_trade_end(int v) { trade_end_ = v; }
+  int trade_end() const { return IsHalfDay() ? half_day : trade_end_; }
+
   bool IsInTradePeriod() const {
-    auto t = GetTime();
+    auto t = GetSeconds();
     return (break_start <= 0 || (t < break_start || t > break_end)) &&
-           (trade_start <= 0 || (t > trade_start && t < trade_end));
+           (trade_start <= 0 || (t > trade_start && t < trade_end()));
   }
+
   tbb::concurrent_unordered_map<std::string, Security*> securities;
+
+ private:
+  int trade_end_ = 0;
 };
 
 // follow IB

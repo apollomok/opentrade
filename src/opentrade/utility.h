@@ -85,13 +85,24 @@ static inline int GetUtcTimeOffset(const char* tz) {
 
 static const int kSecondsOneDay = 3600 * 24;
 
-static inline int GetUtcSinceMidNight(int tm_gmtoff) {
+static inline int GetSeconds(int tm_gmtoff) {
   time_t rawtime;
   time(&rawtime);
+  rawtime += tm_gmtoff;
   struct tm tm_info;
   gmtime_r(&rawtime, &tm_info);
   auto n = tm_info.tm_hour * 3600 + tm_info.tm_min * 60 + tm_info.tm_sec;
-  return (n + kSecondsOneDay + tm_gmtoff) % kSecondsOneDay;
+  return (n + kSecondsOneDay) % kSecondsOneDay;
+}
+
+static inline int GetDate(int tm_gmtoff) {
+  time_t rawtime;
+  time(&rawtime);
+  rawtime += tm_gmtoff;
+  struct tm tm_info;
+  gmtime_r(&rawtime, &tm_info);
+  return 10000 * (tm_info.tm_year + 1900) + 100 * (tm_info.tm_mon + 1) +
+         tm_info.tm_mday;
 }
 
 static inline decltype(auto) Split(const std::string& str, const char* sep,

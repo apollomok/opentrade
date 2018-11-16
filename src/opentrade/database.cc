@@ -43,6 +43,8 @@ static const char create_tables_sql[] = R"(
     odd_lot_allowed boolean,
     trade_period int4, -- e.g. 09301500 => 09:30 - 15:00
     break_period int4, -- e.g. 11301300 => 11:30 - 13:00
+    half_day int4, -- e.g. 1130 => 11:30
+    half_days varchar(5000), -- e.g. 20181001 20190101
     tick_size_table varchar(5000),
     primary key(id)
   );

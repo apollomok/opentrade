@@ -127,7 +127,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("ib_name", &Exchange::ib_name)
       .def_readonly("tz", &Exchange::tz)
       .def_readonly("trade_start", &Exchange::trade_start)
-      .def_readonly("trade_end", &Exchange::trade_end)
+      .add_property("trade_end", &Exchange::trade_end)
       .def_readonly("break_start", &Exchange::break_start)
       .def_readonly("break_end", &Exchange::break_end)
       .def_readonly("desc", &Exchange::desc)
@@ -139,7 +139,8 @@ BOOST_PYTHON_MODULE(opentrade) {
              return FindInMap(self.securities, name);
            },
            bp::return_internal_reference<>())
-      .add_property("now", &Exchange::GetTime);
+      .add_property("date", &Exchange::GetDate)
+      .add_property("seconds", &Exchange::GetSeconds);
 
   bp::class_<Position>("Position")
       .def("__str__",
