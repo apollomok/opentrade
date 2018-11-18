@@ -18,6 +18,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 * Pre-trade risk limits on multi-level accounts
 * Post-trade risk integrated with [OpenRisk](https://github.com/opentradesolutions/openrisk)
 * Edit and test **Python** algo online
+* **Backtest**
 * [Multi-theme web frontend](http://demo.opentradesolutions.com)
 * Fully thread-safe design, everything can be modified during runtime, e.g., reload symbol list, modify tick size table, lot-size, exchange timezone and trading/break period etc.
 * Built-in execution simulator
@@ -97,5 +98,14 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    http://localhost:9111
    ```
    
+# Backtest
+  * Only BBO support currently, full orderbook support will come soon
+  * It is up to you to generate report
+  ```
+  make args=-j backtest-debug
+  wget -O ticks.tgz https://www.dropbox.com/s/maikrn2qbz8hxba/ticks.tgz?dl=1; tar xzf ticks.tgz
+  ./build/backtest-release/opentrade/opentrade -b scripts/backtest.py -t ticks/%Y%m%d -s 20170701 -e 20181115
+  ```
+
 # The other OS system
   we prepared [Dockfile-dev](https://raw.githubusercontent.com/opentradesolutions/opentrade/master/Dockfile-dev) for you.

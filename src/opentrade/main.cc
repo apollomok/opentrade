@@ -161,7 +161,9 @@ int main(int argc, char *argv[]) {
     adapter->set_name(section_name);
     adapter->set_config(params);
     if (adapter->GetVersion() != opentrade::kApiVersion) {
-      LOG_ERROR("Version mismatch");
+      LOG_ERROR("Version mismatch, "
+                << "got " << adapter->GetVersion() << ", expect "
+                << opentrade::kApiVersion);
       continue;
     }
     if (section_name.find("md_") == 0) {
@@ -207,7 +209,9 @@ int main(int argc, char *argv[]) {
       } else if (path.extension() == ".so") {
         auto adapter = opentrade::Adapter::Load(path.string());
         if (adapter->GetVersion() != opentrade::kApiVersion) {
-          LOG_ERROR("Version mismatch");
+          LOG_ERROR("Version mismatch, "
+                    << "got " << adapter->GetVersion() << ", expect "
+                    << opentrade::kApiVersion);
           adapter = nullptr;
         }
         algo = dynamic_cast<opentrade::Algo *>(adapter);
