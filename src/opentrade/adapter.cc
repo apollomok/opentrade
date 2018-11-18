@@ -12,13 +12,13 @@ Adapter* Adapter::Load(const std::string& sofile) {
   LOG_INFO("Trying to load " << sofile);
   auto handle = dlopen(sofile.c_str(), RTLD_NOW);
   if (!handle) {
-    LOG_FATAL(dlerror());
+    LOG_ERROR(dlerror());
     return nullptr;
   }
 
   auto create_func = (CFunc)dlsym(handle, "create");
   if (!create_func) {
-    LOG_FATAL(dlerror());
+    LOG_ERROR(dlerror());
     return nullptr;
   }
 

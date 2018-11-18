@@ -158,7 +158,9 @@ static const char create_tables_sql[] = R"(
 
 void Database::Initialize(const std::string& url, uint8_t pool_size,
                           bool create_tables) {
+#ifndef BACKTEST
   if (pool_size < 2) pool_size = 2;
+#endif
   pool_ = new soci::connection_pool(pool_size);
   static SqlLog log;
   LOG_INFO("Database pool_size=" << (int)pool_size);

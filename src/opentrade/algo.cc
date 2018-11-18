@@ -312,6 +312,10 @@ void AlgoManager::LoadStore(uint32_t seq0, Connection* conn) {
   }
 }
 
+Algo::~Algo() {
+  for (auto& inst : instruments_) delete inst;
+}
+
 Instrument* Algo::Subscribe(const Security& sec, DataSrc src) {
   auto adapter = MarketDataManager::Instance().Subscribe(sec, src);
   assert(adapter);
@@ -337,14 +341,15 @@ void Algo::Stop() {
   }
 }
 
-void Algo::SetTimeout(std::function<void()> func, uint32_t milliseconds) {
+void Algo::SetTimeout(std::function<void()> func, int milliseconds) {
   AlgoManager::Instance().SetTimeout(id_, func, milliseconds);
 }
 
 void AlgoManager::SetTimeout(Algo::IdType id, std::function<void()> func,
-                             uint32_t milliseconds) {
+                             int milliseconds) {
+  if (milliseconds < 0) milliseconds = 0;
 #ifdef BACKTEST
-  auto tm = kTime + milliseconds;
+  auto tm = kTime + milliseconds * 1000lu;
   kTimers.emplace(tm, func);
 #else
   auto t = new boost::asio::deadline_timer(

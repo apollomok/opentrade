@@ -56,13 +56,14 @@ typedef std::vector<ParamDef> ParamDefs;
 
 class Algo : public Adapter {
  public:
+  ~Algo();
   typedef uint32_t IdType;
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
   typedef std::shared_ptr<ParamMap> ParamMapPtr;
 
   Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{});
   void Stop();
-  void SetTimeout(std::function<void()> func, uint32_t milliseconds);
+  void SetTimeout(std::function<void()> func, int milliseconds);
   Order* Place(const Contract& contract, Instrument* inst);
   static bool Cancel(const Order& ord);
 
@@ -156,6 +157,7 @@ class AlgoRunner {
   std::mutex mutex_;
   typedef std::lock_guard<std::mutex> LockGuard;
   friend class AlgoManager;
+  friend class Backtest;
 };
 
 class Connection;
@@ -178,7 +180,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   void Stop(const std::string& token);
   void Handle(Confirmation::Ptr cm);
   void SetTimeout(Algo::IdType id, std::function<void()> func,
-                  uint32_t milliseconds);
+                  int milliseconds);
   bool IsSubscribed(DataSrc::IdType src, Security::IdType id) {
     return md_refs_[std::make_pair(src, id)] > 0;
   }
@@ -204,7 +206,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   std::unique_ptr<boost::asio::io_service::work> work_;
 #ifdef BACKTEST
   struct StrandMock {
-    void post(std::function<void()> func) { func(); }
+    void post(std::function<void()> func) { kTimers.emplace(0, func); }
   };
   std::vector<StrandMock> strands_;
 #else
@@ -213,6 +215,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   std::ofstream of_;
   uint32_t seq_counter_ = 0;
   friend class AlgoRunner;
+  friend class Backtest;
 };
 
 }  // namespace opentrade

@@ -60,7 +60,14 @@ struct Exchange {
            (trade_start <= 0 || (t > trade_start && t < trade_end()));
   }
 
-  tbb::concurrent_unordered_map<std::string, Security*> securities;
+  Security* Get(const std::string& name) {
+    return FindInMap(security_of_name, name);
+  }
+
+  tbb::concurrent_unordered_map<std::string, Security*> security_of_name;
+  typedef std::vector<Security*> Securities;
+  Securities securities;  // mainly used for efficient and easy iteration in
+                          // python interface
 
  private:
   int trade_end_ = 0;
@@ -68,16 +75,16 @@ struct Exchange {
 
 // follow IB
 // https://interactivebrokers.github.io/tws-api/classIBApi_1_1Contract.html
-inline static const std::string kStock = "STK";
-inline static const std::string kForexPair = "CASH";
-inline static const std::string kCommodity = "CMDTY";
-inline static const std::string kFuture = "FUT";
-inline static const std::string kOption = "OPT";
-inline static const std::string kIndex = "IND";
-inline static const std::string kFutureOption = "FOP";
-inline static const std::string kCombo = "BAG";
-inline static const std::string kWarrant = "WAR";
-inline static const std::string kBond = "BOND";
+inline const std::string kStock = "STK";
+inline const std::string kForexPair = "CASH";
+inline const std::string kCommodity = "CMDTY";
+inline const std::string kFuture = "FUT";
+inline const std::string kOption = "OPT";
+inline const std::string kIndex = "IND";
+inline const std::string kFutureOption = "FOP";
+inline const std::string kCombo = "BAG";
+inline const std::string kWarrant = "WAR";
+inline const std::string kBond = "BOND";
 
 struct Security {
   typedef uint32_t IdType;
@@ -114,6 +121,17 @@ struct Security {
     return exchange->GetTickSize(px);
   }
   bool IsInTradePeriod() const { return exchange->IsInTradePeriod(); }
+#ifdef BACKTEST
+  struct Adj {
+    bool operator<(const Adj& b) const { return date < b.date; }
+    explicit Adj(size_t a, double b = 1., double c = 1.)
+        : date(a), px(b), vol(c) {}
+    size_t date = 0;  // YYYYmmdd format
+    double px = 1.;
+    double vol = 1.;
+  };
+  std::vector<Adj> adjs;
+#endif
 };
 
 class SecurityManager : public Singleton<SecurityManager> {
@@ -134,12 +152,15 @@ class SecurityManager : public Singleton<SecurityManager> {
       SecurityMap;
   const SecurityMap& securities() const { return securities_; }
   void LoadFromDatabase();
+  typedef tbb::concurrent_unordered_map<Exchange::IdType, Exchange*>
+      ExchangeMap;
+  const ExchangeMap& exchanges() const { return exchanges_; }
 
  protected:
   void UpdateCheckSum();
 
  private:
-  tbb::concurrent_unordered_map<Exchange::IdType, Exchange*> exchanges_;
+  ExchangeMap exchanges_;
   tbb::concurrent_unordered_map<std::string, Exchange*> exchange_of_name_;
   SecurityMap securities_;
   const char* check_sum_ = "";

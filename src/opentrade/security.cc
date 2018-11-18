@@ -108,7 +108,8 @@ void SecurityManager::LoadFromDatabase() {
     auto ex_it = exchanges_.find(exchange_id);
     if (ex_it != exchanges_.end()) {
       s->exchange = ex_it->second;
-      ex_it->second->securities.emplace(s->symbol, s);
+      ex_it->second->security_of_name.emplace(s->symbol, s);
+      ex_it->second->securities.push_back(s);
     }
     auto underlying_id = Database::GetValue(*it, i++, Security::IdType());
     if (underlying_id > 0) {

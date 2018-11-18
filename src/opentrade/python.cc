@@ -3,15 +3,13 @@
 #include <Python.h>
 #include <boost/filesystem.hpp>
 
+#include "backtest.h"
 #include "logger.h"
 #include "server.h"
 
 namespace fs = boost::filesystem;
 
 namespace opentrade {
-
-static bp::object kOpentrade;
-static void PrintPyError(const char *);
 
 struct LockGIL {
   explicit LockGIL(const std::string &token = "") {
@@ -29,7 +27,46 @@ struct LockGIL {
   static inline std::string test_token_saved;
 };
 
+template <typename T>
+static inline bool GetValueScalar(const bp::object &value, T *out) {
+  auto ptr = value.ptr();
+  if (PyFloat_Check(ptr)) {
+    *out = PyFloat_AsDouble(ptr);
+  } else if (PyLong_Check(ptr)) {
+    *out = PyLong_AsLong(ptr);
+#if PY_MAJOR_VERSION < 3
+  } else if (PyInt_Check(ptr)) {
+    *out = PyInt_AsLong(ptr);
+#endif
+  } else if (ptr == Py_True) {
+    *out = true;
+  } else if (ptr == Py_False) {
+    *out = false;
+  } else {
+    try {
+      *out = bp::extract<std::string>(value);
+      return true;
+    } catch (const bp::error_already_set &err) {
+      PyErr_Clear();
+      try {
+        *out = bp::extract<SecurityTuple &>(value);
+        return true;
+      } catch (const bp::error_already_set &err) {
+        PyErr_Clear();
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+#ifdef BACKTEST
+#define LOCK() \
+  do {         \
+  } while (false)
+#else
 #define LOCK() LockGIL lock(test_token_)
+#endif
 
 static std::string Args2Str(bp::tuple args) {
   auto n = bp::len(args);
@@ -40,6 +77,18 @@ static std::string Args2Str(bp::tuple args) {
   }
   return ss.str();
 }
+
+template <typename T>
+struct ContainerWrapper {
+  explicit ContainerWrapper(T *v) : ptr(v) {}
+  decltype(auto) len() { return ptr->size(); }
+  decltype(auto) begin() { return ptr->begin(); }
+  decltype(auto) end() { return ptr->end(); }
+  T *ptr = nullptr;
+};
+
+typedef ContainerWrapper<const Instrument::Orders> OrdersWrapper;
+typedef ContainerWrapper<const Exchange::Securities> SecuritiesWrapper;
 
 #define PUBLISH_TEST_MSG(type, msg)                        \
   if (LockGIL::test_token.size()) {                        \
@@ -59,6 +108,9 @@ static std::string Args2Str(bp::tuple args) {
 #define LOG2_ERROR(msg)           \
   PUBLISH_TEST_MSG("ERROR", msg); \
   LOG_ERROR(msg)
+#define LOG2_FATAL(msg)           \
+  PUBLISH_TEST_MSG("FATAL", msg); \
+  LOG_FATAL(msg)
 
 BOOST_PYTHON_MODULE(opentrade) {
   bp::enum_<OrderSide>("OrderSide")
@@ -113,13 +165,25 @@ BOOST_PYTHON_MODULE(opentrade) {
   bp::class_<DataSrc>("DataSrc", bp::init<const char *>())
       .def("__str__", &DataSrc::str);
 
-  bp::class_<SubAccount>("SubAccount")
+  bp::class_<SubAccount>("SubAccount", bp::no_init)
       .def("__str__",
            +[](const SubAccount &acc) { return std::string(acc.name); })
+      .add_property(
+          "positions",
+          +[](const SubAccount &acc) {
+            bp::list out;
+            for (auto &pair : PositionManager::Instance().sub_positions()) {
+              if (pair.first.first != acc.id) continue;
+              auto sec = SecurityManager::Instance().Get(pair.first.second);
+              out.append(bp::make_tuple(bp::object(bp::ptr(sec)),
+                                        bp::object(bp::ptr(&pair.second))));
+            }
+            return out;
+          })
       .def_readonly("id", &SubAccount::id)
       .def_readonly("name", &SubAccount::name);
 
-  bp::class_<Exchange>("Exchange")
+  bp::class_<Exchange>("Exchange", bp::no_init)
       .def("__str__", +[](const Exchange &ex) { return std::string(ex.name); })
       .def_readonly("name", &Exchange::name)
       .def_readonly("mic", &Exchange::mic)
@@ -134,15 +198,14 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("utc_time_offset", &Exchange::utc_time_offset)
       .def_readonly("country", &Exchange::country)
       .def_readonly("odd_lot_allowed", &Exchange::odd_lot_allowed)
-      .def("get_security",
-           +[](const Exchange &self, const std::string &name) {
-             return FindInMap(self.securities, name);
-           },
-           bp::return_internal_reference<>())
+      .def("get_security", &Exchange::Get, bp::return_internal_reference<>())
       .add_property("date", &Exchange::GetDate)
-      .add_property("seconds", &Exchange::GetSeconds);
+      .add_property("seconds", &Exchange::GetSeconds)
+      .add_property("securities", +[](const Exchange &self) {
+        return SecuritiesWrapper(&self.securities);
+      });
 
-  bp::class_<Position>("Position")
+  bp::class_<Position>("Position", bp::no_init)
       .def("__str__",
            +[](const Position &p) {
              std::stringstream ss;
@@ -167,7 +230,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("total_outstanding_sell_qty",
                     &Position::total_outstanding_sell_qty);
 
-  auto cls = bp::class_<Security>("Security");
+  auto cls = bp::class_<Security>("Security", bp::no_init);
   cls.def_readonly("id", &Security::id)
       .def("__str__",
            +[](const Security &s) {
@@ -196,6 +259,11 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("multiplier", &Security::multiplier)
       .def_readonly("lot_size", &Security::lot_size)
       .def("get_tick_size", &Security::GetTickSize)
+      .add_property("md", bp::make_function(
+                              +[](const Security &sec) {
+                                return &MarketDataManager::Instance().Get(sec);
+                              },
+                              bp::return_internal_reference<>()))
       .def_readonly("type", &Security::type)
       .add_property(
           "exchange",
@@ -219,6 +287,23 @@ BOOST_PYTHON_MODULE(opentrade) {
                         : nullptr;
            },
            bp::return_internal_reference<>())
+#ifdef BACKTEST
+      .def("set_adj",
+           +[](Security &sec, bp::object adjs) {
+             try {
+               auto n = bp::len(adjs);
+               for (auto i = 0u; i < n; ++i) {
+                 auto x = adjs[i];
+                 sec.adjs.emplace_back(bp::extract<size_t>(x[0]),
+                                       bp::extract<double>(x[1]),
+                                       bp::extract<double>(x[2]));
+               }
+               std::sort(sec.adjs.begin(), sec.adjs.end());
+             } catch (const bp::error_already_set &err) {
+               PrintPyError("set_adj", true);
+             }
+           })
+#endif
       .add_property("is_in_trade_period", &Security::IsInTradePeriod)
       .def_readonly("local_symbol", &Security::local_symbol);
 
@@ -270,7 +355,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readwrite("tif", &Contract::tif)
       .def_readwrite("type", &Contract::type);
 
-  bp::class_<MarketData>("MarketData")
+  bp::class_<MarketData>("MarketData", bp::no_init)
       .def_readonly("tm", &MarketData::tm)
       .add_property("open", +[](const MarketData &md) { return md.trade.open; })
       .add_property("high", +[](const MarketData &md) { return md.trade.high; })
@@ -305,7 +390,7 @@ BOOST_PYTHON_MODULE(opentrade) {
         return md.depth[std::min(i, MarketData::kDepthSize - 1)].bid_size;
       });
 
-  bp::class_<Confirmation>("Confirmation")
+  bp::class_<Confirmation>("Confirmation", bp::no_init)
       .add_property("order", bp::make_function(
                                  +[](const Confirmation &c) { return c.order; },
                                  bp::return_internal_reference<>()))
@@ -324,7 +409,7 @@ BOOST_PYTHON_MODULE(opentrade) {
           })
       .def_readonly("last_px", &Confirmation::last_px);
 
-  bp::class_<Order, bp::bases<Contract>>("Order")
+  bp::class_<Order, bp::bases<Contract>>("Order", bp::no_init)
       .add_property("instrument",
                     bp::make_function(+[](const Order &o) { return o.inst; },
                                       bp::return_internal_reference<>()))
@@ -337,8 +422,17 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("leaves_qty", &Order::leaves_qty)
       .add_property("is_live", &Order::IsLive);
 
-  bp::class_<Instrument>("Instrument",
-                         bp::init<Algo *, const Security &, DataSrc>())
+  bp::class_<OrdersWrapper>("OrdersWrapper", bp::no_init)
+      .def("__len__", &OrdersWrapper::len)
+      .def("__iter__", bp::range<bp::return_internal_reference<>>(
+                           &OrdersWrapper::begin, &OrdersWrapper::end));
+
+  bp::class_<SecuritiesWrapper>("SecuritiesWrapper", bp::no_init)
+      .def("__len__", &SecuritiesWrapper::len)
+      .def("__iter__", bp::range<bp::return_internal_reference<>>(
+                           &SecuritiesWrapper::begin, &SecuritiesWrapper::end));
+
+  bp::class_<Instrument>("Instrument", bp::no_init)
       .add_property("sec", bp::make_function(&Instrument::sec,
                                              bp::return_internal_reference<>()))
       .add_property("md", bp::make_function(&Instrument::md,
@@ -355,15 +449,10 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_qty", &Instrument::total_qty)
       .add_property("id", &Instrument::id)
       .add_property("active_orders", +[](const Instrument &inst) {
-        auto &orders = inst.active_orders();
-        bp::list out;
-        for (auto o : orders) {
-          out.append(bp::ptr(o));
-        }
-        return out;
+        return OrdersWrapper(&inst.active_orders());
       });
 
-  bp::class_<Python>("Algo")
+  bp::class_<Python>("Algo", bp::no_init)
       .def("subscribe", &Algo::Subscribe, bp::return_internal_reference<>())
       .def("place", &Algo::Place, bp::return_internal_reference<>())
       .def("cancel",
@@ -429,6 +518,59 @@ BOOST_PYTHON_MODULE(opentrade) {
         .attr("datetime")
         .attr("fromtimestamp")(NowUtcInMicro() / 1e6);
   });
+
+  bp::def("get_exchangies", +[]() {
+    bp::list out;
+    for (auto &pair : SecurityManager::Instance().exchanges()) {
+      out.append(bp::object(bp::ptr(pair.second)));
+    }
+    return out;
+  });
+
+#ifdef BACKTEST
+  bp::class_<Backtest>("Backtest", bp::no_init)
+      .def("clear", &Backtest::Clear)
+      .def("set_timeout",
+           +[](Backtest &, bp::object func, int milliseconds) {
+             if (milliseconds < 0) milliseconds = 0;
+             auto tm = kTime + milliseconds * 1000lu;
+             kTimers.emplace(tm, [func]() {
+               try {
+                 func();
+               } catch (const bp::error_already_set &err) {
+                 PrintPyError("set_timeout");
+               }
+             });
+           })
+      .def("start_algo",
+           bp::make_function(
+               +[](Backtest &, const std::string &name, bp::dict params) {
+                 auto user = AccountManager::Instance().GetUser(0);
+                 auto params_ptr = std::make_shared<Algo::ParamMap>();
+                 auto items = params.items();
+                 for (auto i = 0u; i < bp::len(items); ++i) {
+                   std::string key = bp::extract<std::string>(items[i][0]);
+                   ParamDef::Value value;
+                   if (!GetValueScalar(items[i][1], &value)) {
+                     LOG_ERROR("Invalid '" << key << "' value: "
+                                           << bp::extract<const char *>(
+                                                  bp::str(items[i][1])));
+                   } else {
+                     (*params_ptr)[key] = value;
+                   }
+                 }
+                 for (auto &pair : *params_ptr) {
+                   if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
+                     pval->acc = AccountManager::Instance().GetSubAccount(0);
+                     params[pair.first].attr("acc") =
+                         bp::object(bp::ptr(pval->acc));
+                   }
+                 }
+                 return AlgoManager::Instance().Spawn(params_ptr, name, *user,
+                                                      "", "");
+               },
+               bp::return_value_policy<bp::reference_existing_object>()));
+#endif
 }
 
 #if PY_MAJOR_VERSION >= 3
@@ -439,7 +581,7 @@ extern "C" PyObject *INIT_MODULE();
 extern "C" void INIT_MODULE();
 #endif
 
-void PrintPyError(const char *from) {
+void PrintPyError(const char *from, bool fatal) {
   PyObject *ptype, *pvalue, *ptraceback;
   PyErr_Fetch(&ptype, &pvalue, &ptraceback);
   PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -471,7 +613,11 @@ void PrintPyError(const char *from) {
   }
   PyErr_Restore(ptype, pvalue, ptraceback);
   PyErr_Clear();
-  LOG2_ERROR(from << "\n" << result);
+  if (fatal) {
+    LOG2_FATAL(from << "\n" << result);
+  } else {
+    LOG2_ERROR(from << "\n" << result);
+  }
 }
 
 static inline double GetDouble(const bp::object &obj) {
@@ -484,7 +630,7 @@ static inline double GetDouble(const bp::object &obj) {
   return 0;
 }
 
-static inline bp::object GetCallable(const bp::object &m, const char *name) {
+bp::object GetCallable(const bp::object &m, const char *name) {
   if (!PyObject_HasAttrString(m.ptr(), name)) return {};
   bp::object func = m.attr(name);
   if (!PyCallable_Check(func.ptr())) {
@@ -494,10 +640,12 @@ static inline bp::object GetCallable(const bp::object &m, const char *name) {
   return func;
 }
 
-void InitalizePy() {
+void InitalizePy(const std::string &extra_python_path) {
   auto tmp = getenv("PYTHONPATH");
-  std::string path = tmp ? tmp : "";
-  setenv("PYTHONPATH", ("./algos:./algos/revisions:" + path).c_str(), 1);
+  std::string path = "./algos";
+  if (tmp) path = path + ":" + tmp;
+  if (extra_python_path.size()) path += ":" + extra_python_path;
+  setenv("PYTHONPATH", path.c_str(), 1);
   PyImport_AppendInittab(const_cast<char *>("opentrade"), INIT_MODULE);
   Py_InitializeEx(0);  // no signal registration
   if (!PyEval_ThreadsInitialized()) PyEval_InitThreads();
@@ -531,39 +679,6 @@ PyModule LoadPyModule(const std::string &module_name) {
   out.on_market_quote = GetCallable(m, "on_market_quote");
   out.on_confirmation = GetCallable(m, "on_confirmation");
   return out;
-}
-
-template <typename T>
-static inline bool GetValueScalar(const bp::object &value, T *out) {
-  auto ptr = value.ptr();
-  if (PyFloat_Check(ptr)) {
-    *out = PyFloat_AsDouble(ptr);
-  } else if (PyLong_Check(ptr)) {
-    *out = PyLong_AsLong(ptr);
-#if PY_MAJOR_VERSION < 3
-  } else if (PyInt_Check(ptr)) {
-    *out = PyInt_AsLong(ptr);
-#endif
-  } else if (ptr == Py_True) {
-    *out = true;
-  } else if (ptr == Py_False) {
-    *out = false;
-  } else {
-    try {
-      *out = bp::extract<std::string>(value);
-      return true;
-    } catch (const bp::error_already_set &err) {
-      PyErr_Clear();
-      try {
-        *out = bp::extract<SecurityTuple &>(value);
-        return true;
-      } catch (const bp::error_already_set &err) {
-        PyErr_Clear();
-        return false;
-      }
-    }
-  }
-  return true;
 }
 
 static inline bool ParseParamDef(const bp::object &item, ParamDef *out) {
@@ -704,7 +819,7 @@ Python *Python::LoadTest(const std::string &module_name,
   return p;
 }
 
-void Python::SetTimeout(bp::object func, size_t milliseconds) {
+void Python::SetTimeout(bp::object func, int milliseconds) {
   Algo::SetTimeout(
       [this, func]() {
         LOCK();

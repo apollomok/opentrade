@@ -93,6 +93,7 @@ class AccountManager : public Singleton<AccountManager> {
   tbb::concurrent_unordered_map<BrokerAccount::IdType, BrokerAccount*>
       broker_accounts_;
   friend class Connection;
+  friend class Backtest;
 };
 
 }  // namespace opentrade

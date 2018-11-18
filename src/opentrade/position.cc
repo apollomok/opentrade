@@ -43,6 +43,7 @@ inline void HandlePnl(double qty, double price, double multiplier, bool is_fx,
   } else {  // open position
     avg_px = (qty0 * avg_px + qty * price) / (qty0 + qty);
   }
+  if (qty0 + qty == 0) avg_px = 0;
 }
 
 inline void Position::HandleTrade(bool is_buy, double qty, double price,
@@ -91,18 +92,14 @@ inline void Position::HandleNew(bool is_buy, double qty, double price,
                                 double multiplier, bool is_fx) {
   assert(qty > 0);
   if (is_buy) {
-    total_outstanding_buy_qty -= qty;
+    total_outstanding_buy_qty += qty;
   } else {
-    total_outstanding_sell_qty -= qty;
+    total_outstanding_sell_qty += qty;
   }
   PositionValue::HandleNew(is_buy, qty, price, multiplier, is_fx);
 }
 
 void PositionManager::Initialize() {
-#ifdef BACKTEST
-  return;
-#endif
-
   Instance().sql_ = Database::Session();
 
   auto& self = Instance();
@@ -304,7 +301,6 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
 }
 
 void PositionManager::UpdatePnl() {
-  auto tm = Time();
   std::map<SubAccount::IdType, std::pair<double, double>> pnls;
   auto& sm = SecurityManager::Instance();
   for (auto& pair : sub_positions_) {
@@ -330,6 +326,10 @@ void PositionManager::UpdatePnl() {
     pos.unrealized_pnl = pos.qty * (price - avg_px) * adj;
     pnl.second += pos.unrealized_pnl;
   }
+#ifdef BACKTEST
+  return;
+#endif
+  auto tm = Time();
   for (auto& pair : pnls) {
     auto& pnl = pnls_[pair.first];
     if (std::abs(pnl.realized - pair.second.first) < 1 &&

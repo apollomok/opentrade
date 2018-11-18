@@ -104,7 +104,7 @@ class MarketDataAdapter : public virtual NetworkAdapter {
   void UpdateLastSize(Security::IdType id, double v);
 
  protected:
-  MarketDataMap* md_;
+  MarketDataMap* md_ = nullptr;
 
  private:
   DataSrc::IdType src_ = 0;
@@ -118,6 +118,7 @@ class MarketDataManager : public AdapterManager<MarketDataAdapter>,
   void Add(MarketDataAdapter* adapter);
   const MarketData& Get(Security::IdType id, DataSrc::IdType src = 0);
   const MarketData& Get(const Security& sec, DataSrc::IdType src = 0);
+  MarketDataAdapter* GetDefault() const { return default_; }
 
  private:
   MarketDataAdapter* GetRoute(const Security& sec, DataSrc::IdType src);

@@ -1,7 +1,7 @@
 #ifndef OPENTRADE_ADAPTER_H_
 #define OPENTRADE_ADAPTER_H_
 
-#include <atomic>
+#include <tbb/atomic.h>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -10,7 +10,7 @@
 
 namespace opentrade {
 
-static const int kApiVersion = 1;
+inline const std::string kApiVersion = "1";
 
 class Adapter {
  public:
@@ -19,7 +19,12 @@ class Adapter {
   const std::string& name() const { return name_; }
   void set_name(const std::string& name) { name_ = name; }
   void set_config(const StrMap& config) { config_ = config; }
-  int GetVersion() const { return kApiVersion; }
+  std::string GetVersion() const {
+#ifdef BACKTEST
+    return "backtest_" + kApiVersion;
+#endif
+    return kApiVersion;
+  }
   typedef Adapter* (*CFunc)();
   typedef std::function<Adapter*()> Func;
   Adapter* Clone() {
@@ -47,7 +52,7 @@ class NetworkAdapter : public Adapter {
   virtual bool connected() const noexcept { return 1 == connected_; }
 
  protected:
-  std::atomic<int> connected_ = 0;
+  tbb::atomic<int> connected_ = 0;
 };
 
 template <typename T>

@@ -8,6 +8,7 @@
 
 #include "account.h"
 #include "algo.h"
+#include "backtest.h"
 #include "database.h"
 #include "exchange_connectivity.h"
 #include "logger.h"
@@ -31,35 +32,57 @@ int main(int argc, char *argv[]) {
   std::string config_file_path;
   std::string log_config_file_path;
   std::string db_url;
-  uint16_t db_pool_size;
-  bool disable_rms;
-  bool db_create_tables;
-  int io_threads;
-  int algo_threads;
-  int port;
+  uint16_t db_pool_size = 1;
+  auto db_create_tables = false;
+  auto algo_threads = 0;
+#ifdef BACKTEST
+  std::string backtest_file;
+  std::string tick_file;
+  auto start_date = 0u;
+  auto end_date = 0u;
+  auto latency = 0;
+#else
+  auto io_threads = 0;
+  auto port = 0;
+  auto disable_rms = true;
+#endif
   try {
     bpo::options_description config("Configuration");
-    config.add_options()("help,h", "produce help message")(
-        "config_file,c",
-        bpo::value<std::string>(&config_file_path)
-            ->default_value("opentrade.conf"),
-        "config file path")("log_config_file,l",
-                            bpo::value<std::string>(&log_config_file_path)
-                                ->default_value("log.conf"),
-                            "log4cxx config file path")(
-        "db_url", bpo::value<std::string>(&db_url), "database connection url")(
-        "db_create_tables",
-        bpo::value<bool>(&db_create_tables)->default_value(false),
-        "create database tables")(
-        "db_pool_size", bpo::value<uint16_t>(&db_pool_size)->default_value(4),
-        "database connection pool size")(
-        "port", bpo::value<int>(&port)->default_value(9111), "listen port")(
-        "io_threads", bpo::value<int>(&io_threads)->default_value(1),
-        "number of web server io threads")(
-        "algo_threads", bpo::value<int>(&algo_threads)->default_value(1),
-        "number of algo threads")(
-        "disable_rms", bpo::value<bool>(&disable_rms)->default_value(false),
-        "whether disable rms");
+    config.add_options()("help,h", "produce help message")
+#ifdef BACKTEST
+        ("backtest_file,b", bpo::value<std::string>(&backtest_file),
+         "python file which provides callback functions")(
+            "tick_file,t", bpo::value<std::string>(&tick_file),
+            "in strftime format, e.g. /to/path/%Y%m%d.txt")(
+            "start_date,s", bpo::value<uint32_t>(&start_date),
+            "start date, in 'YYYYmmdd' format")(
+            "end_date,e", bpo::value<uint32_t>(&end_date),
+            "end date, in 'YYYYmmdd' format")(
+            "latency,l", bpo::value<int>(&latency), "latency in milliseconds")
+#else
+        ("db_create_tables",
+         bpo::value<bool>(&db_create_tables)->default_value(false),
+         "create database tables")(
+            "db_pool_size",
+            bpo::value<uint16_t>(&db_pool_size)->default_value(4),
+            "database connection pool size")(
+            "port", bpo::value<int>(&port)->default_value(9111), "listen port")(
+            "io_threads", bpo::value<int>(&io_threads)->default_value(1),
+            "number of web server io threads")(
+            "algo_threads", bpo::value<int>(&algo_threads)->default_value(1),
+            "number of algo threads")(
+            "disable_rms", bpo::value<bool>(&disable_rms)->default_value(false),
+            "whether disable rms")
+#endif
+            ("config_file,c",
+             bpo::value<std::string>(&config_file_path)
+                 ->default_value("opentrade.conf"),
+             "config file path")("log_config_file,l",
+                                 bpo::value<std::string>(&log_config_file_path)
+                                     ->default_value("log.conf"),
+                                 "log4cxx config file path")(
+                "db_url", bpo::value<std::string>(&db_url),
+                "database connection url");
 
     bpo::options_description config_file_options;
     config_file_options.add(config);
@@ -94,6 +117,23 @@ int main(int argc, char *argv[]) {
 
   opentrade::Logger::Initialize("opentrade", log_config_file_path);
 
+  if (db_url.empty()) {
+    LOG_ERROR("db_url not configured");
+    return 1;
+  }
+  opentrade::Database::Initialize(db_url, db_pool_size, db_create_tables);
+  opentrade::SecurityManager::Initialize();
+
+  std::string extra_python_path;
+#ifdef BACKTEST
+  if (end_date < start_date) {
+    LOG_FATAL("end_date < start_date");
+  }
+  if (tick_file.empty()) {
+    LOG_FATAL("empty tick_file");
+  }
+  extra_python_path = fs::path(backtest_file).parent_path().string();
+#else
   if (!fs::exists(kStorePath)) {
     fs::create_directory(kStorePath);
   }
@@ -101,16 +141,6 @@ int main(int argc, char *argv[]) {
   if (!fs::exists(kAlgoPath)) {
     fs::create_directory(kAlgoPath);
   }
-
-  if (db_url.empty()) {
-    LOG_ERROR("db_url not configured");
-    return 1;
-  }
-
-  opentrade::InitalizePy();
-  opentrade::Database::Initialize(db_url, db_pool_size, db_create_tables);
-  opentrade::SecurityManager::Initialize();
-  AlgoManager::Initialize();
 
   boost::property_tree::ptree prop_tree;
   boost::property_tree::ini_parser::read_ini(config_file_path, prop_tree);
@@ -127,10 +157,12 @@ int main(int argc, char *argv[]) {
     if (sofile.empty()) continue;
     params.erase("sofile");
     auto adapter = opentrade::Adapter::Load(sofile);
+    if (!adapter) continue;
     adapter->set_name(section_name);
     adapter->set_config(params);
     if (adapter->GetVersion() != opentrade::kApiVersion) {
-      LOG_FATAL("Version mismatch");
+      LOG_ERROR("Version mismatch");
+      continue;
     }
     if (section_name.find("md_") == 0) {
       auto md = dynamic_cast<opentrade::MarketDataAdapter *>(adapter);
@@ -149,6 +181,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  AlgoManager::Initialize();
   opentrade::AccountManager::Initialize();
   PositionManager::Initialize();
   opentrade::GlobalOrderBook::Initialize();
@@ -157,7 +190,9 @@ int main(int argc, char *argv[]) {
     LOG_INFO("rms disabled");
     opentrade::RiskManager::Instance().Disable();
   }
+#endif
 
+  opentrade::InitalizePy(extra_python_path);
   LOG_INFO("Loading python algos from " << kAlgoPath);
   if (fs::is_directory(kAlgoPath)) {
     for (auto &entry :
@@ -172,7 +207,8 @@ int main(int argc, char *argv[]) {
       } else if (path.extension() == ".so") {
         auto adapter = opentrade::Adapter::Load(path.string());
         if (adapter->GetVersion() != opentrade::kApiVersion) {
-          LOG_FATAL("Version mismatch");
+          LOG_ERROR("Version mismatch");
+          adapter = nullptr;
         }
         algo = dynamic_cast<opentrade::Algo *>(adapter);
       } else {
@@ -197,11 +233,25 @@ int main(int argc, char *argv[]) {
   AlgoManager::Instance().Run(algo_threads);
 
 #ifdef BACKTEST
-  return 0;
-#endif
-
+  auto &bt = opentrade::Backtest::Instance();
+  bt.Start(backtest_file, latency);
+  boost::gregorian::date dt(start_date / 10000, start_date % 10000 / 100,
+                            start_date % 100);
+  boost::gregorian::date end(end_date / 10000, end_date % 10000 / 100,
+                             end_date % 100);
+  while (dt <= end) {
+    bt.PlayTickFile(tick_file, dt);
+    dt += boost::gregorian::date_duration(1);
+  }
+  bt.End();
+#else
+  if (!MarketDataManager::Instance().GetDefault()) {
+    LOG_FATAL("At least one market data adapter required");
+    return -1;
+  }
   PositionManager::Instance().UpdatePnl();
   opentrade::Server::Start(port, io_threads);
+#endif
 
   return 0;
 }

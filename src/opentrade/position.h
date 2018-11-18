@@ -57,15 +57,17 @@ class PositionManager : public Singleton<PositionManager> {
     return user_positions_[std::make_pair(user.id, sec.id)];
   }
   void UpdatePnl();
+  typedef tbb::concurrent_unordered_map<
+      std::pair<SubAccount::IdType, Security::IdType>, Position>
+      SubPositions;
+  const SubPositions& sub_positions() const { return sub_positions_; }
 
  private:
   // holding the sql session exclusively for position update
   std::unique_ptr<soci::session> sql_;
   boost::unordered_map<std::pair<SubAccount::IdType, Security::IdType>, Bod>
       bods_;
-  tbb::concurrent_unordered_map<std::pair<SubAccount::IdType, Security::IdType>,
-                                Position>
-      sub_positions_;
+  SubPositions sub_positions_;
   tbb::concurrent_unordered_map<
       std::pair<BrokerAccount::IdType, Security::IdType>, Position>
       broker_positions_;

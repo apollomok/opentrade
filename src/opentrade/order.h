@@ -157,6 +157,7 @@ class GlobalOrderBook : public Singleton<GlobalOrderBook> {
   tbb::concurrent_unordered_set<std::pair<Order::IdType, std::string>>
       exec_ids_;
   std::ofstream of_;
+  friend class Backtest;
 };
 
 static inline bool GetOrderSide(const std::string& side_str, OrderSide* side) {

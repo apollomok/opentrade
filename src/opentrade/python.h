@@ -37,7 +37,7 @@ class Python : public Algo {
                      const MarketData& md0) noexcept override;
   void OnConfirmation(const Confirmation& cm) noexcept override;
   const ParamDefs& GetParamDefs() noexcept override;
-  void SetTimeout(bp::object func, size_t milliseconds);
+  void SetTimeout(bp::object func, int milliseconds);
 
  private:
   PyModule py_;
@@ -46,7 +46,11 @@ class Python : public Algo {
   std::string test_token_;
 };
 
-void InitalizePy();
+void InitalizePy(const std::string& extra_python_path);
+void PrintPyError(const char*, bool fatal = false);
+bp::object GetCallable(const bp::object& m, const char* name);
+
+inline bp::object kOpentrade;
 
 }  // namespace opentrade
 

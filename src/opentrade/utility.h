@@ -54,7 +54,7 @@ inline std::multimap<uint64_t, std::function<void()>> kTimers;
 
 inline time_t Time() {
 #ifdef BACKTEST
-  return kTime / 1000000lu;
+  if (kTime) return kTime / 1000000lu;
 #endif
   return std::time(nullptr);
 }
