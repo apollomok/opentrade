@@ -143,8 +143,7 @@ class Fix : public FIX::Application,
         OnRejected(msg, text);
         break;
       case FIX::ExecType_SUSPENDED:
-        if (text.empty()) text = "Suspended";
-        OnRejected(msg, text);
+        OnSuspended(msg);
         break;
       case FIX::ExecType_RESTATED:
         break;
@@ -165,6 +164,14 @@ class Fix : public FIX::Application,
     if (msg.isSetField(FIX::FIELD::OrderID))
       order_id = msg.getField(FIX::FIELD::OrderID);
     HandleNew(clordid, order_id, transact_time_);
+  }
+
+  void OnSuspended(const FIX::Message& msg) {
+    Order::IdType clordid = atol(msg.getField(FIX::FIELD::ClOrdID).c_str());
+    std::string order_id;
+    if (msg.isSetField(FIX::FIELD::OrderID))
+      order_id = msg.getField(FIX::FIELD::OrderID);
+    HandleSuspended(clordid, order_id, transact_time_);
   }
 
   void OnPendingNew(const FIX::Message& msg, const std::string& text) {

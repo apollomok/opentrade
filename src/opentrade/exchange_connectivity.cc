@@ -235,6 +235,12 @@ void ExchangeConnectivityAdapter::HandleNew(Order::IdType id,
   Handle(name(), id, "new", kNew, order_id, transaction_time);
 }
 
+void ExchangeConnectivityAdapter::HandleSuspended(Order::IdType id,
+                                                  const std::string& order_id,
+                                                  int64_t transaction_time) {
+  Handle(name(), id, "suspended", kSuspended, order_id, transaction_time);
+}
+
 void ExchangeConnectivityAdapter::HandlePendingNew(Order::IdType id,
                                                    const std::string& text,
                                                    int64_t transaction_time) {

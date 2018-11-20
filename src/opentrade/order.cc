@@ -78,6 +78,7 @@ inline void GlobalOrderBook::UpdateOrder(Confirmation::Ptr cm) {
       }
       break;
     case kNew:
+    case kSuspended:
     case kPendingNew:
     case kPendingCancel:
       cm->order->status = cm->exec_type;
@@ -118,6 +119,7 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
     auto ord = cm->order;
     switch (cm->exec_type) {
       case kNew:
+      case kSuspended:
         ss << ord->id << ' ' << cm->transaction_time << ' ' << cm->order_id;
         break;
       case kPartiallyFilled:
@@ -195,7 +197,8 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         continue;
     }
     switch (exec_type) {
-      case kNew: {
+      case kNew:
+      case kSuspended: {
         uint32_t id;
         int64_t tm;
         char id_str[n];

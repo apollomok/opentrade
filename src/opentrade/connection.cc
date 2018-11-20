@@ -717,6 +717,8 @@ void Connection::Send(const Confirmation& cm, bool offline) {
       if (!status) status = "pending_cancel";
     case kNew:
       if (!status) status = "new";
+    case kSuspended:
+      if (!status) status = "suspended";
     case kCanceled:
       if (!status) status = "cancelled";
       j.push_back(status);
@@ -1068,6 +1070,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
        {"userId", user->id},
        {"startTime", kStartTime},
        {"sessionToken", token},
+       {"isAdmin", user->is_admin},
        {"securitiesCheckSum", SecurityManager::Instance().check_sum()}},
   };
   Send(out.dump());
