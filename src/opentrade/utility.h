@@ -52,7 +52,7 @@ inline uint64_t kTime;
 inline std::multimap<uint64_t, std::function<void()>> kTimers;
 #endif
 
-inline time_t Time() {
+inline time_t GetTime() {
 #ifdef BACKTEST
   if (kTime) return kTime / 1000000lu;
 #endif
@@ -72,7 +72,7 @@ static inline int64_t NowUtcInMicro() {
   struct timeval now;
   auto rc = GetTimeOfDay(&now);
   if (rc)
-    return Time() * 1000000lu;
+    return GetTime() * 1000000lu;
   else
     return now.tv_sec * 1000000lu + now.tv_usec;
 }
@@ -95,7 +95,7 @@ static inline int GetUtcTimeOffset(const char* tz) {
   setenv("TZ", tz, 1);
   tzset();
   struct tm tm;
-  auto t = Time();
+  auto t = GetTime();
   localtime_r(&t, &tm);
   if (orig_tz)
     setenv("TZ", orig_tz, 1);
@@ -108,7 +108,7 @@ static inline int GetUtcTimeOffset(const char* tz) {
 static const int kSecondsOneDay = 3600 * 24;
 
 static inline int GetSeconds(int tm_gmtoff) {
-  auto rawtime = Time() + tm_gmtoff;
+  auto rawtime = GetTime() + tm_gmtoff;
   struct tm tm_info;
   gmtime_r(&rawtime, &tm_info);
   auto n = tm_info.tm_hour * 3600 + tm_info.tm_min * 60 + tm_info.tm_sec;
@@ -116,7 +116,7 @@ static inline int GetSeconds(int tm_gmtoff) {
 }
 
 static inline int GetDate(int tm_gmtoff) {
-  auto rawtime = Time() + tm_gmtoff;
+  auto rawtime = GetTime() + tm_gmtoff;
   struct tm tm_info;
   gmtime_r(&rawtime, &tm_info);
   return 10000 * (tm_info.tm_year + 1900) + 100 * (tm_info.tm_mon + 1) +

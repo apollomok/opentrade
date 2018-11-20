@@ -30,7 +30,7 @@ void GlobalOrderBook::Initialize() {
   }
   self.LoadStore();
   LOG_INFO("Got last maximum client order id: " << self.order_id_counter_);
-  time_t t = Time();
+  time_t t = GetTime();
   struct tm now;
   localtime_r(&t, &now);
   auto secs = now.tm_hour * 3600 + now.tm_min * 60 + now.tm_sec;

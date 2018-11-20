@@ -20,7 +20,7 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
   inst_ = Subscribe(*sec, src);
   auto seconds = GetParam(params, "ValidSeconds", 0);
   if (seconds < 60) return "Too short ValidSeconds, must be >= 60";
-  begin_time_ = Time();
+  begin_time_ = GetTime();
   price_ = GetParam(params, "Price", 0.);
   end_time_ = begin_time_ + seconds;
   min_size_ = GetParam(params, "MinSize", 0);
@@ -91,7 +91,7 @@ const ParamDefs& TWAP::GetParamDefs() noexcept {
 
 void TWAP::Timer() {
   if (!is_active()) return;
-  auto now = Time();
+  auto now = GetTime();
   if (now > end_time_) {
     Stop();
     return;

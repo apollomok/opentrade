@@ -329,7 +329,7 @@ void PositionManager::UpdatePnl() {
 #ifdef BACKTEST
   return;
 #endif
-  auto tm = Time();
+  auto tm = GetTime();
   for (auto& pair : pnls) {
     auto& pnl = pnls_[pair.first];
     if (std::abs(pnl.realized - pair.second.first) < 1 &&

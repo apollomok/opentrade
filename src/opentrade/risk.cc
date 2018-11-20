@@ -6,7 +6,7 @@ namespace opentrade {
 
 static bool CheckMsgRate(const char* name, const AccountBase& acc,
                          Security::IdType sid) {
-  auto tm = Time();
+  auto tm = GetTime();
   auto& l = acc.limits;
   if (l.msg_rate_per_security > 0) {
     auto v = FindInMap(acc.throttle_per_security_in_sec, sid)(tm);
