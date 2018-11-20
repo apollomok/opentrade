@@ -95,7 +95,7 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
   }
 
   char fn[256];
-  strftime(fn, 26, fn_tmpl.c_str(), &tm);
+  strftime(fn, sizeof(fn), fn_tmpl.c_str(), &tm);
 
   std::ifstream ifs(fn);
   if (!ifs.good()) return;

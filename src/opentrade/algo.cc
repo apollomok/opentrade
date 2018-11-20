@@ -259,7 +259,7 @@ void AlgoManager::Persist(const Algo& algo, const std::string& status,
 #endif
   kWriteTaskPool.AddTask([this, &algo, status, body]() {
     std::stringstream ss;
-    ss << Time() << ' ' << algo.name() << ' ' << status << ' ' << body;
+    ss << GetTime() << ' ' << algo.name() << ' ' << status << ' ' << body;
     auto str = ss.str();
     auto seq = ++seq_counter_;
     Server::Publish(algo, status, body, seq);
