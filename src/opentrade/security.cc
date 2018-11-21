@@ -9,6 +9,91 @@
 
 namespace opentrade {
 
+std::string Exchange::ParseTickSizeTable(const std::string& str) {
+  if (str.size()) {
+    auto tmp = std::make_shared<TickSizeTable>();
+    for (auto& str : Split(str, "\n;|,")) {
+      double low, up, value;
+      if (sscanf(str.c_str(), "%lf %lf %lf", &low, &up, &value) == 3) {
+        tmp->push_back({low, up, value});
+      } else {
+        return "Invalid format, expect '<low_price> <up_price> <value>,...'";
+      }
+    }
+    if (!tmp->empty()) {
+      tmp->shrink_to_fit();
+      std::sort(tmp->begin(), tmp->end());
+      std::atomic_thread_fence(std::memory_order_release);
+      tick_size_table_ = tmp;
+    }
+  }
+  return {};
+}
+
+std::string Exchange::GetTickSizeTableString() const {
+  std::stringstream out;
+  auto tmp = tick_size_table();
+  if (!tmp) return {};
+  out << std::setprecision(15);
+  for (auto i = 0u; i < tmp->size(); ++i) {
+    auto t = (*tmp)[i];
+    if (i > 0) out << ",";
+    out << t.lower_bound << ' ' << t.upper_bound << ' ' << t.value;
+  }
+  return out.str();
+}
+
+std::string Exchange::ParseHalfDays(const std::string& str) {
+  if (str.size()) {
+    auto tmp = std::make_shared<HalfDays>();
+    for (auto& f : Split(str, "\n;|, \t")) {
+      auto i = atoi(f.c_str());
+      if (i > 0) {
+        tmp->insert(i);
+      }
+    }
+    if (tmp->empty()) {
+      return "Invalid format, expect '<YYYmmdd>,...'";
+    }
+    std::atomic_thread_fence(std::memory_order_release);
+    half_days_ = tmp;
+  }
+  return {};
+}
+
+std::string Exchange::GetHalfDaysString() const {
+  std::stringstream out;
+  auto tmp = half_days();
+  if (!tmp) return {};
+  out << std::setprecision(15);
+  auto it = tmp->begin();
+  while (it != tmp->end()) {
+    if (it != tmp->begin()) out << ",";
+    out << *it;
+    ++it;
+  }
+  return out.str();
+}
+
+std::string Exchange::GetTradePeriodString() const {
+  return std::to_string(trade_start / 3600) + ":" +
+         std::to_string(trade_start % 3600 / 60) + "-" +
+         std::to_string(trade_end_ / 3600) + ":" +
+         std::to_string(trade_end_ % 3600 / 60);
+}
+
+std::string Exchange::GetBreakPeriodString() const {
+  return std::to_string(break_start / 3600) + ":" +
+         std::to_string(break_start % 3600 / 60) + "-" +
+         std::to_string(break_end / 3600) + ":" +
+         std::to_string(break_end % 3600 / 60);
+}
+
+std::string Exchange::GetHalfDayString() const {
+  return std::to_string(half_day / 3600) + ":" +
+         std::to_string(half_day % 3600 / 60);
+}
+
 void SecurityManager::Initialize() {
   auto& self = Instance();
   self.LoadFromDatabase();
@@ -36,21 +121,7 @@ void SecurityManager::LoadFromDatabase() {
     e->bb_name = Database::GetValue(*it, i++, "");
     e->tz = Database::GetValue(*it, i++, "");
     if (*e->tz) e->utc_time_offset = GetUtcTimeOffset(e->tz);
-    auto tick_size_table = Database::GetValue(*it, i++, kEmptyStr);
-    if (tick_size_table.size()) {
-      Exchange::TickSizeTable t;
-      for (auto& str : Split(tick_size_table, "\n;|,")) {
-        double low, up, value;
-        if (sscanf(str.c_str(), "%lf %lf %lf", &low, &up, &value) == 3) {
-          t.push_back({low, up, value});
-        }
-      }
-      if (!t.empty()) {
-        t.shrink_to_fit();
-        std::sort(t.begin(), t.end());
-        e->tick_size_table = new Exchange::TickSizeTable(std::move(t));
-      }
-    }
+    e->ParseTickSizeTable(Database::GetValue(*it, i++, kEmptyStr));
     e->odd_lot_allowed = Database::GetValue(*it, i++, 0);
     auto trade_period = Database::GetValue(*it, i++, 0);
     if (trade_period > 0) {
@@ -70,15 +141,7 @@ void SecurityManager::LoadFromDatabase() {
     if (half_day > 0) {
       e->half_day = (half_day / 100) * 3600 + (half_day % 100) * 60;
     }
-    auto half_days = Database::GetValue(*it, i++, kEmptyStr);
-    if (half_days.size()) {
-      for (auto& str : Split(half_days, "\n;|, \t")) {
-        auto i = atoi(str.c_str());
-        if (i > 0) {
-          e->half_days.insert(i);
-        }
-      }
-    }
+    e->ParseHalfDays(Database::GetValue(*it, i++, kEmptyStr));
 
     std::atomic_thread_fence(std::memory_order_release);
     exchanges_.emplace(e->id, e);
@@ -109,7 +172,6 @@ void SecurityManager::LoadFromDatabase() {
     if (ex_it != exchanges_.end()) {
       s->exchange = ex_it->second;
       ex_it->second->security_of_name.emplace(s->symbol, s);
-      ex_it->second->securities.push_back(s);
     }
     auto underlying_id = Database::GetValue(*it, i++, Security::IdType());
     if (underlying_id > 0) {
@@ -165,7 +227,7 @@ double Security::CurrentPrice() const {
 }
 
 double Exchange::GetTickSize(double ref) const {
-  auto table = tick_size_table;
+  auto table = tick_size_table();
   if (!table) return 0;
   TickSizeTuple t{ref};
   auto it = std::lower_bound(table->begin(), table->end(), t);

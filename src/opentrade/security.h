@@ -33,13 +33,16 @@ struct Exchange {
     }
   };
   typedef std::vector<TickSizeTuple> TickSizeTable;
+  typedef std::shared_ptr<const TickSizeTable> TickSizeTablePtr;
+  TickSizeTablePtr tick_size_table() const { return tick_size_table_; }
   double GetTickSize(double ref) const;
-  const TickSizeTable* tick_size_table = nullptr;
   int trade_start = 0;  // seconds since midnight
   int break_start = 0;
   int break_end = 0;
   int half_day = 0;
-  std::unordered_set<int> half_days;
+  typedef std::unordered_set<int> HalfDays;
+  typedef std::shared_ptr<const HalfDays> HalfDaysPtr;
+  HalfDaysPtr half_days() const { return half_days_; }
 
   int GetSeconds() const {  // seconds since midnight in exchange time zone
     return opentrade::GetSeconds(utc_time_offset);
@@ -48,7 +51,8 @@ struct Exchange {
   int GetDate() const { return opentrade::GetDate(utc_time_offset); }
 
   bool IsHalfDay() const {
-    return half_day && half_days.find(GetDate()) != half_days.end();
+    auto tmp = half_days();
+    return tmp && tmp->find(GetDate()) != tmp->end();
   }
 
   void set_trade_end(int v) { trade_end_ = v; }
@@ -65,12 +69,19 @@ struct Exchange {
   }
 
   tbb::concurrent_unordered_map<std::string, Security*> security_of_name;
-  typedef std::vector<Security*> Securities;
-  Securities securities;  // mainly used for efficient and easy iteration in
-                          // python interface
+
+  std::string ParseTickSizeTable(const std::string& str);
+  std::string ParseHalfDays(const std::string& str);
+  std::string GetTickSizeTableString() const;
+  std::string GetHalfDaysString() const;
+  std::string GetTradePeriodString() const;
+  std::string GetBreakPeriodString() const;
+  std::string GetHalfDayString() const;
 
  private:
   int trade_end_ = 0;
+  TickSizeTablePtr tick_size_table_;
+  HalfDaysPtr half_days_;
 };
 
 // follow IB
@@ -164,6 +175,7 @@ class SecurityManager : public Singleton<SecurityManager> {
   tbb::concurrent_unordered_map<std::string, Exchange*> exchange_of_name_;
   SecurityMap securities_;
   const char* check_sum_ = "";
+  friend class Connection;
 };
 
 }  // namespace opentrade

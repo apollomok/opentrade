@@ -80,15 +80,17 @@ static std::string Args2Str(bp::tuple args) {
 
 template <typename T>
 struct ContainerWrapper {
-  explicit ContainerWrapper(T *v) : ptr(v) {}
+  explicit ContainerWrapper(T v) : ptr(v) {}
   decltype(auto) len() { return ptr->size(); }
   decltype(auto) begin() { return ptr->begin(); }
   decltype(auto) end() { return ptr->end(); }
-  T *ptr = nullptr;
+  T ptr;
 };
 
-typedef ContainerWrapper<const Instrument::Orders> OrdersWrapper;
-typedef ContainerWrapper<const Exchange::Securities> SecuritiesWrapper;
+typedef ContainerWrapper<const Instrument::Orders *> OrdersWrapper;
+typedef std::vector<const Security *> Securities;
+typedef std::shared_ptr<Securities> SecuritiesPtr;
+typedef ContainerWrapper<SecuritiesPtr> SecuritiesWrapper;
 
 #define PUBLISH_TEST_MSG(type, msg)                        \
   if (LockGIL::test_token.size()) {                        \
@@ -202,7 +204,12 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("date", &Exchange::GetDate)
       .add_property("seconds", &Exchange::GetSeconds)
       .add_property("securities", +[](const Exchange &self) {
-        return SecuritiesWrapper(&self.securities);
+        auto tmp = new Securities;
+        tmp->reserve(self.security_of_name.size());
+        for (auto &pair : self.security_of_name) {
+          tmp->push_back(pair.second);
+        }
+        return SecuritiesWrapper(SecuritiesPtr(tmp));
       });
 
   bp::class_<Position>("Position", bp::no_init)
@@ -281,7 +288,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("get_broker_position",
            +[](const Security &sec, const SubAccount *acc) {
              if (!acc) return (const Position *)nullptr;
-             auto broker = acc->GetBroker(sec);
+             auto broker = acc->GetBrokerAccount(sec.exchange->id);
              if (!broker) return (const Position *)nullptr;
              return acc ? &PositionManager::Instance().Get(*broker, sec)
                         : nullptr;

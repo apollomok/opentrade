@@ -278,10 +278,9 @@ void Connection::PublishMarketdata() {
       self->Send(j.dump());
     }
     if (!self->sub_pnl_) return;
-    auto sub_accounts = self->user_->sub_accounts;
     for (auto& pair : PositionManager::Instance().sub_positions_) {
       auto sub_account_id = pair.first.first;
-      if (sub_accounts->find(sub_account_id) == sub_accounts->end()) continue;
+      if (!self->user_->GetSubAccount(sub_account_id)) continue;
       auto sec_id = pair.first.second;
       auto& pnl0 = self->single_pnls_[pair.first];
       auto& pos = pair.second;
@@ -301,7 +300,7 @@ void Connection::PublishMarketdata() {
     }
     for (auto& pair : PositionManager::Instance().pnls_) {
       auto id = pair.first;
-      if (sub_accounts->find(id) == sub_accounts->end()) continue;
+      if (!self->user_->GetSubAccount(id)) continue;
       auto& pnl0 = self->pnls_[id];
       auto& pnl = pair.second;
       if (pnl.realized != pnl0.first || pnl.unrealized != pnl0.second) {
@@ -389,10 +388,9 @@ void Connection::OnMessageSync(const std::string& msg,
     if (action == "login" || action == "validate_user") {
       OnLogin(action, j);
     } else if (action == "bod") {
-      auto accs = user_->sub_accounts;
       for (auto& pair : PositionManager::Instance().bods_) {
         auto acc = pair.first.first;
-        if (!user_->is_admin && accs->find(acc) == accs->end()) continue;
+        if (!user_->is_admin && !user_->GetSubAccount(acc)) continue;
         auto sec_id = pair.first.second;
         auto& pos = pair.second;
         json j = {
@@ -421,6 +419,8 @@ void Connection::OnMessageSync(const std::string& msg,
       }
     } else if (action == "securities") {
       OnSecurities(j);
+    } else if (action == "admin") {
+      OnAdmin(j);
     } else if (action == "position") {
       OnPosition(j, msg);
     } else if (action == "offline") {
@@ -485,8 +485,7 @@ void Connection::OnMessageSync(const std::string& msg,
       tm0 = std::max(GetTime() - 24 * 3600, tm0);
       for (auto& pair : PositionManager::Instance().pnls_) {
         auto id = pair.first;
-        auto sub_accounts = user_->sub_accounts;
-        if (sub_accounts->find(id) == sub_accounts->end()) continue;
+        if (!user_->GetSubAccount(id)) continue;
         auto path = kStorePath / ("pnl-" + std::to_string(id));
         std::ifstream f(path.c_str());
         const int LINE_LENGTH = 100;
@@ -589,9 +588,7 @@ void Connection::OnMessageSync(const std::string& msg,
 void Connection::Send(Confirmation::Ptr cm) {
   if (closed_) return;
   if (!user_) return;
-  if (user_->sub_accounts->find(cm->order->sub_account->id) ==
-      user_->sub_accounts->end())
-    return;
+  if (!user_->GetSubAccount(cm->order->sub_account->id)) return;
   auto self = shared_from_this();
   strand_.post([self, cm]() { self->Send(*cm.get(), false); });
 }
@@ -804,7 +801,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
   const Position* p;
   bool broker = j.size() > 3 && Get<bool>(j[3]);
   if (broker) {
-    auto broker_acc = acc->GetBroker(*sec);
+    auto broker_acc = acc->GetBrokerAccount(sec->exchange->id);
     if (!broker_acc) {
       json j = {"error", "position", "account name",
                 "Can not find broker for this account and security pair"};
@@ -868,8 +865,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
         for (auto& pair : *params) {
           if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
             auto acc = pval->acc;
-            auto accs = user_->sub_accounts;
-            if (accs->find(acc->id) == accs->end()) {
+            if (!user_->GetSubAccount(acc->id)) {
               throw std::runtime_error("No permission to trade with account: " +
                                        std::string(acc->name));
             }
@@ -1077,7 +1073,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
   if (!user_ && !transport_->stateless) {
     user_ = user;
     PublishMarketdata();
-    auto accs = user->sub_accounts;
+    auto accs = user->sub_accounts();
     for (auto& pair : *accs) {
       json j = {
           "sub_account",
@@ -1088,7 +1084,8 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     }
     if (user->is_admin) {
       for (auto& pair : AccountManager::Instance().users_) {
-        for (auto& pair2 : *pair.second->sub_accounts) {
+        auto tmp = pair.second->sub_accounts();
+        for (auto& pair2 : *tmp) {
           json j = {
               "user_sub_account",
               pair.first,
@@ -1158,6 +1155,89 @@ void Connection::SendTestMsg(const std::string& token, const std::string& msg,
       self->Send(out.dump());
     }
   });
+}
+
+void Connection::OnAdmin(const json& j) {
+  auto name = Get<std::string>(j[1]);
+  auto action = Get<std::string>(j[2]);
+  json out = {"admin", name, action};
+  if (strcasecmp(name.c_str(), "users")) {
+    auto& inst = AccountManager::Instance();
+    if (action == "ls") {
+      json users;
+      for (auto& pair : inst.users_) {
+        auto user = pair.second;
+        json juser = {user->id, user->name, user->is_disabled, user->is_admin,
+                      user->limits.GetString()};
+        json sub_accounts;
+        auto tmp = user->sub_accounts();
+        for (auto& pair2 : *tmp) {
+          sub_accounts.push_back(pair2.second->id);
+        }
+        juser.push_back(sub_accounts);
+        users.push_back(juser);
+      }
+      out.push_back(users);
+      Send(out.dump());
+    }
+  } else if (name.c_str(), "broker accounts") {
+    auto& inst = AccountManager::Instance();
+    if (action == "ls") {
+      json accs;
+      for (auto& pair : inst.broker_accounts_) {
+        auto acc = pair.second;
+        json jacc = {acc->id, acc->name, acc->adapter_name,
+                     acc->limits.GetString()};
+        accs.push_back(jacc);
+      }
+      out.push_back(accs);
+      Send(out.dump());
+    }
+  } else if (name.c_str(), "sub accounts") {
+    auto& inst = AccountManager::Instance();
+    if (action == "ls") {
+      json accs;
+      for (auto& pair : inst.sub_accounts_) {
+        auto acc = pair.second;
+        json jacc = {acc->id, acc->name, acc->limits.GetString()};
+        auto b = acc->broker_accounts();
+        json map;
+        for (auto& pair : *b) {
+          map[pair.first] = pair.second->id;
+        }
+        jacc.push_back(map);
+        accs.push_back(jacc);
+      }
+      out.push_back(accs);
+      Send(out.dump());
+    }
+  } else if (name.c_str(), "exchanges") {
+    auto& inst = SecurityManager::Instance();
+    if (action == "ls") {
+      json exchs;
+      for (auto& pair : inst.exchanges_) {
+        auto exch = pair.second;
+        json jexch = {
+            exch->id,
+            exch->name,
+            exch->mic,
+            exch->country,
+            exch->ib_name,
+            exch->bb_name,
+            exch->tz,
+            exch->odd_lot_allowed,
+            exch->GetTickSizeTableString(),
+            exch->GetTradePeriodString(),
+            exch->GetBreakPeriodString(),
+            exch->GetHalfDayString(),
+            exch->GetHalfDaysString(),
+        };
+        exchs.push_back(jexch);
+      }
+      out.push_back(exchs);
+      Send(out.dump());
+    }
+  }
 }
 
 }  // namespace opentrade

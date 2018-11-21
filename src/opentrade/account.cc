@@ -9,8 +9,6 @@
 
 namespace opentrade {
 
-Limits ParseLimits(const std::string& limits_str);
-
 void AccountManager::Initialize() {
   auto& self = Instance();
   auto sql = Database::Session();
@@ -27,7 +25,7 @@ void AccountManager::Initialize() {
     u->password = Database::GetValue(*it, i++, "");
     u->is_admin = Database::GetValue(*it, i++, 0);
     u->is_disabled = Database::GetValue(*it, i++, 0);
-    u->limits = ParseLimits(Database::GetValue(*it, i++, kEmptyStr));
+    u->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));
     self.users_.emplace(u->id, u);
     self.user_of_name_.emplace(u->name, u);
   }
@@ -41,7 +39,7 @@ void AccountManager::Initialize() {
     auto i = 0;
     s->id = Database::GetValue(*it, i++, 0);
     s->name = Database::GetValue(*it, i++, "");
-    s->limits = ParseLimits(Database::GetValue(*it, i++, kEmptyStr));
+    s->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));
     self.sub_accounts_.emplace(s->id, s);
     self.sub_account_of_name_.emplace(s->name, s);
   }
@@ -63,7 +61,7 @@ void AccountManager::Initialize() {
           std::string("ec_") + b->adapter_name);
     }
     b->set_params(Database::GetValue(*it, i++, kEmptyStr));
-    b->limits = ParseLimits(Database::GetValue(*it, i++, kEmptyStr));
+    b->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));
     self.broker_accounts_.emplace(b->id, b);
   }
 
@@ -83,8 +81,8 @@ void AccountManager::Initialize() {
     }
   }
   for (auto& pair : user_sub_account_map) {
-    pair.first->sub_accounts =
-        new decltype(pair.second)(std::move(pair.second));
+    pair.first->set_sub_accounts(User::SubAccountMapPtr(
+        new decltype(pair.second)(std::move(pair.second))));
   }
 
   query = R"(
@@ -106,13 +104,13 @@ void AccountManager::Initialize() {
     }
   }
   for (auto& pair : sub_account_broker_account_map) {
-    pair.first->broker_accounts =
-        new decltype(pair.second)(std::move(pair.second));
+    pair.first->set_broker_accounts(SubAccount::BrokerAccountMapPtr(
+        new decltype(pair.second)(std::move(pair.second))));
   }
 }
 
 void BrokerAccount::set_params(const std::string& params) {
-  auto tmp = new StrMap();
+  auto tmp = std::make_shared<StrMap>();
   for (auto& str : Split(params, "\n")) {
     auto pos = str.find("=");
     if (pos == std::string::npos || pos == str.length() - 1) continue;
@@ -124,33 +122,7 @@ void BrokerAccount::set_params(const std::string& params) {
   }
   std::atomic_thread_fence(std::memory_order_release);
   // not release old params, intended memory leak
-  this->params = tmp;
-}
-
-Limits ParseLimits(const std::string& limits_str) {
-  Limits limits{};
-  for (auto& str : Split(limits_str, ",;\n")) {
-    char name[str.size()];
-    double value;
-    if (sscanf(str.c_str(), "%s=%lf", name, &value) != 2) continue;
-    if (!strcasecmp(name, "msg_rate"))
-      limits.msg_rate = value;
-    else if (!strcasecmp(name, "msg_rate_per_security"))
-      limits.msg_rate_per_security = value;
-    else if (!strcasecmp(name, "order_qty"))
-      limits.order_qty = value;
-    else if (!strcasecmp(name, "order_value"))
-      limits.order_value = value;
-    else if (!strcasecmp(name, "value"))
-      limits.value = value;
-    else if (!strcasecmp(name, "turnover"))
-      limits.turnover = value;
-    else if (!strcasecmp(name, "total_value"))
-      limits.total_value = value;
-    else if (!strcasecmp(name, "total_turnover"))
-      limits.total_turnover = value;
-  }
-  return limits;
+  this->params_ = tmp;
 }
 
 }  // namespace opentrade

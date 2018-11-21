@@ -314,8 +314,9 @@ void Backtest::Start(const std::string& py, int latency) {
   acc_mngr.broker_accounts_.emplace(b->id, b);
   auto s = new SubAccount();
   s->name = "test";
-  const_cast<SubAccount::BrokerAccountMap*>(s->broker_accounts)
-      ->emplace(0, b);  //  0 is the default exchange
+  auto tmp = std::make_shared<BrokerAccountMap>();
+  tmp->emplace(0, b);
+  s->set_broker_accounts(tmp);  //  0 is the default exchange
   acc_mngr.sub_accounts_.emplace(s->id, s);
   acc_mngr.sub_account_of_name_.emplace(s->name, s);
   const_cast<User::SubAccountMap*>(u->sub_accounts)->emplace(s->id, s);

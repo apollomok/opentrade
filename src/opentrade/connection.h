@@ -36,6 +36,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   void OnAlgo(const json& j, const std::string& msg);
   void OnOrder(const json& j, const std::string& msg);
   void OnSecurities(const json& j);
+  void OnAdmin(const json& j);
   void OnPosition(const json& j, const std::string& msg);
   void OnLogin(const std::string& action, const json& j);
   void Send(Confirmation::Ptr cm);

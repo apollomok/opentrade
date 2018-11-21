@@ -191,9 +191,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
     if (seq <= seq0) continue;
     if (conn) {
       assert(conn->user_);
-      if (!conn->user_->is_admin &&
-          conn->user_->sub_accounts->find(sub_account_id) ==
-              conn->user_->sub_accounts->end())
+      if (!conn->user_->is_admin && !conn->user_->GetSubAccount(sub_account_id))
         continue;
     }
     switch (exec_type) {

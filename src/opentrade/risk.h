@@ -17,6 +17,8 @@ struct Limits {
   double turnover = 0;  // per security
   double total_value = 0;
   double total_turnover = 0;
+  std::string GetString();
+  std::string FromString(const std::string& str);
 };
 
 struct Throttle {

@@ -29,9 +29,15 @@ struct BrokerAccount : public AccountBase {
   const char* adapter_name = "";
   ExchangeConnectivityAdapter* adapter = nullptr;
   typedef std::unordered_map<std::string, std::string> StrMap;
-  const StrMap* params = new StrMap();
+  typedef std::shared_ptr<const StrMap> StrMapPtr;
 
   void set_params(const std::string& params);
+  std::string GetParam(const std::string& k) const {
+    return FindInMap(params_, k);
+  }
+
+ private:
+  StrMapPtr params_ = std::make_shared<const StrMap>();
 };
 
 struct SubAccount : public AccountBase {
@@ -39,11 +45,19 @@ struct SubAccount : public AccountBase {
   IdType id = 0;
   const char* name = "";
   typedef std::unordered_map<Exchange::IdType, BrokerAccount*> BrokerAccountMap;
-  const BrokerAccountMap* broker_accounts = new BrokerAccountMap();
-
-  const BrokerAccount* GetBroker(const Security& sec) const {
-    return FindInMap(*broker_accounts, sec.id);
+  typedef std::shared_ptr<const BrokerAccountMap> BrokerAccountMapPtr;
+  BrokerAccountMapPtr broker_accounts() const { return broker_accounts_; }
+  void set_broker_accounts(BrokerAccountMapPtr accs) {
+    broker_accounts_ = accs;
   }
+  const BrokerAccount* GetBrokerAccount(Exchange::IdType id) const {
+    auto tmp = FindInMap(broker_accounts(), id);
+    if (!tmp && id) tmp = FindInMap(broker_accounts(), 0);
+    return tmp;
+  }
+
+ private:
+  BrokerAccountMapPtr broker_accounts_ = std::make_shared<BrokerAccountMap>();
 };
 
 struct User : public AccountBase {
@@ -54,34 +68,31 @@ struct User : public AccountBase {
   bool is_admin = false;
   bool is_disabled = false;
   typedef std::unordered_map<SubAccount::IdType, SubAccount*> SubAccountMap;
-  const SubAccountMap* sub_accounts = new SubAccountMap();
-};
+  typedef std::shared_ptr<const SubAccountMap> SubAccountMapPtr;
+  const SubAccount* GetSubAccount(SubAccount::IdType id) const {
+    return FindInMap(sub_accounts_, id);
+  }
+  SubAccountMapPtr sub_accounts() const { return sub_accounts_; }
+  void set_sub_accounts(SubAccountMapPtr accs) { sub_accounts_ = accs; }
 
-struct UserSubAccountMap {
-  User::IdType user_id = 0;
-  SubAccount::IdType sub_account_id = 0;
-};
-
-struct SubAccountBrokerAccountMap {
-  SubAccount::IdType sub_account_id = 0;
-  Exchange::IdType exchange_id = 0;
-  BrokerAccount::IdType broker_account_id = 0;
+ private:
+  SubAccountMapPtr sub_accounts_ = std::make_shared<SubAccountMap>();
 };
 
 class AccountManager : public Singleton<AccountManager> {
  public:
   static void Initialize();
-  const User* GetUser(const std::string& name) {
+  const User* GetUser(const std::string& name) const {
     return FindInMap(user_of_name_, name);
   }
-  const User* GetUser(User::IdType id) { return FindInMap(users_, id); }
-  const SubAccount* GetSubAccount(SubAccount::IdType id) {
+  const User* GetUser(User::IdType id) const { return FindInMap(users_, id); }
+  const SubAccount* GetSubAccount(SubAccount::IdType id) const {
     return FindInMap(sub_accounts_, id);
   }
-  const SubAccount* GetSubAccount(const std::string& name) {
+  const SubAccount* GetSubAccount(const std::string& name) const {
     return FindInMap(sub_account_of_name_, name);
   }
-  const BrokerAccount* GetBrokerAccount(BrokerAccount::IdType id) {
+  const BrokerAccount* GetBrokerAccount(BrokerAccount::IdType id) const {
     return FindInMap(broker_accounts_, id);
   }
 

@@ -4,6 +4,47 @@
 
 namespace opentrade {
 
+std::string Limits::GetString() {
+  std::stringstream out;
+  out << std::setprecision(15);
+  out << "msg_rate=" << msg_rate << ','
+      << "msg_rate_per_security=" << msg_rate_per_security << ','
+      << "order_qty=" << order_qty << ',' << "order_value=" << order_value
+      << ',' << "value=" << value << ',' << "turnover=" << turnover << ','
+      << "total_value=" << total_value << ','
+      << "total_turnover=" << total_turnover;
+  return out.str();
+}
+
+std::string Limits::FromString(const std::string& str) {
+  Limits l;
+  for (auto& str : Split(str, ",;\n")) {
+    char name[str.size()];
+    double value;
+    if (sscanf(str.c_str(), "%s=%lf", name, &value) != 2) {
+      return "Invalid format, expect <name>=<value>,...'";
+    }
+    if (!strcasecmp(name, "msg_rate"))
+      l.msg_rate = value;
+    else if (!strcasecmp(name, "msg_rate_per_security"))
+      l.msg_rate_per_security = value;
+    else if (!strcasecmp(name, "order_qty"))
+      l.order_qty = value;
+    else if (!strcasecmp(name, "order_value"))
+      l.order_value = value;
+    else if (!strcasecmp(name, "value"))
+      l.value = value;
+    else if (!strcasecmp(name, "turnover"))
+      l.turnover = value;
+    else if (!strcasecmp(name, "total_value"))
+      l.total_value = value;
+    else if (!strcasecmp(name, "total_turnover"))
+      l.total_turnover = value;
+  }
+  *this = l;
+  return {};
+}
+
 static bool CheckMsgRate(const char* name, const AccountBase& acc,
                          Security::IdType sid) {
   auto tm = GetTime();

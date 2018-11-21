@@ -115,8 +115,7 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
   if (!ord->sub_account) return false;
   if (!ord->sec) return false;
   if (!ord->user) return false;
-  auto subs = ord->user->sub_accounts;
-  if (subs->find(ord->sub_account->id) == subs->end()) {
+  if (!ord->user->GetSubAccount(ord->sub_account->id)) {
     char buf[256];
     snprintf(buf, sizeof(buf), "Not permissioned to trade with sub account: %s",
              ord->sub_account->name);
@@ -124,13 +123,9 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     HandleConfirmation(ord, kRiskRejected, kRiskError);
     return false;
   }
-  auto brokers = ord->sub_account->broker_accounts;
   auto exchange = ord->sec->exchange;
-  auto it = brokers->find(exchange->id);
-  if (it == brokers->end()) {
-    it = brokers->find(0);
-  }
-  if (it == brokers->end()) {
+  auto broker = ord->sub_account->GetBrokerAccount(exchange->id);
+  if (!broker) {
     char buf[256];
     snprintf(buf, sizeof(buf), "Not permissioned to trade on exchange: %s",
              exchange->name);
@@ -138,7 +133,7 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     HandleConfirmation(ord, kRiskRejected, kRiskError);
     return false;
   }
-  ord->broker_account = it->second;
+  ord->broker_account = broker;
   if (ord->type == kOTC) {
     ord->id = GlobalOrderBook::Instance().NewOrderId();
     ord->leaves_qty = ord->qty;
