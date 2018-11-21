@@ -1130,9 +1130,11 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     if (fs::is_directory(kAlgoPath)) {
       for (auto& entry :
            boost::make_iterator_range(fs::directory_iterator(kAlgoPath), {})) {
-        auto tmp = entry.path();
-        auto fn = tmp.filename().string();
+        auto path = entry.path();
+        auto fn = path.filename().string();
         if (fn[0] == '_' || fn[0] == '.') continue;
+        if (path.extension() == ".pyc") continue;
+        if (path.extension() == ".so") continue;
         files.push_back(fn);
       }
     }

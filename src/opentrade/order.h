@@ -109,7 +109,7 @@ struct Order : public Contract {
 
   bool IsLive() const {
     return status == kUnconfirmedNew || status == kPendingNew ||
-           status == kNew || status == kPartiallyFilled;
+           status == kNew || status == kSuspended || status == kPartiallyFilled;
   }
 };
 
