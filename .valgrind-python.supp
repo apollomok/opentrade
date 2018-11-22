@@ -1,0 +1,3140 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetDefault
+   fun:PyUnicode_InternInPlace
+   fun:PyUnicode_InternFromString
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetDefault
+   fun:PyUnicode_InternInPlace
+   fun:PyUnicode_InternFromString
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetDefault
+   fun:PyUnicode_InternInPlace
+   fun:PyUnicode_InternFromString
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__wcsnlen_avx2
+   fun:wcsrtombs
+   fun:wcstombs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:Py_GetProgramFullPath
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:internal_utf8_loop
+   fun:__gconv_transform_internal_utf8
+   fun:wcsrtombs
+   fun:wcstombs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:Py_GetProgramFullPath
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:internal_utf8_loop
+   fun:__gconv_transform_internal_utf8
+   fun:wcsrtombs
+   fun:wcstombs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:Py_GetProgramFullPath
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:internal_utf8_loop
+   fun:__gconv_transform_internal_utf8
+   fun:wcsrtombs
+   fun:wcstombs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:Py_GetProgramFullPath
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__wcsnlen_avx2
+   fun:wcsrtombs
+   fun:wcstombs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_Py_wfopen
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:Py_GetProgramFullPath
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyMarshal_ReadObjectFromString
+   fun:PyImport_ImportFrozenModuleObject
+   fun:PyImport_ImportFrozenModule
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_Py_InitializeEx_Private
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyMarshal_ReadObjectFromString
+   fun:PyImport_ImportFrozenModuleObject
+   fun:PyImport_ImportFrozenModule
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyMarshal_ReadObjectFromString
+   fun:PyImport_ImportFrozenModuleObject
+   fun:PyImport_ImportFrozenModule
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyImport_ImportFrozenModuleObject
+   fun:PyImport_ImportFrozenModule
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_Py_InitializeEx_Private
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyImport_ImportFrozenModuleObject
+   fun:PyImport_ImportFrozenModule
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyMarshal_ReadObjectFromString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyModule_AddFunctions
+   fun:PyModule_Create2
+   fun:PyInit_posix
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyModule_AddFunctions
+   fun:PyModule_Create2
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyModule_AddFunctions
+   fun:PyModule_Create2
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyBytes_Resize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyInit_errno
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyInit_errno
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyInit_errno
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyInit_errno
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyInit_errno
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyInit_errno
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_Dir
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_Call_Prepend
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyBytes_Resize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyBytes_Resize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyModule_AddObject
+   fun:PyModule_AddIntConstant
+   fun:PyInit__locale
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyModule_AddObject
+   fun:PyModule_AddIntConstant
+   fun:PyInit__locale
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyTokenizer_FromUTF8
+   fun:PyParser_ParseStringObject
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyTokenizer_FromUTF8
+   fun:PyParser_ParseStringObject
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyGrammar_AddAccelerators
+   fun:PyParser_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyGrammar_AddAccelerators
+   fun:PyParser_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyGrammar_AddAccelerators
+   fun:PyParser_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyNode_AddChild
+   fun:PyParser_AddToken
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyNode_AddChild
+   fun:PyParser_AddToken
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyTokenizer_Free
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyTokenizer_Free
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCode_Optimize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyTuple_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyUnicodeWriter_Finish
+   fun:PyUnicode_DecodeUTF8Stateful
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_New
+   fun:PyWeakref_NewRef
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyType_Ready
+   fun:PyInit_itertools
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyType_Ready
+   fun:PyInit__collections
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyUnicodeWriter_Finish
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyCFunction_FastCallKeywords
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyTokenizer_Free
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   fun:PyArena_AddPyObject
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   fun:PyArena_AddPyObject
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   fun:PyArena_AddPyObject
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_FromNodeObject
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyNode_Free
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PySymtable_BuildObject
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PySymtable_BuildObject
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCode_Optimize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCode_Optimize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCode_Optimize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyArena_Free
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_CallMethodId_SizeT
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:PyObject_CallMethodObjArgs
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZN5boost4asio6detail16thread_info_base8allocateEPS2_m
+   fun:_ZN5boost4asio21asio_handler_allocateEmz
+   fun:_ZN32boost_asio_handler_alloc_helpers8allocateIZN9opentrade8TaskPool7AddTaskIZNS1_15PositionManager9UpdatePnlEvEUlvE_N5boost10posix_time7secondsEEEvRKT_T0_EUlRKNS6_6system10error_codeEE_EEPvmRS9_
+   fun:_ZN5boost4asio6detail22deadline_timer_serviceINS0_11time_traitsINS_10posix_time5ptimeEEEE10async_waitIZN9opentrade8TaskPool7AddTaskIZNS9_15PositionManager9UpdatePnlEvEUlvE_NS4_7secondsEEEvRKT_T0_EUlRKNS_6system10error_codeEE_EEvRNS7_19implementation_typeERSF_
+   fun:_ZN5boost4asio22deadline_timer_serviceINS_10posix_time5ptimeENS0_11time_traitsIS3_EEE10async_waitIZN9opentrade8TaskPool7AddTaskIZNS8_15PositionManager9UpdatePnlEvEUlvE_NS2_7secondsEEEvRKT_T0_EUlRKNS_6system10error_codeEE_EENS0_12async_resultINS0_12handler_typeISE_FvSJ_EE4typeEE4typeERNS0_6detail22deadline_timer_serviceIS5_E19implementation_typeEOSE_
+   fun:_ZN5boost4asio20basic_deadline_timerINS_10posix_time5ptimeENS0_11time_traitsIS3_EENS0_22deadline_timer_serviceIS3_S5_EEE10async_waitIZN9opentrade8TaskPool7AddTaskIZNSA_15PositionManager9UpdatePnlEvEUlvE_NS2_7secondsEEEvRKT_T0_EUlRKNS_6system10error_codeEE_EENS0_12async_resultINS0_12handler_typeISG_FvSL_EE4typeEE4typeEOSG_
+   fun:_ZN9opentrade8TaskPool7AddTaskIZNS_15PositionManager9UpdatePnlEvEUlvE_N5boost10posix_time7secondsEEEvRKT_T0_
+   fun:_ZN9opentrade15PositionManager9UpdatePnlEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZN9opentrade8TaskPool7AddTaskIZNS_15PositionManager9UpdatePnlEvEUlvE_N5boost10posix_time7secondsEEEvRKT_T0_
+   fun:_ZN9opentrade15PositionManager9UpdatePnlEv
+   fun:_ZZN9opentrade15PositionManager9UpdatePnlEvENKUlvE_clEv
+   fun:_ZZN9opentrade8TaskPool7AddTaskIZNS_15PositionManager9UpdatePnlEvEUlvE_N5boost10posix_time7secondsEEEvRKT_T0_ENKUlRKNS4_6system10error_codeEE_clESE_
+   fun:_ZN5boost4asio6detail7binder1IZN9opentrade8TaskPool7AddTaskIZNS3_15PositionManager9UpdatePnlEvEUlvE_NS_10posix_time7secondsEEEvRKT_T0_EUlRKNS_6system10error_codeEE_SF_EclEv
+   fun:_ZN5boost4asio19asio_handler_invokeINS0_6detail7binder1IZN9opentrade8TaskPool7AddTaskIZNS4_15PositionManager9UpdatePnlEvEUlvE_NS_10posix_time7secondsEEEvRKT_T0_EUlRKNS_6system10error_codeEE_SG_EEEEvRSB_z
+   fun:_ZN33boost_asio_handler_invoke_helpers6invokeIN5boost4asio6detail7binder1IZN9opentrade8TaskPool7AddTaskIZNS5_15PositionManager9UpdatePnlEvEUlvE_NS1_10posix_time7secondsEEEvRKT_T0_EUlRKNS1_6system10error_codeEE_SH_EESK_EEvRSC_RSF_
+   fun:_ZN5boost4asio6detail12wait_handlerIZN9opentrade8TaskPool7AddTaskIZNS3_15PositionManager9UpdatePnlEvEUlvE_NS_10posix_time7secondsEEEvRKT_T0_EUlRKNS_6system10error_codeEE_E11do_completeEPNS1_15task_io_serviceEPNS1_25task_io_service_operationESH_m
+   fun:_ZN5boost4asio6detail25task_io_service_operation8completeERNS1_15task_io_serviceERKNS_6system10error_codeEm
+   fun:_ZN5boost4asio6detail15task_io_service10do_run_oneERNS1_11scoped_lockINS1_11posix_mutexEEERNS1_27task_io_service_thread_infoERKNS_6system10error_codeE
+   fun:_ZN5boost4asio6detail15task_io_service3runERNS_6system10error_codeE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:__libc_alloc_buffer_allocate
+   fun:alloc_buffer_allocate
+   fun:__resolv_conf_allocate
+   fun:__resolv_conf_load
+   fun:__resolv_conf_get_current
+   fun:__res_vinit
+   fun:maybe_init
+   fun:context_get
+   fun:__resolv_context_get
+   fun:gethostbyname_r@@GLIBC_2.2.5
+   fun:_ZN3FIX15socket_hostnameEPKc
+   fun:_ZN3FIX14socket_connectEiPKci
+   fun:_ZN3FIX24ThreadedSocketConnection7connectEv
+   fun:_ZN3FIX23ThreadedSocketInitiator12socketThreadEPv
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZN9__gnu_cxx13new_allocatorIcE8allocateEmPKv
+   fun:_ZNSt16allocator_traitsISaIcEE8allocateERS0_m
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE9_M_createERmm
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPcEEvT_S7_St20forward_iterator_tag
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE16_M_construct_auxIPcEEvT_S7_St12__false_type
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE12_M_constructIPcEEvT_S7_
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEC1ERKS4_
+   fun:_ZN5boost13property_tree11basic_ptreeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7_St4lessIS7_EEC1ERKSA_
+   fun:_ZNSt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEN5boost13property_tree11basic_ptreeIS5_S5_St4lessIS5_EEEEC1ERKSD_
+   fun:_ZN5boost6detail9allocator9constructISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEEEEvPvRKT_
+   fun:_ZN5boost11multi_index6detail10index_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EEEENS0_18ordered_non_uniqueINSJ_INSF_4subs7by_nameESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EENS0_6memberISG_SA_XadL_ZNSG_5firstEEEEESE_EESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EESaISG_EE7insert_ERKSG_RPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISG_SW_EEEEEENS1_10lvalue_tagE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZN5boost13property_tree11basic_ptreeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7_St4lessIS7_EEC1ERKSA_
+   fun:_ZNSt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEN5boost13property_tree11basic_ptreeIS5_S5_St4lessIS5_EEEEC1ERKSD_
+   fun:_ZN5boost6detail9allocator9constructISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEEEEvPvRKT_
+   fun:_ZN5boost11multi_index6detail10index_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EEEENS0_18ordered_non_uniqueINSJ_INSF_4subs7by_nameESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EENS0_6memberISG_SA_XadL_ZNSG_5firstEEEEESE_EESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EESaISG_EE7insert_ERKSG_RPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISG_SW_EEEEEENS1_10lvalue_tagE
+   fun:_ZN5boost11multi_index6detail18ordered_index_implINS0_6memberISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEESB_XadL_ZNSH_5firstEEEEESF_NS1_9nth_layerILi2ESH_NS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EEEENS0_18ordered_non_uniqueINSM_INSG_4subs7by_nameESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EESI_SF_EESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EESaISH_EEENS_3mpl6v_itemIST_NSZ_7vector0ISO_EELi0EEENS1_22ordered_non_unique_tagENS1_19null_augment_policyEE7insert_INS1_10lvalue_tagEEEPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeIS15_NS1_15index_node_baseISH_SX_EEEEEERKSH_RS1F_T_
+   fun:_ZN5boost11multi_index6detail15sequenced_indexINS1_9nth_layerILi1ESt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EEEENS0_18ordered_non_uniqueINSK_INSG_4subs7by_nameESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EENS0_6memberISH_SB_XadL_ZNSH_5firstEEEEESF_EESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EESaISH_EEENS_3mpl7vector0ISM_EEE7insert_INS1_10lvalue_tagEEEPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISH_SX_EEEEEERKSH_RS1C_T_
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EE7insert_INS0_6detail10lvalue_tagEEES2_IPNSY_20sequenced_index_nodeINSY_18ordered_index_nodeINSY_19null_augment_policyENSY_15index_node_baseISF_SV_EEEEEEbERKSF_T_
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EE7insert_ERKSF_
+   fun:_ZN5boost11multi_index6detail10index_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EEEENS0_18ordered_non_uniqueINSJ_INSF_4subs7by_nameESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EENS0_6memberISG_SA_XadL_ZNSG_5firstEEEEESE_EESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EESaISG_EE13final_insert_ERKSG_
+   fun:_ZN5boost11multi_index6detail15sequenced_indexINS1_9nth_layerILi1ESt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EEEENS0_18ordered_non_uniqueINSK_INSG_4subs7by_nameESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EENS0_6memberISH_SB_XadL_ZNSH_5firstEEEEESF_EESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EESaISH_EEENS_3mpl7vector0ISM_EEE6insertENS1_19bidir_node_iteratorINS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISH_SX_EEEEEEEERKSH_
+   fun:_ZN5boost11multi_index6detail15sequenced_indexINS1_9nth_layerILi1ESt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EEEENS0_18ordered_non_uniqueINSK_INSG_4subs7by_nameESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EENS0_6memberISH_SB_XadL_ZNSH_5firstEEEEESF_EESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EESaISH_EEENS_3mpl7vector0ISM_EEE9push_backERKSH_
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__sub_I_account.cc
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__sub_I_account.cc
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_Z41__static_initialization_and_destruction_0ii
+   fun:_GLOBAL__sub_I_position.cc
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_ZN9opentrade3FixC2Ev
+   fun:_ZN9SimClientC1Ev
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_ZN9SimServerC1Ev
+   fun:create
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_ZN3FIX12AsyncFileLogC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3FIX19AsyncFileLogFactory6createEv
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_ZN3FIX12AsyncFileLogC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKNS_9SessionIDE
+   fun:_ZN3FIX19AsyncFileLogFactory6createERKNS_9SessionIDE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZN3FIX12thread_spawnEPFPvS0_ES0_Rm
+   fun:_ZN3FIX8Acceptor5startEv
+   fun:_ZN9SimServer5StartEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9SimServer5StartEvEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9SimServer5StartEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZN3FIX12thread_spawnEPFPvS0_ES0_Rm
+   fun:_ZN3FIX22ThreadedSocketAcceptor7onStartEv
+   fun:_ZN3FIX8Acceptor11startThreadEPv
+   fun:start_thread
+   fun:clone
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_ZN3FIX12AsyncFileLogC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3FIX19AsyncFileLogFactory6createEv
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade8TaskPoolC4EmEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade8TaskPoolC4EmEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade8TaskPoolC4EmEUlvE_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade8TaskPoolC4EmEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade8TaskPoolC1Em
+   fun:_ZN3FIX12AsyncFileLogC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKNS_9SessionIDE
+   fun:_ZN3FIX19AsyncFileLogFactory6createERKNS_9SessionIDE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZN3FIX12thread_spawnEPFPvS0_ES0_Rm
+   fun:_ZN3FIX9Initiator5startEv
+   fun:_ZN9opentrade3Fix5StartEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZN3FIX12thread_spawnEPFPvS0_ES0_Rm
+   fun:_ZN3FIX23ThreadedSocketInitiator9doConnectERKNS_9SessionIDERKNS_10DictionaryE
+   fun:_ZN3FIX9Initiator7connectEv
+   fun:_ZN3FIX23ThreadedSocketInitiator7onStartEv
+   fun:_ZN3FIX9Initiator11startThreadEPv
+   fun:start_thread
+   fun:clone
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade11AlgoManager3RunEiEUlvE_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade11AlgoManager3RunEiEUlvE_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade11AlgoManager3RunEiEUlvE_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade11AlgoManager3RunEiEUlvE_EEERS0_DpOT_
+   fun:_ZN9opentrade11AlgoManager3RunEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE
+   fun:_ZNSt6threadC1IZN9opentrade6Server5StartEiiEUlvE6_JEEEOT_DpOT0_
+   fun:_ZN9__gnu_cxx13new_allocatorISt6threadE9constructIS1_JZN9opentrade6Server5StartEiiEUlvE6_EEEvPT_DpOT0_
+   fun:_ZNSt16allocator_traitsISaISt6threadEE9constructIS0_JZN9opentrade6Server5StartEiiEUlvE6_EEEvRS1_PT_DpOT0_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE17_M_realloc_insertIJZN9opentrade6Server5StartEiiEUlvE6_EEEvN9__gnu_cxx17__normal_iteratorIPS0_S2_EEDpOT_
+   fun:_ZNSt6vectorISt6threadSaIS0_EE12emplace_backIJZN9opentrade6Server5StartEiiEUlvE6_EEERS0_DpOT_
+   fun:_ZN9opentrade6Server5StartEii
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:allocate_stack
+   fun:pthread_create@@GLIBC_2.2.5
+   fun:_ZN3FIX12thread_spawnEPFPvS0_ES0_Rm
+   fun:_ZN3FIX22ThreadedSocketAcceptor20socketAcceptorThreadEPv
+   fun:start_thread
+   fun:clone
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_Call_Prepend
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_CallMethodIdObjArgs
+   fun:PyImport_ImportModuleLevelObject
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_Call_Prepend
+   fun:_PyObject_FastCallDict
+   fun:PyObject_CallFunctionObjArgs
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_Call
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:realloc
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZN9__gnu_cxx13new_allocatorIN5boost11multi_index6detail20sequenced_index_nodeINS3_18ordered_index_nodeINS3_19null_augment_policyENS3_15index_node_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS1_13property_tree11basic_ptreeISE_SE_St4lessISE_EEEESaISL_EEEEEEEE8allocateEmPKv
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EE13allocate_nodeEv
+   fun:_ZN5boost11multi_index6detail10index_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EEEENS0_18ordered_non_uniqueINSJ_INSF_4subs7by_nameESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EENS0_6memberISG_SA_XadL_ZNSG_5firstEEEEESE_EESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EESaISG_EE7insert_ERKSG_RPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISG_SW_EEEEEENS1_10lvalue_tagE
+   fun:_ZN5boost11multi_index6detail18ordered_index_implINS0_6memberISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEESB_XadL_ZNSH_5firstEEEEESF_NS1_9nth_layerILi2ESH_NS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EEEENS0_18ordered_non_uniqueINSM_INSG_4subs7by_nameESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EESI_SF_EESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EESaISH_EEENS_3mpl6v_itemIST_NSZ_7vector0ISO_EELi0EEENS1_22ordered_non_unique_tagENS1_19null_augment_policyEE7insert_INS1_10lvalue_tagEEEPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeIS15_NS1_15index_node_baseISH_SX_EEEEEERKSH_RS1F_T_
+   fun:_ZN5boost11multi_index6detail15sequenced_indexINS1_9nth_layerILi1ESt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EEEENS0_18ordered_non_uniqueINSK_INSG_4subs7by_nameESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EENS0_6memberISH_SB_XadL_ZNSH_5firstEEEEESF_EESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EESaISH_EEENS_3mpl7vector0ISM_EEE7insert_INS1_10lvalue_tagEEEPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISH_SX_EEEEEERKSH_RS1C_T_
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EE7insert_INS0_6detail10lvalue_tagEEES2_IPNSY_20sequenced_index_nodeINSY_18ordered_index_nodeINSY_19null_augment_policyENSY_15index_node_baseISF_SV_EEEEEEbERKSF_T_
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EE7insert_ERKSF_
+   fun:_ZN5boost11multi_index6detail10index_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EEEENS0_18ordered_non_uniqueINSJ_INSF_4subs7by_nameESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EENS0_6memberISG_SA_XadL_ZNSG_5firstEEEEESE_EESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EESaISG_EE13final_insert_ERKSG_
+   fun:_ZN5boost11multi_index6detail15sequenced_indexINS1_9nth_layerILi1ESt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EEEENS0_18ordered_non_uniqueINSK_INSG_4subs7by_nameESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EENS0_6memberISH_SB_XadL_ZNSH_5firstEEEEESF_EESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EESaISH_EEENS_3mpl7vector0ISM_EEE6insertENS1_19bidir_node_iteratorINS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISH_SX_EEEEEEEERKSH_
+   fun:_ZN5boost11multi_index6detail15sequenced_indexINS1_9nth_layerILi1ESt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EEEENS0_18ordered_non_uniqueINSK_INSG_4subs7by_nameESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EENS0_6memberISH_SB_XadL_ZNSH_5firstEEEEESF_EESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EESaISH_EEENS_3mpl7vector0ISM_EEE9push_backERKSH_
+   fun:_ZN5boost13property_tree11basic_ptreeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7_St4lessIS7_EE9push_backERKSt4pairIKS7_SA_E
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZN9__gnu_cxx13new_allocatorIN5boost11multi_index6detail20sequenced_index_nodeINS3_18ordered_index_nodeINS3_19null_augment_policyENS3_15index_node_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS1_13property_tree11basic_ptreeISE_SE_St4lessISE_EEEESaISL_EEEEEEEE8allocateEmPKv
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EE13allocate_nodeEv
+   fun:_ZN5boost11multi_index6detail13header_holderIPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISD_SD_St4lessISD_EEEESaISK_EEEEEEENS0_21multi_index_containerISK_NS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_EEEENS0_18ordered_non_uniqueINST_INSJ_4subs7by_nameESV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_EENS0_6memberISK_SE_XadL_ZNSK_5firstEEEEESI_EESV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_SV_EESL_EEEC1Ev
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EEC1ERKSW_
+   fun:_ZN5boost13property_tree11basic_ptreeINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES7_St4lessIS7_EEC1ERKSA_
+   fun:_ZNSt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEN5boost13property_tree11basic_ptreeIS5_S5_St4lessIS5_EEEEC1ERKSD_
+   fun:_ZN5boost6detail9allocator9constructISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEEEEvPvRKT_
+   fun:_ZN5boost11multi_index6detail10index_baseISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS9_S9_St4lessIS9_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EEEENS0_18ordered_non_uniqueINSJ_INSF_4subs7by_nameESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EENS0_6memberISG_SA_XadL_ZNSG_5firstEEEEESE_EESL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_SL_EESaISG_EE7insert_ERKSG_RPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISG_SW_EEEEEENS1_10lvalue_tagE
+   fun:_ZN5boost11multi_index6detail18ordered_index_implINS0_6memberISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEESB_XadL_ZNSH_5firstEEEEESF_NS1_9nth_layerILi2ESH_NS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EEEENS0_18ordered_non_uniqueINSM_INSG_4subs7by_nameESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EESI_SF_EESO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_SO_EESaISH_EEENS_3mpl6v_itemIST_NSZ_7vector0ISO_EELi0EEENS1_22ordered_non_unique_tagENS1_19null_augment_policyEE7insert_INS1_10lvalue_tagEEEPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeIS15_NS1_15index_node_baseISH_SX_EEEEEERKSH_RS1F_T_
+   fun:_ZN5boost11multi_index6detail15sequenced_indexINS1_9nth_layerILi1ESt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeISA_SA_St4lessISA_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EEEENS0_18ordered_non_uniqueINSK_INSG_4subs7by_nameESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EENS0_6memberISH_SB_XadL_ZNSH_5firstEEEEESF_EESM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_SM_EESaISH_EEENS_3mpl7vector0ISM_EEE7insert_INS1_10lvalue_tagEEEPNS1_20sequenced_index_nodeINS1_18ordered_index_nodeINS1_19null_augment_policyENS1_15index_node_baseISH_SX_EEEEEERKSH_RS1C_T_
+   fun:_ZN5boost11multi_index21multi_index_containerISt4pairIKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEENS_13property_tree11basic_ptreeIS8_S8_St4lessIS8_EEEENS0_10indexed_byINS0_9sequencedINS0_3tagIN4mpl_2naESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EEEENS0_18ordered_non_uniqueINSI_INSE_4subs7by_nameESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EENS0_6memberISF_S9_XadL_ZNSF_5firstEEEEESD_EESK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_SK_EESaISF_EE7insert_INS0_6detail10lvalue_tagEEES2_IPNSY_20sequenced_index_nodeINSY_18ordered_index_nodeINSY_19null_augment_policyENSY_15index_node_baseISF_SV_EEEEEEbERKSF_T_
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_Call_Prepend
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_FastCallDict
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_Call_Prepend
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_CallMethodIdObjArgs
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_CallMethodIdObjArgs
+   fun:PyImport_ImportModuleLevelObject
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_CallMethodIdObjArgs
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetDefault
+   fun:PyUnicode_InternInPlace
+   fun:PyUnicode_InternFromString
+   fun:PyDescr_NewMethod
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyMarshal_ReadObjectFromString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyMarshal_ReadObjectFromString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyModule_AddFunctions
+   fun:PyModule_Create2
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_SetAttr
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:_PyObject_Call_Prepend
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyNode_Free
+   fun:PyParser_ASTFromStringObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PySymtable_Free
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PySymtable_Free
+   fun:PyAST_CompileObject
+   fun:PyRun_StringFlags
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_CallMethodId_SizeT
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:PyObject_CallMethodObjArgs
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_CallMethodId_SizeT
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:PyObject_CallMethodObjArgs
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZN9opentrade8TaskPool7AddTaskIZNS_15PositionManager9UpdatePnlEvEUlvE_N5boost10posix_time7secondsEEEvRKT_T0_
+   fun:_ZN9opentrade15PositionManager9UpdatePnlEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyModule_AddObject
+   fun:PyModule_AddIntConstant
+   fun:PyInit__stat
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyModule_AddObject
+   fun:PyModule_AddIntConstant
+   fun:PyInit__stat
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyModule_AddFunctions
+   fun:PyModule_Create2
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyType_Ready
+   fun:PyInit__io
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyType_Ready
+   fun:PyInit__io
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyCFunction_Call
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyModule_AddFunctions
+   fun:PyModule_Create2
+   fun:_PyBuiltin_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyUnicodeWriter_PrepareInternal
+   fun:_PyUnicodeWriter_WriteSubstring
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyCFunction_FastCallKeywords
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyUnicodeWriter_PrepareInternal
+   fun:_PyUnicodeWriter_WriteSubstring
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyCFunction_FastCallKeywords
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyUnicodeWriter_Finish
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyCFunction_FastCallKeywords
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyUnicodeWriter_Finish
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyCFunction_FastCallKeywords
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   fun:_ZN5boost6python3api7setattrERKNS1_6objectEPKcS4_
+   fun:_ZN5boost6python7objects9enum_base9add_valueEPKcl
+   fun:_ZN5boost6python5enum_IN9opentrade11OrderStatusEE5valueEPKcS3_
+   fun:_ZN9opentrade21init_module_opentradeEv
+   fun:_ZN5boost6python21handle_exception_implENS_9function0IvEE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GC_Resize
+   fun:PyFrame_New
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_Call
+   fun:_PyCodec_Lookup
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
