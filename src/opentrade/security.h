@@ -72,6 +72,9 @@ struct Exchange {
 
   std::string ParseTickSizeTable(const std::string& str);
   std::string ParseHalfDays(const std::string& str);
+  std::string ParseTradePeriod(const std::string& str);
+  std::string ParseBreakPeriod(const std::string& str);
+  std::string ParseHalfDay(const std::string& str);
   std::string GetTickSizeTableString() const;
   std::string GetHalfDaysString() const;
   std::string GetTradePeriodString() const;

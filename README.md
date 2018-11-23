@@ -72,8 +72,10 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    sudo apt remove --purge postgres*
    sudo apt autoremove
    sudo apt install -y postgresql-10 postgresql-contrib postgresql-client
+   sudo su postgres;
+   cd;
    wget https://github.com/opentradesolutions/data/raw/master/opentrade-pg_dumpall.sql
-   sudo -u postgres psql -f opentrade-pg_dumpall.sql postgres
+   psql -f opentrade-pg_dumpall.sql 
    ```
  
  * **Run opentrade**

@@ -3138,3 +3138,67 @@
    fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
    fun:main
 }
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyImport_ImportFrozenModuleObject
+   fun:PyImport_ImportFrozenModule
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}

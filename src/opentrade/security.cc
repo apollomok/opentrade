@@ -17,7 +17,8 @@ std::string Exchange::ParseTickSizeTable(const std::string& str) {
       if (sscanf(str.c_str(), "%lf %lf %lf", &low, &up, &value) == 3) {
         tmp->push_back({low, up, value});
       } else {
-        return "Invalid format, expect '<low_price> <up_price> <value>,...'";
+        return "Invalid tick size table format, expect '<low_price> <up_price> "
+               "<value>,...'";
       }
     }
     if (!tmp->empty()) {
@@ -30,6 +31,70 @@ std::string Exchange::ParseTickSizeTable(const std::string& str) {
   return {};
 }
 
+std::string Exchange::ParseTradePeriod(const std::string& str) {
+  if (str.empty()) {
+    trade_start = 0;
+    trade_end_ = 0;
+    return {};
+  }
+  if (atoi(str.c_str()) > 10000) {  // for back-compactible, will remove
+    auto trade_period = atoi(str.c_str());
+    auto start = trade_period / 10000;
+    auto end = trade_period % 10000;
+    trade_start = (start / 100) * 3600 + (start % 100) * 60;
+    trade_end_ = ((end / 100) * 3600 + (end % 100) * 60);
+    return {};
+  }
+  int a, b, c, d;
+  if (sscanf(str.c_str(), "%d:%d-%d:%d", &a, &b, &c, &d) != 4) {
+    return "Invalid trade period, expect 'HH:MM-HH:MM'";
+  }
+  trade_start = a * 3600 + b * 60;
+  trade_end_ = c * 3600 + d * 60;
+  return {};
+}
+
+std::string Exchange::ParseBreakPeriod(const std::string& str) {
+  if (str.empty()) {
+    break_start = 0;
+    break_end = 0;
+    return {};
+  }
+  if (atoi(str.c_str()) > 10000) {  // for back-compactible, will remove
+    auto break_period = atoi(str.c_str());
+    auto start = break_period / 10000;
+    auto end = break_period % 10000;
+    break_start = (start / 100) * 3600 + (start % 100) * 60;
+    break_end = ((end / 100) * 3600 + (end % 100) * 60);
+    return {};
+  }
+  int a, b, c, d;
+  if (sscanf(str.c_str(), "%d:%d-%d:%d", &a, &b, &c, &d) != 4) {
+    return "Invalid break period, expect 'HH:MM-HH:MM'";
+  }
+  break_start = a * 3600 + b * 60;
+  break_end = c * 3600 + d * 60;
+  return {};
+}
+
+std::string Exchange::ParseHalfDay(const std::string& str) {
+  if (str.empty()) {
+    half_day = 0;
+    return {};
+  }
+  if (atoi(str.c_str()) > 1000) {  // for back-compactible, will remove
+    auto tmp = atoi(str.c_str());
+    half_day = (tmp / 100) * 3600 + (tmp % 100) * 60;
+    return {};
+  }
+  int a, b;
+  if (sscanf(str.c_str(), "%d:%d", &a, &b) != 4) {
+    return "Invalid half day end time, expect 'HH:MM'";
+  }
+  half_day = a * 3600 + b * 60;
+  return {};
+}
+
 std::string Exchange::GetTickSizeTableString() const {
   std::stringstream out;
   auto tmp = tick_size_table();
@@ -37,7 +102,7 @@ std::string Exchange::GetTickSizeTableString() const {
   out << std::setprecision(15);
   for (auto i = 0u; i < tmp->size(); ++i) {
     auto t = (*tmp)[i];
-    if (i > 0) out << ",";
+    if (i > 0) out << "\n";
     out << t.lower_bound << ' ' << t.upper_bound << ' ' << t.value;
   }
   return out.str();
@@ -53,7 +118,7 @@ std::string Exchange::ParseHalfDays(const std::string& str) {
       }
     }
     if (tmp->empty()) {
-      return "Invalid format, expect '<YYYmmdd>,...'";
+      return "Invalid half days format, expect '<YYYmmdd>,...'";
     }
     std::atomic_thread_fence(std::memory_order_release);
     half_days_ = tmp;
@@ -68,7 +133,7 @@ std::string Exchange::GetHalfDaysString() const {
   out << std::setprecision(15);
   auto it = tmp->begin();
   while (it != tmp->end()) {
-    if (it != tmp->begin()) out << ",";
+    if (it != tmp->begin()) out << "\n";
     out << *it;
     ++it;
   }
@@ -76,6 +141,7 @@ std::string Exchange::GetHalfDaysString() const {
 }
 
 std::string Exchange::GetTradePeriodString() const {
+  if (!trade_start) return {};
   return std::to_string(trade_start / 3600) + ":" +
          std::to_string(trade_start % 3600 / 60) + "-" +
          std::to_string(trade_end_ / 3600) + ":" +
@@ -83,6 +149,7 @@ std::string Exchange::GetTradePeriodString() const {
 }
 
 std::string Exchange::GetBreakPeriodString() const {
+  if (!break_start) return {};
   return std::to_string(break_start / 3600) + ":" +
          std::to_string(break_start % 3600 / 60) + "-" +
          std::to_string(break_end / 3600) + ":" +
@@ -90,6 +157,7 @@ std::string Exchange::GetBreakPeriodString() const {
 }
 
 std::string Exchange::GetHalfDayString() const {
+  if (!half_day) return {};
   return std::to_string(half_day / 3600) + ":" +
          std::to_string(half_day % 3600 / 60);
 }
@@ -123,24 +191,9 @@ void SecurityManager::LoadFromDatabase() {
     if (*e->tz) e->utc_time_offset = GetUtcTimeOffset(e->tz);
     e->ParseTickSizeTable(Database::GetValue(*it, i++, kEmptyStr));
     e->odd_lot_allowed = Database::GetValue(*it, i++, 0);
-    auto trade_period = Database::GetValue(*it, i++, 0);
-    if (trade_period > 0) {
-      auto start = trade_period / 10000;
-      auto end = trade_period % 10000;
-      e->trade_start = (start / 100) * 3600 + (start % 100) * 60;
-      e->set_trade_end((end / 100) * 3600 + (end % 100) * 60);
-    }
-    auto break_period = Database::GetValue(*it, i++, 0);
-    if (break_period > 0) {
-      auto start = break_period / 10000;
-      auto end = break_period % 10000;
-      e->break_start = (start / 100) * 3600 + (start % 100) * 60;
-      e->break_end = (end / 100) * 3600 + (end % 100) * 60;
-    }
-    auto half_day = Database::GetValue(*it, i++, 0);
-    if (half_day > 0) {
-      e->half_day = (half_day / 100) * 3600 + (half_day % 100) * 60;
-    }
+    e->ParseTradePeriod(Database::GetValue(*it, i++, kEmptyStr));
+    e->ParseBreakPeriod(Database::GetValue(*it, i++, kEmptyStr));
+    e->ParseHalfDay(Database::GetValue(*it, i++, kEmptyStr));
     e->ParseHalfDays(Database::GetValue(*it, i++, kEmptyStr));
 
     std::atomic_thread_fence(std::memory_order_release);

@@ -41,9 +41,9 @@ static const char create_tables_sql[] = R"(
     "tz" varchar(20),
     "desc" varchar(1000),
     odd_lot_allowed boolean,
-    trade_period int4, -- e.g. 09301500 => 09:30 - 15:00
-    break_period int4, -- e.g. 11301300 => 11:30 - 13:00
-    half_day int4, -- e.g. 1130 => 11:30
+    trade_period varchar(32), -- e.g. 09:30-15:00
+    break_period varchar(32), -- e.g. 11:30-13:00
+    half_day varchar(32), -- e.g. 11:30
     half_days varchar(5000), -- e.g. 20181001 20190101
     tick_size_table varchar(5000),
     primary key(id)
@@ -172,6 +172,12 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   }
   LOG_INFO("Database connected");
   if (create_tables) *Session() << create_tables_sql;
+
+  // for back-compactible, will remove
+  auto sql = Session();
+  *sql << "alter table exchange alter column trade_period type varchar(32);";
+  *sql << "alter table exchange alter column break_period type varchar(32);";
+  *sql << "alter table exchange alter column half_day type varchar(32);";
 }
 
 }  // namespace opentrade
