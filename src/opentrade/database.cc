@@ -49,6 +49,14 @@ static const char create_tables_sql[] = R"(
     primary key(id)
   );
   create unique index if not exists exchange_name_index on exchange("name");
+  do $$
+  begin
+  if not exists(
+    select 1 from exchange where id=0
+  ) then
+    insert into exchange(id, "name") values(0, 'default');
+  end if;
+  end $$;
 
   create sequence if not exists security_id_seq start with 10000;
   create table if not exists security(

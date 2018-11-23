@@ -30,8 +30,7 @@ struct BrokerAccount : public AccountBase {
   ExchangeConnectivityAdapter* adapter = nullptr;
   typedef std::unordered_map<std::string, std::string> StrMap;
   typedef std::shared_ptr<const StrMap> StrMapPtr;
-
-  void set_params(const std::string& params);
+  std::string set_params(const std::string& params);
   std::string GetParam(const std::string& k) const {
     return FindInMap(params_, k);
   }
@@ -44,13 +43,15 @@ struct SubAccount : public AccountBase {
   typedef uint16_t IdType;
   IdType id = 0;
   const char* name = "";
-  typedef std::unordered_map<Exchange::IdType, BrokerAccount*> BrokerAccountMap;
+  typedef std::unordered_map<Exchange::IdType, const BrokerAccount*>
+      BrokerAccountMap;
   typedef std::shared_ptr<const BrokerAccountMap> BrokerAccountMapPtr;
   BrokerAccountMapPtr broker_accounts() const { return broker_accounts_; }
   void set_broker_accounts(BrokerAccountMapPtr accs) {
     broker_accounts_ = accs;
   }
   const BrokerAccount* GetBrokerAccount(Exchange::IdType id) const {
+    assert(id);
     auto tmp = FindInMap(broker_accounts(), id);
     if (!tmp && id) tmp = FindInMap(broker_accounts(), 0);
     return tmp;
@@ -67,7 +68,8 @@ struct User : public AccountBase {
   const char* password = "";
   bool is_admin = false;
   bool is_disabled = false;
-  typedef std::unordered_map<SubAccount::IdType, SubAccount*> SubAccountMap;
+  typedef std::unordered_map<SubAccount::IdType, const SubAccount*>
+      SubAccountMap;
   typedef std::shared_ptr<const SubAccountMap> SubAccountMapPtr;
   const SubAccount* GetSubAccount(SubAccount::IdType id) const {
     return FindInMap(sub_accounts_, id);
@@ -95,6 +97,9 @@ class AccountManager : public Singleton<AccountManager> {
   const BrokerAccount* GetBrokerAccount(BrokerAccount::IdType id) const {
     return FindInMap(broker_accounts_, id);
   }
+  const BrokerAccount* GetBrokerAccount(const std::string& name) const {
+    return FindInMap(broker_account_of_name_, name);
+  }
 
  private:
   tbb::concurrent_unordered_map<User::IdType, User*> users_;
@@ -103,6 +108,8 @@ class AccountManager : public Singleton<AccountManager> {
   tbb::concurrent_unordered_map<std::string, SubAccount*> sub_account_of_name_;
   tbb::concurrent_unordered_map<BrokerAccount::IdType, BrokerAccount*>
       broker_accounts_;
+  tbb::concurrent_unordered_map<std::string, BrokerAccount*>
+      broker_account_of_name_;
   friend class Connection;
   friend class Backtest;
 };
