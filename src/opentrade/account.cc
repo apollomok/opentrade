@@ -54,15 +54,11 @@ void AccountManager::Initialize() {
     b->id = Database::GetValue(*it, i++, 0);
     b->name = Database::GetValue(*it, i++, "");
     b->adapter_name = Database::GetValue(*it, i++, "");
-    b->adapter =
-        ExchangeConnectivityManager::Instance().GetAdapter(b->adapter_name);
-    if (!b->adapter) {
-      b->adapter = ExchangeConnectivityManager::Instance().GetAdapter(
-          std::string("ec_") + b->adapter_name);
-    }
+    b->adapter = ExchangeConnectivityManager::Instance().Get(b->adapter_name);
     b->set_params(Database::GetValue(*it, i++, kEmptyStr));
     b->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));
     self.broker_accounts_.emplace(b->id, b);
+    self.broker_account_of_name_.emplace(b->name, b);
   }
 
   query = R"(
@@ -115,12 +111,11 @@ std::string BrokerAccount::set_params(const std::string& params) {
     char k[str.size()];
     char v[str.size()];
     if (sscanf(str.c_str(), "%s=%s", k, v) != 2) {
-      return "Invalid params format, expect <name>=<value>,...'";
+      return "Invalid params format, expect <name>=<value>[,;\n]...'";
     }
     tmp->emplace((const char*)k, (const char*)v);
   }
   std::atomic_thread_fence(std::memory_order_release);
-  // not release old params, intended memory leak
   this->params_ = tmp;
   return {};
 }

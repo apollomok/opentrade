@@ -39,6 +39,11 @@ class ExchangeConnectivityManager
  public:
   bool Place(Order* ord);
   bool Cancel(const Order& orig_ord);
+  ExchangeConnectivityAdapter* Get(const std::string& name) {
+    auto out = GetAdapter(name);
+    if (out) return out;
+    return GetAdapter("ec_" + name);
+  }
 };
 
 }  // namespace opentrade

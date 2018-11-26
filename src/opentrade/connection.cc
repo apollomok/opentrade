@@ -1173,16 +1173,62 @@ void Connection::OnAdmin(const json& j) {
   } else if (!strcasecmp(name.c_str(), "exchanges")) {
     OnAdminExchanges(j, name, action);
   } else if (!strcasecmp(name.c_str(), "sub accounts of user")) {
-    auto user_id = GetNum(j[3]);
-    auto acc_id = GetNum(j[4]);
+    auto& inst = AccountManager::Instance();
+    if (action == "ls") {
+      json out;
+      json users;
+      for (auto& pair : inst.users_) {
+        users.push_back(pair.second->name);
+        for (auto& pair2 : *pair.second->sub_accounts()) {
+          json tmp = {pair.second->name, pair2.second->name};
+          out.push_back(tmp);
+        }
+      }
+      json subs;
+      for (auto& pair : inst.sub_accounts_) {
+        subs.push_back(pair.second->name);
+      }
+      json tmp = {"admin", name, action, {out, users, subs}};
+      Send(tmp.dump());
+      return;
+    }
+    auto values = j[3];
+    std::string user_name;
+    std::string sub_name;
+    for (auto i = 0u; i < values.size(); ++i) {
+      auto v = values[i];
+      auto name = Get<std::string>(v[0]);
+      auto value = Get<std::string>(v[1]);
+      if (name == "user") {
+        user_name = value;
+      } else if (name == "sub") {
+        sub_name = value;
+      }
+    }
+    auto user = const_cast<User*>(inst.GetUser(user_name));
+    if (!user) {
+      json out = {"admin", name, action,
+                  "Unknown user name '" + user_name + "'"};
+      Send(out.dump());
+      return;
+    }
+    auto user_id = user->id;
+    auto sub = inst.GetSubAccount(sub_name);
+    if (!sub) {
+      json out = {"admin", name, action,
+                  "Unknown sub broker name '" + sub_name + "'"};
+      Send(out.dump());
+      return;
+    }
+    auto sub_id = sub->id;
     std::stringstream ss;
     if (action == "add") {
       ss << "insert into user_sub_account_map(user_id, sub_account_id) "
             "values("
-         << user_id << ", " << acc_id << ")";
+         << user_id << ", " << sub_id << ")";
     } else if (action == "delete") {
       ss << "delete from user_sub_account_map where user_id=" << user_id
-         << " and sub_account_id=" << acc_id;
+         << " and sub_account_id=" << sub_id;
     }
     auto str = ss.str();
     if (str.empty()) return;
@@ -1194,29 +1240,90 @@ void Connection::OnAdmin(const json& j) {
       Send(out.dump());
       return;
     }
-    auto& inst = AccountManager::Instance();
-    auto user = const_cast<User*>(inst.GetUser(user_id));
-    auto acc = inst.GetSubAccount(acc_id);
-    assert(user && acc);
-    if (!user || !acc) return;
     auto accs = user->sub_accounts();
     if (action == "add") {
       auto tmp = std::make_shared<User::SubAccountMap>(*accs);
-      tmp->emplace(acc->id, acc);
+      tmp->emplace(sub->id, sub);
+      std::atomic_thread_fence(std::memory_order_release);
       user->set_sub_accounts(tmp);
     } else if (action == "delete") {
       auto tmp = std::make_shared<User::SubAccountMap>();
       for (auto& pair : *accs) {
-        if (pair.first == acc_id) continue;
+        if (pair.first == sub_id) continue;
         tmp->emplace(pair.first, pair.second);
       }
+      std::atomic_thread_fence(std::memory_order_release);
       user->set_sub_accounts(tmp);
     }
-    Send(j.dump());
+    json out = {"admin", name, action};
+    Send(out.dump());
   } else if (!strcasecmp(name.c_str(), "broker accounts of sub account")) {
-    auto sub_id = GetNum(j[3]);
-    auto exch_id = GetNum(j[4]);
-    auto broker_id = GetNum(j[5]);
+    auto& inst = AccountManager::Instance();
+    if (action == "ls") {
+      json out;
+      json subs;
+      for (auto& pair : inst.sub_accounts_) {
+        subs.push_back(pair.second->name);
+        for (auto& pair2 : *pair.second->broker_accounts()) {
+          auto e = SecurityManager::Instance().GetExchange(pair2.first);
+          assert(e);
+          if (!e) continue;
+          json tmp = {pair.second->name, e->name, pair2.second->name};
+          out.push_back(tmp);
+        }
+      }
+      json exchs;
+      for (auto& pair : SecurityManager::Instance().exchanges_) {
+        exchs.push_back(pair.second->name);
+      }
+      json brokers;
+      for (auto& pair : inst.broker_accounts_) {
+        brokers.push_back(pair.second->name);
+      }
+      json tmp = {"admin", name, action, {out, subs, exchs, brokers}};
+      Send(tmp.dump());
+      return;
+    }
+    std::string sub_name;
+    std::string exch_name;
+    std::string broker_name;
+    auto values = j[3];
+    for (auto i = 0u; i < values.size(); ++i) {
+      auto v = values[i];
+      auto name = Get<std::string>(v[0]);
+      auto value = Get<std::string>(v[1]);
+      if (name == "exchange") {
+        exch_name = value;
+      } else if (name == "sub") {
+        sub_name = value;
+      } else if (name == "broker") {
+        broker_name = value;
+      }
+    }
+    auto sub = const_cast<SubAccount*>(inst.GetSubAccount(sub_name));
+    if (!sub) {
+      json out = {"admin", name, action,
+                  "Unknown sub broker name '" + sub_name + "'"};
+      Send(out.dump());
+      return;
+    }
+    auto sub_id = sub->id;
+    auto exch = SecurityManager::Instance().GetExchange(exch_name);
+    if (!exch) {
+      json out = {"admin", name, action,
+                  "Unknown exchange name '" + exch_name + "'"};
+      Send(out.dump());
+      return;
+    }
+    auto exch_id = exch->id;
+    auto broker = inst.GetBrokerAccount(broker_name);
+    if (!broker) {
+      json out = {"admin", name, action,
+                  "Unknown broker account name '" + broker_name + "'"};
+      Send(out.dump());
+      return;
+    }
+    auto broker_id = broker->id;
     std::stringstream ss;
     if (action == "add") {
       ss << "insert into sub_account_broker_account_map(sub_account_id, "
@@ -1238,28 +1345,30 @@ void Connection::OnAdmin(const json& j) {
       Send(out.dump());
       return;
     }
-    auto& inst = AccountManager::Instance();
-    auto sub_acc = const_cast<SubAccount*>(inst.GetSubAccount(sub_id));
-    auto exch = SecurityManager::Instance().GetExchange(exch_id);
-    auto broker_acc = inst.GetBrokerAccount(broker_id);
-    assert(sub_acc && exch && broker_acc);
-    if (!sub_acc || !exch || !broker_acc) return;
-    auto accs = sub_acc->broker_accounts();
+    auto accs = sub->broker_accounts();
     if (action == "add") {
       auto tmp = std::make_shared<SubAccount::BrokerAccountMap>(*accs);
-      tmp->emplace(exch->id, broker_acc);
-      sub_acc->set_broker_accounts(tmp);
+      tmp->emplace(exch->id, broker);
+      std::atomic_thread_fence(std::memory_order_release);
+      sub->set_broker_accounts(tmp);
     } else if (action == "delete") {
       auto tmp = std::make_shared<SubAccount::BrokerAccountMap>();
       for (auto& pair : *accs) {
         if (pair.first == exch_id) continue;
         tmp->emplace(pair.first, pair.second);
       }
-      sub_acc->set_broker_accounts(tmp);
+      std::atomic_thread_fence(std::memory_order_release);
+      sub->set_broker_accounts(tmp);
     }
-
-    Send(j.dump());
+    json out = {"admin", name, action};
+    Send(out.dump());
   }
+}
+
+char* StrDup(const std::string& str) {
+  auto tmp = strdup(str.c_str());
+  std::atomic_thread_fence(std::memory_order_release);
+  return tmp;
 }
 
 void Connection::OnAdminUsers(const json& j, const std::string& name,
@@ -1273,12 +1382,6 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
       json juser = {
           user->id,          user->name,     0,
           user->is_disabled, user->is_admin, user->limits.GetString()};
-      json sub_accounts;
-      auto tmp = user->sub_accounts();
-      for (auto& pair2 : *tmp) {
-        sub_accounts.push_back(pair2.second->id);
-      }
-      juser.push_back(sub_accounts);
       users.push_back(juser);
     }
     json out = {"admin", name, action};
@@ -1297,8 +1400,8 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
       std::string err;
-      if (!v[1].is_string()) continue;
-      auto str = Get<std::string>(v[1]);
+      if (!v[1].is_string() && !v[1].is_null()) continue;
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "limits") {
         Limits l;
         err = l.FromString(str);
@@ -1324,6 +1427,8 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
         ss << GetNum(v[1]);
       } else if (v[1].is_boolean()) {
         ss << Get<bool>(v[1]);
+      } else if (v[1].is_null()) {
+        ss << "null";
       } else {
         auto tmp = Get<std::string>(v[1]);
         if (key == "password") tmp = sha1(tmp);
@@ -1333,7 +1438,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
     ss << " where id=" << id;
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str();
+      *sql << ss.str();
     } catch (const std::exception& e) {
       json out = {"admin", name, action, id, e.what()};
       Send(out.dump());
@@ -1342,17 +1447,22 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
     for (auto i = 0u; i < values.size(); ++i) {
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
+      if (key == "is_admin") {
+        user->is_admin = v[1].is_null() ? false : Get<bool>(v[1]);
+        continue;
+      } else if (key == "is_disabled") {
+        user->is_disabled = v[1].is_null() ? false : Get<bool>(v[1]);
+        continue;
+      }
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "name") {
-        user->name = strdup(Get<std::string>(v[1]).c_str());
+        user->name = StrDup(str);
+        std::atomic_thread_fence(std::memory_order_release);
         inst.user_of_name_[user->name] = user;
       } else if (key == "password") {
-        user->password = strdup(sha1(Get<std::string>(v[1])).c_str());
-      } else if (key == "is_admin") {
-        user->is_admin = Get<bool>(v[1]);
-      } else if (key == "is_disabled") {
-        user->is_disabled = Get<bool>(v[1]);
+        user->password = StrDup(sha1(str));
       } else if (key == "limits") {
-        user->limits.FromString(Get<std::string>(v[1]));
+        user->limits.FromString(str);
       }
     }
     json out = {"admin", name, action, id};
@@ -1367,21 +1477,23 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
       if (i) ss << ",";
       auto key = Get<std::string>(v[0]);
       ss << '"' << key << '"';
-      std::string err;
-      if (key == "name") {
-        auto str = Get<std::string>(v[1]);
-        user->name = strdup(str.c_str());
-        if (str.empty()) err = "name can not be empty";
-      } else if (key == "password") {
-        auto str = Get<std::string>(v[1]);
-        user->password = strdup(sha1(str).c_str());
-        if (str.empty()) err = "password can not be empty";
-      } else if (key == "is_admin") {
+      if (key == "is_admin") {
         user->is_admin = Get<bool>(v[1]);
+        continue;
       } else if (key == "is_disabled") {
         user->is_disabled = Get<bool>(v[1]);
+        continue;
+      }
+      auto str = Get<std::string>(v[1]);
+      std::string err;
+      if (key == "name") {
+        user->name = StrDup(str);
+        if (str.empty()) err = "name can not be empty";
+      } else if (key == "password") {
+        user->password = StrDup(sha1(str));
+        if (str.empty()) err = "password can not be empty";
       } else if (key == "limits") {
-        err = user->limits.FromString(Get<std::string>(v[1]));
+        err = user->limits.FromString(str);
       }
       if (err.size()) {
         json out = {"admin", name, action, err};
@@ -1408,7 +1520,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
     ss << ") returning id";
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str(), soci::into(user->id);
+      *sql << ss.str(), soci::into(user->id);
     } catch (const std::exception& e) {
       json out = {"admin", name, action, e.what()};
       Send(out.dump());
@@ -1453,7 +1565,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
       std::string err;
-      auto str = Get<std::string>(v[1]);
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "limits") {
         Limits l;
         err = l.FromString(str);
@@ -1463,7 +1575,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         BrokerAccount b;
         err = b.set_params(str);
       } else if (key == "adapter") {
-        adapter = ExchangeConnectivityManager::Instance().GetAdapter(str);
+        adapter = ExchangeConnectivityManager::Instance().Get(str);
         if (!adapter) err = "Unknown adapter name";
       }
       if (err.size()) {
@@ -1483,6 +1595,8 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         ss << GetNum(v[1]);
       } else if (v[1].is_boolean()) {
         ss << Get<bool>(v[1]);
+      } else if (v[1].is_null()) {
+        ss << "null";
       } else {
         auto tmp = Get<std::string>(v[1]);
         ss << "'" << tmp << "'";
@@ -1491,7 +1605,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     ss << " where id=" << id;
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str();
+      *sql << ss.str();
     } catch (const std::exception& e) {
       json out = {"admin", name, action, id, e.what()};
       Send(out.dump());
@@ -1500,15 +1614,17 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     for (auto i = 0u; i < values.size(); ++i) {
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "name") {
-        broker->name = strdup(Get<std::string>(v[1]).c_str());
+        broker->name = StrDup(str);
+        std::atomic_thread_fence(std::memory_order_release);
         inst.broker_account_of_name_[broker->name] = broker;
       } else if (key == "limits") {
-        broker->limits.FromString(Get<std::string>(v[1]));
+        broker->limits.FromString(str);
       } else if (key == "params") {
-        broker->set_params(Get<std::string>(v[1]));
+        broker->set_params(str);
       } else if (key == "adapter") {
-        broker->adapter_name = strdup(Get<std::string>(v[1]).c_str());
+        broker->adapter_name = StrDup(str);
         broker->adapter = adapter;
       }
     }
@@ -1527,17 +1643,17 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
       std::string err;
       auto str = Get<std::string>(v[1]);
       if (key == "name") {
-        broker->name = strdup(str.c_str());
+        broker->name = StrDup(str);
         if (str.empty()) err = "name can not be empty";
       } else if (key == "params") {
         err = broker->set_params(str);
       } else if (key == "adapter") {
-        auto adapter = ExchangeConnectivityManager::Instance().GetAdapter(str);
+        auto adapter = ExchangeConnectivityManager::Instance().Get(str);
         if (!adapter) {
           err = "Unknown adapter name";
         } else {
           broker->adapter = adapter;
-          broker->adapter_name = strdup(str.c_str());
+          broker->adapter_name = StrDup(str);
         }
       } else if (key == "limits") {
         err = broker->limits.FromString(str);
@@ -1564,7 +1680,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     ss << ") returning id";
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str(), soci::into(broker->id);
+      *sql << ss.str(), soci::into(broker->id);
     } catch (const std::exception& e) {
       json out = {"admin", name, action, e.what()};
       Send(out.dump());
@@ -1589,12 +1705,6 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     for (auto& pair : inst.sub_accounts_) {
       auto acc = pair.second;
       json jacc = {acc->id, acc->name, acc->limits.GetString()};
-      auto b = acc->broker_accounts();
-      json map;
-      for (auto& pair : *b) {
-        map[pair.first] = pair.second->id;
-      }
-      jacc.push_back(map);
       accs.push_back(jacc);
     }
     json out = {"admin", name, action};
@@ -1613,7 +1723,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
       std::string err;
-      auto str = Get<std::string>(v[1]);
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "name") {
         if (str.empty()) err = "name can not be empty";
       } else if (key == "limits") {
@@ -1637,6 +1747,8 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
         ss << GetNum(v[1]);
       } else if (v[1].is_boolean()) {
         ss << Get<bool>(v[1]);
+      } else if (v[1].is_null()) {
+        ss << "null";
       } else {
         auto tmp = Get<std::string>(v[1]);
         ss << "'" << tmp << "'";
@@ -1645,7 +1757,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     ss << " where id=" << id;
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str();
+      *sql << ss.str();
     } catch (const std::exception& e) {
       json out = {"admin", name, action, id, e.what()};
       Send(out.dump());
@@ -1654,11 +1766,13 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     for (auto i = 0u; i < values.size(); ++i) {
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "name") {
-        sub->name = strdup(Get<std::string>(v[1]).c_str());
+        sub->name = StrDup(str);
+        std::atomic_thread_fence(std::memory_order_release);
         inst.sub_account_of_name_[sub->name] = sub;
       } else if (key == "limits") {
-        sub->limits.FromString(Get<std::string>(v[1]));
+        sub->limits.FromString(str);
       }
     }
     json out = {"admin", name, action, id};
@@ -1676,7 +1790,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
       std::string err;
       auto str = Get<std::string>(v[1]);
       if (key == "name") {
-        sub->name = strdup(str.c_str());
+        sub->name = StrDup(str);
         if (str.empty()) err = "name can not be empty";
       } else if (key == "limits") {
         err = sub->limits.FromString(str);
@@ -1703,7 +1817,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     ss << ") returning id";
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str(), soci::into(sub->id);
+      *sql << ss.str(), soci::into(sub->id);
     } catch (const std::exception& e) {
       json out = {"admin", name, action, e.what()};
       Send(out.dump());
@@ -1760,8 +1874,8 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
       auto key = Get<std::string>(v[0]);
       Exchange e;
       std::string err;
-      if (!v[1].is_string()) continue;
-      auto str = Get<std::string>(v[1]);
+      if (!v[1].is_string() && !v[1].is_null()) continue;
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "name") {
         if (str.empty()) err = "name can not be empty";
       } else if (key == "tick_size_table") {
@@ -1792,6 +1906,8 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
         ss << GetNum(v[1]);
       } else if (v[1].is_boolean()) {
         ss << Get<bool>(v[1]);
+      } else if (v[1].is_null()) {
+        ss << "null";
       } else {
         auto tmp = Get<std::string>(v[1]);
         ss << "'" << tmp << "'";
@@ -1800,7 +1916,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
     ss << " where id=" << id;
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str();
+      *sql << ss.str();
     } catch (const std::exception& e) {
       json out = {"admin", name, action, id, e.what()};
       Send(out.dump());
@@ -1809,32 +1925,36 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
     for (auto i = 0u; i < values.size(); ++i) {
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
+      if (key == "odd_lot_allowed") {
+        exch->odd_lot_allowed = v[1].is_null() ? false : Get<bool>(v[1]);
+        continue;
+      }
+      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
       if (key == "name") {
-        exch->name = strdup(Get<std::string>(v[1]).c_str());
+        exch->name = StrDup(str);
+        std::atomic_thread_fence(std::memory_order_release);
         inst.exchange_of_name_[exch->name] = exch;
       } else if (key == "tick_size_table") {
-        exch->ParseTickSizeTable(Get<std::string>(v[1]));
+        exch->ParseTickSizeTable(str);
       } else if (key == "trade_period") {
-        exch->ParseTradePeriod(Get<std::string>(v[1]));
+        exch->ParseTradePeriod(str);
       } else if (key == "break_period") {
-        exch->ParseBreakPeriod(Get<std::string>(v[1]));
+        exch->ParseBreakPeriod(str);
       } else if (key == "half_day") {
-        exch->ParseHalfDay(Get<std::string>(v[1]));
+        exch->ParseHalfDay(str);
       } else if (key == "half_days") {
-        exch->ParseHalfDays(Get<std::string>(v[1]));
+        exch->ParseHalfDays(str);
       } else if (key == "mic") {
-        exch->mic = strdup(Get<std::string>(v[1]).c_str());
+        exch->mic = StrDup(str);
       } else if (key == "country") {
-        exch->country = strdup(Get<std::string>(v[1]).c_str());
+        exch->country = StrDup(str);
       } else if (key == "ib_name") {
-        exch->ib_name = strdup(Get<std::string>(v[1]).c_str());
+        exch->ib_name = StrDup(str);
       } else if (key == "bb_name") {
-        exch->bb_name = strdup(Get<std::string>(v[1]).c_str());
+        exch->bb_name = StrDup(str);
       } else if (key == "tz") {
-        exch->tz = strdup(Get<std::string>(v[1]).c_str());
+        exch->tz = StrDup(str);
         if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
-      } else if (key == "odd_lot_allowed") {
-        exch->odd_lot_allowed = Get<bool>(v[1]);
       }
     }
     json out = {"admin", name, action, id};
@@ -1850,35 +1970,37 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
       auto key = Get<std::string>(v[0]);
       ss << '"' << key << '"';
       std::string err;
+      if (key == "odd_lot_allowed") {
+        exch->odd_lot_allowed = Get<bool>(v[1]);
+        continue;
+      }
+      auto str = Get<std::string>(v[1]);
       if (key == "name") {
-        auto str = Get<std::string>(v[1]);
         if (str.empty())
           err = "name can not be empty";
         else
-          exch->name = strdup(str.c_str());
+          exch->name = StrDup(str);
       } else if (key == "tick_size_table") {
-        err = exch->ParseTickSizeTable(Get<std::string>(v[1]));
+        err = exch->ParseTickSizeTable(str);
       } else if (key == "trade_period") {
-        err = exch->ParseTradePeriod(Get<std::string>(v[1]));
+        err = exch->ParseTradePeriod(str);
       } else if (key == "break_period") {
-        err = exch->ParseBreakPeriod(Get<std::string>(v[1]));
+        err = exch->ParseBreakPeriod(str);
       } else if (key == "half_day") {
-        err = exch->ParseHalfDay(Get<std::string>(v[1]));
+        err = exch->ParseHalfDay(str);
       } else if (key == "half_days") {
-        err = exch->ParseHalfDays(Get<std::string>(v[1]));
+        err = exch->ParseHalfDays(str);
       } else if (key == "mic") {
-        exch->mic = strdup(Get<std::string>(v[1]).c_str());
+        exch->mic = StrDup(str);
       } else if (key == "country") {
-        exch->country = strdup(Get<std::string>(v[1]).c_str());
+        exch->country = StrDup(str);
       } else if (key == "ib_name") {
-        exch->ib_name = strdup(Get<std::string>(v[1]).c_str());
+        exch->ib_name = StrDup(str);
       } else if (key == "bb_name") {
-        exch->bb_name = strdup(Get<std::string>(v[1]).c_str());
+        exch->bb_name = StrDup(str);
       } else if (key == "tz") {
-        exch->tz = strdup(Get<std::string>(v[1]).c_str());
+        exch->tz = StrDup(str);
         if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
-      } else if (key == "odd_lot_allowed") {
-        exch->odd_lot_allowed = Get<bool>(v[1]);
       }
       if (err.size()) {
         json out = {"admin", name, action, err};
@@ -1902,7 +2024,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
     ss << ") returning id";
     try {
       auto sql = Database::Session();
-      (*sql) << ss.str().c_str(), soci::into(exch->id);
+      *sql << ss.str(), soci::into(exch->id);
     } catch (const std::exception& e) {
       json out = {"admin", name, action, e.what()};
       Send(out.dump());

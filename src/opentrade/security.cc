@@ -12,13 +12,13 @@ namespace opentrade {
 std::string Exchange::ParseTickSizeTable(const std::string& str) {
   if (str.size()) {
     auto tmp = std::make_shared<TickSizeTable>();
-    for (auto& str : Split(str, "\n;|,")) {
+    for (auto& str : Split(str, ",;\n")) {
       double low, up, value;
       if (sscanf(str.c_str(), "%lf %lf %lf", &low, &up, &value) == 3) {
         tmp->push_back({low, up, value});
       } else {
         return "Invalid tick size table format, expect '<low_price> <up_price> "
-               "<value>,...'";
+               "<value>[,;\n]...'";
       }
     }
     if (!tmp->empty()) {
@@ -111,14 +111,14 @@ std::string Exchange::GetTickSizeTableString() const {
 std::string Exchange::ParseHalfDays(const std::string& str) {
   if (str.size()) {
     auto tmp = std::make_shared<HalfDays>();
-    for (auto& f : Split(str, "\n;|, \t")) {
+    for (auto& f : Split(str, ",;\n")) {
       auto i = atoi(f.c_str());
       if (i > 0) {
         tmp->insert(i);
       }
     }
     if (tmp->empty()) {
-      return "Invalid half days format, expect '<YYYmmdd>,...'";
+      return "Invalid half days format, expect '<YYYmmdd>[,;\n]...'";
     }
     std::atomic_thread_fence(std::memory_order_release);
     half_days_ = tmp;
@@ -142,24 +142,27 @@ std::string Exchange::GetHalfDaysString() const {
 
 std::string Exchange::GetTradePeriodString() const {
   if (!trade_start) return {};
-  return std::to_string(trade_start / 3600) + ":" +
-         std::to_string(trade_start % 3600 / 60) + "-" +
-         std::to_string(trade_end_ / 3600) + ":" +
-         std::to_string(trade_end_ % 3600 / 60);
+  char buf[256];
+  snprintf(buf, sizeof(buf), "%02d:%02d-%02d:%02d", trade_start / 3600,
+           trade_start % 3600 / 60, trade_end_ / 3600, trade_end_ % 3600 / 60);
+  return buf;
 }
 
 std::string Exchange::GetBreakPeriodString() const {
   if (!break_start) return {};
-  return std::to_string(break_start / 3600) + ":" +
-         std::to_string(break_start % 3600 / 60) + "-" +
-         std::to_string(break_end / 3600) + ":" +
-         std::to_string(break_end % 3600 / 60);
+  char buf[256];
+  snprintf(buf, sizeof(buf), "%02d:%02d-%02d:%02d", break_start / 3600,
+           break_start % 3600 / 60, break_end / 3600, break_end % 3600 / 60);
+  return buf;
 }
 
 std::string Exchange::GetHalfDayString() const {
   if (!half_day) return {};
-  return std::to_string(half_day / 3600) + ":" +
-         std::to_string(half_day % 3600 / 60);
+
+  char buf[256];
+  snprintf(buf, sizeof(buf), "%02d:%02d", half_day / 3600,
+           half_day % 3600 / 60);
+  return buf;
 }
 
 void SecurityManager::Initialize() {

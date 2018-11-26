@@ -3563,3 +3563,175 @@
    obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
    fun:PyAST_FromNodeObject
 }
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:__wcsnlen_avx2
+   fun:wcsrtombs
+   fun:wcstombs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_Py_wreadlink
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:Py_GetProgramFullPath
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:internal_utf8_loop
+   fun:__gconv_transform_internal_utf8
+   fun:wcsrtombs
+   fun:wcstombs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_Py_wreadlink
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:Py_GetProgramFullPath
+   fun:_PySys_Init
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyEval_EvalCodeEx
+   fun:PyEval_EvalCode
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   fun:PyArena_AddPyObject
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyDict_SetItemString
+   fun:PyType_Ready
+   fun:_Py_ReadyTypes
+   fun:_Py_InitializeEx_Private
+   fun:_ZN9opentrade11InitalizePyERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyBytes_Resize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:PyObject_CallMethodObjArgs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyBytes_Resize
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+   fun:_PyObject_FastCallDict
+   fun:PyObject_CallMethodObjArgs
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyEval_EvalFrameDefault
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyList_Append
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyCFunction_FastCallDict
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   fun:_ZN5boost6python7objects10class_base7setattrEPKcRKNS0_3api6objectE
+   fun:_ZN5boost6python7objects10class_base12add_propertyEPKcRKNS0_3api6objectES4_
+   fun:_ZN5boost6python6class_IN9opentrade8ExchangeENS0_6detail13not_specifiedES5_S5_E12add_propertyIPFNS2_16ContainerWrapperISt10shared_ptrISt6vectorIPKNS2_8SecurityESaISD_EEEEERKS3_EEERS6_PKcT_SO_
+   fun:_ZN9opentrade21init_module_opentradeEv
+   fun:_ZN5boost6python21handle_exception_implENS_9function0IvEE
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Value8
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:_PyObject_GenericSetAttrWithDict
+   obj:/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0
+   fun:PyObject_SetAttr
+   fun:PyObject_SetAttrString
+   fun:_ZN5boost6python7objects10class_base7setattrEPKcRKNS0_3api6objectE
+   fun:_ZN5boost6python7objects10class_base12add_propertyEPKcRKNS0_3api6objectES4_
+   fun:_ZN5boost6python6class_IN9opentrade8ExchangeENS0_6detail13not_specifiedES5_S5_E12add_propertyIPFNS2_16ContainerWrapperISt10shared_ptrISt6vectorIPKNS2_8SecurityESaISD_EEEEERKS3_EEERS6_PKcT_SO_
+   fun:_ZN9opentrade21init_module_opentradeEv
+   fun:_ZN5boost6python21handle_exception_implENS_9function0IvEE
+}

@@ -7,11 +7,13 @@ namespace opentrade {
 std::string Limits::GetString() {
   std::stringstream out;
   out << std::setprecision(15);
-  out << "msg_rate=" << msg_rate << ','
-      << "msg_rate_per_security=" << msg_rate_per_security << ','
-      << "order_qty=" << order_qty << ',' << "order_value=" << order_value
-      << ',' << "value=" << value << ',' << "turnover=" << turnover << ','
-      << "total_value=" << total_value << ','
+  out << "msg_rate=" << msg_rate << '\n'
+      << "msg_rate_per_security=" << msg_rate_per_security << '\n'
+      << "order_qty=" << order_qty << '\n'
+      << "order_value=" << order_value << '\n'
+      << "value=" << value << '\n'
+      << "turnover=" << turnover << '\n'
+      << "total_value=" << total_value << '\n'
       << "total_turnover=" << total_turnover;
   return out.str();
 }
@@ -22,7 +24,7 @@ std::string Limits::FromString(const std::string& str) {
     char name[str.size()];
     double value;
     if (sscanf(str.c_str(), "%s=%lf", name, &value) != 2) {
-      return "Invalid limits format, expect <name>=<value>,...'";
+      return "Invalid limits format, expect <name>=<value>[,;\n]...'";
     }
     if (!strcasecmp(name, "msg_rate"))
       l.msg_rate = value;
