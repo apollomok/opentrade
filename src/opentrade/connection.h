@@ -60,6 +60,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   void Send(const std::string& msg) {
     if (!closed_) transport_->Send(msg);
   }
+  void Send(const json& msg) { Send(msg.dump()); }
   void Send(const Confirmation& cm, bool offline);
   void Send(Algo::IdType id, time_t tm, const std::string& token,
             const std::string& name, const std::string& status,

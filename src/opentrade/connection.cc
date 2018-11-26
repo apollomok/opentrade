@@ -187,14 +187,8 @@ void Connection::PublishMarketStatus() {
     auto v = it.second->connected();
     auto it2 = ecs_.find(name);
     if (it2 == ecs_.end() || it2->second != v) {
-      json j = {
-          "market",
-          "exchange",
-          name,
-          v,
-      };
       ecs_[name] = v;
-      Send(j.dump());
+      Send(json{"market", "exchange", name, v});
     }
   }
   auto& mds = MarketDataManager::Instance().adapters();
@@ -203,14 +197,8 @@ void Connection::PublishMarketStatus() {
     auto v = it.second->connected();
     auto it2 = mds_.find(name);
     if (it2 == mds_.end() || it2->second != v) {
-      json j = {
-          "market",
-          "data",
-          name,
-          v,
-      };
       mds_[name] = v;
-      Send(j.dump());
+      Send(json{"market", "data", name, v});
     }
   }
 }
@@ -252,11 +240,7 @@ static inline void GetMarketData(const MarketData& md, const MarketData& md0,
     }
   }
   if (!j3.size()) return;
-  json j2 = {
-      id,
-  };
-  j2.push_back(j3);
-  j->push_back(j2);
+  j->push_back(json{id, j3});
 }
 
 void Connection::PublishMarketdata() {
@@ -266,9 +250,7 @@ void Connection::PublishMarketdata() {
   timer_.async_wait(strand_.wrap([self](auto) {
     self->PublishMarketdata();
     self->PublishMarketStatus();
-    json j = {
-        "md",
-    };
+    json j = {"md"};
     for (auto& pair : self->subs_) {
       auto id = pair.first;
       auto& md = MarketDataManager::Instance().Get(id);
@@ -276,7 +258,7 @@ void Connection::PublishMarketdata() {
       pair.second.first = md;
     }
     if (j.size() > 1) {
-      self->Send(j.dump());
+      self->Send(j);
     }
     if (!self->sub_pnl_) return;
     for (auto& pair : PositionManager::Instance().sub_positions_) {
@@ -296,7 +278,7 @@ void Connection::PublishMarketdata() {
             pnl0.second,
         };
         if (x) j.push_back(pnl0.first);
-        self->Send(j.dump());
+        self->Send(j);
       }
     }
     for (auto& pair : PositionManager::Instance().pnls_) {
@@ -307,10 +289,7 @@ void Connection::PublishMarketdata() {
       if (pnl.realized != pnl0.first || pnl.unrealized != pnl0.second) {
         pnl0.first = pnl.realized;
         pnl0.second = pnl.unrealized;
-        json j = {
-            "Pnl", id, GetTime(), pnl.realized, pnl.unrealized,
-        };
-        self->Send(j.dump());
+        self->Send(json{"Pnl", id, GetTime(), pnl.realized, pnl.unrealized});
       }
     }
   }));
@@ -366,8 +345,9 @@ void Connection::OnMessageAsync(const std::string& msg) {
 void Connection::OnMessageSync(const std::string& msg,
                                const std::string& token) {
   try {
-    if (msg == "h") {
-      Send("h");
+    static std::string h("h");
+    if (msg == h) {
+      Send(h);
       return;
     }
     auto j = json::parse(msg);
@@ -375,14 +355,13 @@ void Connection::OnMessageSync(const std::string& msg,
     if (action.empty()) {
       json j = {"error", "msg", "action", "empty action"};
       LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-      Send(j.dump());
+      Send(j);
       return;
     }
     if (action != "login" && !user_) {
       user_ = FindInMap(kTokens, token);
       if (!user_) {
-        json j = {"error", "msg", "action", "you must login first"};
-        Send(j.dump());
+        Send(json{"error", "msg", "action", "you must login first"});
         return;
       }
     }
@@ -404,7 +383,7 @@ void Connection::OnMessageSync(const std::string& msg,
             pos.broker_account_id,
             pos.tm,
         };
-        Send(j.dump());
+        Send(j);
       }
     } else if (action == "reconnect") {
       auto name = Get<std::string>(j[1]);
@@ -429,17 +408,14 @@ void Connection::OnMessageSync(const std::string& msg,
         auto seq_algo = Get<int64_t>(j[2]);
         LOG_DEBUG(GetAddress() << ": Offline algos requested: " << seq_algo);
         AlgoManager::Instance().LoadStore(seq_algo, this);
-        json j = {"offline_algos", "complete"};
-        Send(j.dump());
+        Send(json{"offline_algos", "complete"});
       }
       auto seq_confirmation = Get<int64_t>(j[1]);
       LOG_DEBUG(GetAddress()
                 << ": Offline confirmations requested: " << seq_confirmation);
       GlobalOrderBook::Instance().LoadStore(seq_confirmation, this);
-      json j = {"offline_orders", "complete"};
-      Send(j.dump());
-      j = {"offline", "complete"};
-      Send(j.dump());
+      Send(json{"offline_orders", "complete"});
+      Send(json{"offline", "complete"});
     } else if (action == "shutdown") {
       if (!user_->is_admin) return;
       int seconds = 3;
@@ -472,7 +448,7 @@ void Connection::OnMessageSync(const std::string& msg,
         json j = {"error", "cancel", "order id",
                   "Invalid order id: " + std::to_string(id)};
         LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-        Send(j.dump());
+        Send(j);
         return;
       }
       ExchangeConnectivityManager::Instance().Cancel(*ord);
@@ -497,14 +473,10 @@ void Connection::OnMessageSync(const std::string& msg,
           double a, b;
           if (3 == sscanf(str, "%d %lf %lf", &tm, &a, &b)) {
             if (tm <= tm0) continue;
-            json j = {tm, a, b};
-            j2.push_back(j);
+            j2.push_back(json{tm, a, b});
           }
         }
-        if (j2.size()) {
-          json j = {"Pnl", id, j2};
-          Send(j.dump());
-        }
+        if (j2.size()) Send(json{"Pnl", id, j2});
       }
       sub_pnl_ = true;
     } else if (action == "sub") {
@@ -521,7 +493,7 @@ void Connection::OnMessageSync(const std::string& msg,
         }
       }
       if (jout.size() > 1) {
-        Send(jout.dump());
+        Send(jout);
       }
     } else if (action == "unsub") {
       for (auto i = 1u; i < j.size(); ++i) {
@@ -544,7 +516,7 @@ void Connection::OnMessageSync(const std::string& msg,
         j.push_back(nullptr);
         j.push_back("Not found");
       }
-      Send(j.dump());
+      Send(j);
     } else if (action == "deleteAlgoFile") {
       auto fn = Get<std::string>(j[1]);
       auto path = kAlgoPath / fn;
@@ -554,7 +526,7 @@ void Connection::OnMessageSync(const std::string& msg,
       } catch (const fs::filesystem_error& err) {
         j.push_back(err.what());
       }
-      Send(j.dump());
+      Send(j);
     } else if (action == "saveAlgoFile") {
       auto fn = Get<std::string>(j[1]);
       auto text = Get<std::string>(j[2]);
@@ -566,23 +538,20 @@ void Connection::OnMessageSync(const std::string& msg,
       } else {
         j.push_back("Can not write");
       }
-      Send(j.dump());
+      Send(j);
     }
   } catch (nlohmann::detail::parse_error& e) {
     LOG_DEBUG(GetAddress() << ": invalid json string: " << msg);
-    json j = {"error", "json", msg, "invalid json string"};
-    Send(j.dump());
+    Send(json{"error", "json", msg, "invalid json string"});
   } catch (nlohmann::detail::exception& e) {
     LOG_DEBUG(GetAddress() << ": json error: " << e.what() << ", " << msg);
     std::string error = "json error: ";
     error += e.what();
-    json j = {"error", "json", msg, error};
-    Send(j.dump());
+    Send(json{"error", "json", msg, error});
   } catch (std::exception& e) {
     LOG_DEBUG(GetAddress() << ": Connection::OnMessage: " << e.what() << ", "
                            << msg);
-    json j = {"error", "Connection::OnMessage", msg, e.what()};
-    Send(j.dump());
+    Send(json{"error", "Connection::OnMessage", msg, e.what()});
   }
 }
 
@@ -608,10 +577,7 @@ void Connection::Send(const Algo& algo, const std::string& status,
 void Connection::Send(Algo::IdType id, time_t tm, const std::string& token,
                       const std::string& name, const std::string& status,
                       const std::string& body, uint32_t seq, bool offline) {
-  json j = {
-      offline ? "Algo" : "algo", seq, id, tm, token, name, status, body,
-  };
-  Send(j.dump());
+  Send(json{offline ? "Algo" : "algo", seq, id, tm, token, name, status, body});
 }
 
 static inline const char* GetSide(OrderSide c) {
@@ -772,7 +738,7 @@ void Connection::Send(const Confirmation& cm, bool offline) {
       return;
       break;
   }
-  Send(j.dump());
+  Send(j);
 }
 
 void Connection::OnPosition(const json& j, const std::string& msg) {
@@ -786,7 +752,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
         "Invalid security id: " + security_id,
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j.dump());
+    Send(j);
     return;
   }
   auto acc_name = Get<std::string>(j[2]);
@@ -795,7 +761,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
     json j = {"error", "position", "account name",
               "Invalid account name: " + acc_name};
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j.dump());
+    Send(j);
     return;
   }
 
@@ -807,7 +773,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
       json j = {"error", "position", "account name",
                 "Can not find broker for this account and security pair"};
       LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-      Send(j.dump());
+      Send(j);
       return;
     }
     p = &PositionManager::Instance().Get(*broker_acc, *sec);
@@ -826,7 +792,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
        {"total_outstanding_sell_qty", p->total_outstanding_sell_qty},
        {"total_outstanding_sell_qty", p->total_outstanding_sell_qty}},
   };
-  Send(j.dump());
+  Send(j);
 }
 
 void Connection::OnAlgo(const json& j, const std::string& msg) {
@@ -856,7 +822,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
           token,
       };
       LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-      Send(j.dump());
+      Send(j);
       return;
     }
     try {
@@ -884,12 +850,10 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
       }
     } catch (const std::exception& err) {
       LOG_DEBUG(GetAddress() << ": " << err.what() << '\n' << msg);
-      json j = {"error", "algo", "invalid params", token, err.what()};
-      Send(j.dump());
+      Send(json{"error", "algo", "invalid params", token, err.what()});
     }
   } else {
-    json j = {"error", "algo", "invalid action", action};
-    Send(j.dump());
+    Send(json{"error", "algo", "invalid action", action});
   }
 }
 
@@ -901,7 +865,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
     json j = {"error", "order", "sub_account",
               "Invalid sub_account: " + sub_account};
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j.dump());
+    Send(j);
     return;
   }
   auto side_str = Get<std::string>(j[3]);
@@ -923,7 +887,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
         "Invalid security id: " + security_id,
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j.dump());
+    Send(j);
     return;
   }
   c.sub_account = acc;
@@ -935,7 +899,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
         "Invalid side: " + side_str,
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j.dump());
+    Send(j);
     return;
   }
   if (!strcasecmp(type_str.c_str(), "market"))
@@ -954,7 +918,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
         "Miss stop price for stop order",
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j.dump());
+    Send(j);
     return;
   }
   if (!strcasecmp(tif_str.c_str(), "GTC"))
@@ -1005,7 +969,7 @@ void Connection::OnSecurities(const json& j) {
       if (transport_->stateless) {
         out.push_back(j);
       } else {
-        Send(j.dump());
+        Send(j);
       }
     } else {
       json j = {
@@ -1015,16 +979,16 @@ void Connection::OnSecurities(const json& j) {
       if (transport_->stateless) {
         out.push_back(j);
       } else {
-        Send(j.dump());
+        Send(j);
       }
     }
   }
   if (transport_->stateless) {
-    Send(out.dump());
+    Send(out);
     return;
   }
   out = {"securities", "complete"};
-  Send(out.dump());
+  Send(out);
 }
 
 void Connection::OnLogin(const std::string& action, const json& j) {
@@ -1042,20 +1006,11 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     state = "ok";
   if (action == "validate_user") {
     auto token = Get<int64_t>(j[3]);
-    json j = {
-        "user_validation",
-        state == "ok" ? user->id : 0,
-        token,
-    };
-    Send(j.dump());
+    Send(json{"user_validation", state == "ok" ? user->id : 0, token});
     return;
   }
   if (state != "ok") {
-    json j = {
-        "connection",
-        state,
-    };
-    Send(j.dump());
+    Send(json{"connection", state});
     return;
   }
   auto token = boost::uuids::to_string(kUuidGen());
@@ -1070,40 +1025,25 @@ void Connection::OnLogin(const std::string& action, const json& j) {
        {"isAdmin", user->is_admin},
        {"securitiesCheckSum", SecurityManager::Instance().check_sum()}},
   };
-  Send(out.dump());
+  Send(out);
   if (!user_ && !transport_->stateless) {
     user_ = user;
     PublishMarketdata();
     auto accs = user->sub_accounts();
     for (auto& pair : *accs) {
-      json j = {
-          "sub_account",
-          pair.first,
-          pair.second->name,
-      };
-      Send(j.dump());
+      Send(json{"sub_account", pair.first, pair.second->name});
     }
     if (user->is_admin) {
       for (auto& pair : AccountManager::Instance().users_) {
         auto tmp = pair.second->sub_accounts();
         for (auto& pair2 : *tmp) {
-          json j = {
-              "user_sub_account",
-              pair.first,
-              pair2.first,
-              pair2.second->name,
-          };
-          Send(j.dump());
+          Send(json{"user_sub_account", pair.first, pair2.first,
+                    pair2.second->name});
         }
       }
     }
     for (auto& pair : AccountManager::Instance().broker_accounts_) {
-      json j = {
-          "broker_account",
-          pair.first,
-          pair.second->name,
-      };
-      Send(j.dump());
+      Send(json{"broker_account", pair.first, pair.second->name});
     }
     for (auto& pair : AlgoManager::Instance().adapters()) {
       auto& params = pair.second->GetParamDefs();
@@ -1122,7 +1062,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
         j2.push_back(p.precision);
         j.push_back(j2);
       }
-      Send(j.dump());
+      Send(j);
     }
     json files;
     if (fs::is_directory(kAlgoPath)) {
@@ -1136,10 +1076,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
         files.push_back(fn);
       }
     }
-    if (files.size() > 0) {
-      json j = {"algoFiles", files};
-      Send(j.dump());
-    }
+    if (files.size() > 0) Send(json{"algoFiles", files});
   }
 }
 
@@ -1149,11 +1086,9 @@ void Connection::SendTestMsg(const std::string& token, const std::string& msg,
   if (test_algo_tokens_.find(token) == test_algo_tokens_.end()) return;
   auto self = shared_from_this();
   strand_.post([self, msg, stopped, token]() {
-    json j = {"test_msg", msg};
-    self->Send(j.dump());
+    self->Send(json{"test_msg", msg});
     if (stopped) {
-      json out = {"test_done", token};
-      self->Send(out.dump());
+      self->Send(json{"test_done", token});
     }
   });
 }
@@ -1188,8 +1123,7 @@ void Connection::OnAdmin(const json& j) {
       for (auto& pair : inst.sub_accounts_) {
         subs.push_back(pair.second->name);
       }
-      json tmp = {"admin", name, action, {out, users, subs}};
-      Send(tmp.dump());
+      Send(json{"admin", name, action, {out, users, subs}});
       return;
     }
     auto values = j[3];
@@ -1207,17 +1141,15 @@ void Connection::OnAdmin(const json& j) {
     }
     auto user = const_cast<User*>(inst.GetUser(user_name));
     if (!user) {
-      json out = {"admin", name, action,
-                  "Unknown user name '" + user_name + "'"};
-      Send(out.dump());
+      Send(
+          json{"admin", name, action, "Unknown user name '" + user_name + "'"});
       return;
     }
     auto user_id = user->id;
     auto sub = inst.GetSubAccount(sub_name);
     if (!sub) {
-      json out = {"admin", name, action,
-                  "Unknown sub broker name '" + sub_name + "'"};
-      Send(out.dump());
+      Send(json{"admin", name, action,
+                "Unknown sub broker name '" + sub_name + "'"});
       return;
     }
     auto sub_id = sub->id;
@@ -1236,8 +1168,7 @@ void Connection::OnAdmin(const json& j) {
       auto sql = Database::Session();
       *sql << str;
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, e.what()});
       return;
     }
     auto accs = user->sub_accounts();
@@ -1255,8 +1186,7 @@ void Connection::OnAdmin(const json& j) {
       std::atomic_thread_fence(std::memory_order_release);
       user->set_sub_accounts(tmp);
     }
-    json out = {"admin", name, action};
-    Send(out.dump());
+    Send(json{"admin", name, action});
   } else if (!strcasecmp(name.c_str(), "broker accounts of sub account")) {
     auto& inst = AccountManager::Instance();
     if (action == "ls") {
@@ -1280,8 +1210,7 @@ void Connection::OnAdmin(const json& j) {
       for (auto& pair : inst.broker_accounts_) {
         brokers.push_back(pair.second->name);
       }
-      json tmp = {"admin", name, action, {out, subs, exchs, brokers}};
-      Send(tmp.dump());
+      Send(json{"admin", name, action, {out, subs, exchs, brokers}});
       return;
     }
     std::string sub_name;
@@ -1302,25 +1231,22 @@ void Connection::OnAdmin(const json& j) {
     }
     auto sub = const_cast<SubAccount*>(inst.GetSubAccount(sub_name));
     if (!sub) {
-      json out = {"admin", name, action,
-                  "Unknown sub broker name '" + sub_name + "'"};
-      Send(out.dump());
+      Send(json{"admin", name, action,
+                "Unknown sub broker name '" + sub_name + "'"});
       return;
     }
     auto sub_id = sub->id;
     auto exch = SecurityManager::Instance().GetExchange(exch_name);
     if (!exch) {
-      json out = {"admin", name, action,
-                  "Unknown exchange name '" + exch_name + "'"};
-      Send(out.dump());
+      Send(json{"admin", name, action,
+                "Unknown exchange name '" + exch_name + "'"});
       return;
     }
     auto exch_id = exch->id;
     auto broker = inst.GetBrokerAccount(broker_name);
     if (!broker) {
-      json out = {"admin", name, action,
-                  "Unknown broker account name '" + broker_name + "'"};
-      Send(out.dump());
+      Send(json{"admin", name, action,
+                "Unknown broker account name '" + broker_name + "'"});
       return;
     }
     auto broker_id = broker->id;
@@ -1341,8 +1267,7 @@ void Connection::OnAdmin(const json& j) {
       auto sql = Database::Session();
       *sql << str;
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, e.what()});
       return;
     }
     auto accs = sub->broker_accounts();
@@ -1360,8 +1285,7 @@ void Connection::OnAdmin(const json& j) {
       std::atomic_thread_fence(std::memory_order_release);
       sub->set_broker_accounts(tmp);
     }
-    json out = {"admin", name, action};
-    Send(out.dump());
+    Send(json{"admin", name, action});
   }
 }
 
@@ -1379,20 +1303,15 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
     for (auto& pair : inst.users_) {
       auto user = pair.second;
       // 0 is the placeholder of password
-      json juser = {
-          user->id,          user->name,     0,
-          user->is_disabled, user->is_admin, user->limits.GetString()};
-      users.push_back(juser);
+      users.push_back(json{user->id, user->name, 0, user->is_disabled,
+                           user->is_admin, user->limits.GetString()});
     }
-    json out = {"admin", name, action};
-    out.push_back(users);
-    Send(out.dump());
+    Send(json{"admin", name, action, users});
   } else if (action == "modify") {
     auto id = GetNum(j[3]);
     auto user = const_cast<User*>(inst.GetUser(id));
     if (!user) {
-      json out = {"admin", name, action, id, "Unknown user id"};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, "Unknown user id"});
       return;
     }
     auto values = j[4];
@@ -1411,8 +1330,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
         if (str.empty()) err = "password can not be empty";
       }
       if (err.size()) {
-        json out = {"admin", name, action, id, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, id, err});
         return;
       }
     }
@@ -1440,8 +1358,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str();
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, id, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, e.what()});
       return;
     }
     for (auto i = 0u; i < values.size(); ++i) {
@@ -1465,8 +1382,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
         user->limits.FromString(str);
       }
     }
-    json out = {"admin", name, action, id};
-    Send(out.dump());
+    Send(json{"admin", name, action, id});
   } else if (action == "add") {
     auto values = j[3];
     auto user = new User;
@@ -1496,8 +1412,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
         err = user->limits.FromString(str);
       }
       if (err.size()) {
-        json out = {"admin", name, action, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, err});
         return;
       }
     }
@@ -1522,8 +1437,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str(), soci::into(user->id);
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, e.what()});
       if (*user->name) free(const_cast<char*>(user->name));
       if (*user->password) free(const_cast<char*>(user->password));
       delete user;
@@ -1532,8 +1446,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
     std::atomic_thread_fence(std::memory_order_release);
     inst.users_.emplace(user->id, user);
     inst.user_of_name_[user->name] = user;
-    json out = {"admin", name, action, user->id};
-    Send(out.dump());
+    Send(json{"admin", name, action, user->id});
   }
 }
 
@@ -1544,19 +1457,15 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     json accs;
     for (auto& pair : inst.broker_accounts_) {
       auto acc = pair.second;
-      json jacc = {acc->id, acc->name, acc->adapter_name,
-                   acc->limits.GetString()};
-      accs.push_back(jacc);
+      accs.push_back(
+          json{acc->id, acc->name, acc->adapter_name, acc->limits.GetString()});
     }
-    json out = {"admin", name, action};
-    out.push_back(accs);
-    Send(out.dump());
+    Send(json{"admin", name, action, accs});
   } else if (action == "modify") {
     auto id = GetNum(j[3]);
     auto broker = const_cast<BrokerAccount*>(inst.GetBrokerAccount(id));
     if (!broker) {
-      json out = {"admin", name, action, id, "Unknown broker account id"};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, "Unknown broker account id"});
       return;
     }
     auto values = j[4];
@@ -1579,8 +1488,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         if (!adapter) err = "Unknown adapter name";
       }
       if (err.size()) {
-        json out = {"admin", name, action, id, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, id, err});
         return;
       }
     }
@@ -1607,8 +1515,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str();
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, id, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, e.what()});
       return;
     }
     for (auto i = 0u; i < values.size(); ++i) {
@@ -1628,8 +1535,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         broker->adapter = adapter;
       }
     }
-    json out = {"admin", name, action, id};
-    Send(out.dump());
+    Send(json{"admin", name, action, id});
   } else if (action == "add") {
     auto values = j[3];
     auto broker = new BrokerAccount;
@@ -1659,8 +1565,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         err = broker->limits.FromString(str);
       }
       if (err.size()) {
-        json out = {"admin", name, action, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, err});
         return;
       }
     }
@@ -1682,8 +1587,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str(), soci::into(broker->id);
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, e.what()});
       if (*broker->name) free(const_cast<char*>(broker->name));
       if (*broker->adapter_name) free(const_cast<char*>(broker->adapter_name));
       delete broker;
@@ -1692,8 +1596,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     std::atomic_thread_fence(std::memory_order_release);
     inst.broker_accounts_.emplace(broker->id, broker);
     inst.broker_account_of_name_[broker->name] = broker;
-    json out = {"admin", name, action, broker->id};
-    Send(out.dump());
+    Send(json{"admin", name, action, broker->id});
   }
 }
 
@@ -1704,18 +1607,14 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     json accs;
     for (auto& pair : inst.sub_accounts_) {
       auto acc = pair.second;
-      json jacc = {acc->id, acc->name, acc->limits.GetString()};
-      accs.push_back(jacc);
+      accs.push_back(json{acc->id, acc->name, acc->limits.GetString()});
     }
-    json out = {"admin", name, action};
-    out.push_back(accs);
-    Send(out.dump());
+    Send(json{"admin", name, action, accs});
   } else if (action == "modify") {
     auto id = GetNum(j[3]);
     auto sub = const_cast<SubAccount*>(inst.GetSubAccount(id));
     if (!sub) {
-      json out = {"admin", name, action, id, "Unknown sub account id"};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, "Unknown sub account id"});
       return;
     }
     auto values = j[4];
@@ -1731,8 +1630,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
         err = l.FromString(str);
       }
       if (err.size()) {
-        json out = {"admin", name, action, id, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, id, err});
         return;
       }
     }
@@ -1759,8 +1657,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str();
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, id, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, e.what()});
       return;
     }
     for (auto i = 0u; i < values.size(); ++i) {
@@ -1775,8 +1672,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
         sub->limits.FromString(str);
       }
     }
-    json out = {"admin", name, action, id};
-    Send(out.dump());
+    Send(json{"admin", name, action, id});
   } else if (action == "add") {
     auto values = j[3];
     auto sub = new SubAccount;
@@ -1796,8 +1692,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
         err = sub->limits.FromString(str);
       }
       if (err.size()) {
-        json out = {"admin", name, action, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, err});
         return;
       }
     }
@@ -1819,8 +1714,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str(), soci::into(sub->id);
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, e.what()});
       if (*sub->name) free(const_cast<char*>(sub->name));
       delete sub;
       return;
@@ -1828,8 +1722,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     std::atomic_thread_fence(std::memory_order_release);
     inst.sub_accounts_.emplace(sub->id, sub);
     inst.sub_account_of_name_[sub->name] = sub;
-    json out = {"admin", name, action, sub->id};
-    Send(out.dump());
+    Send(json{"admin", name, action, sub->id});
   }
 }
 
@@ -1840,7 +1733,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
     json exchs;
     for (auto& pair : inst.exchanges_) {
       auto exch = pair.second;
-      json jexch = {
+      exchs.push_back(json{
           exch->id,
           exch->name,
           exch->mic,
@@ -1854,18 +1747,14 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
           exch->GetBreakPeriodString(),
           exch->GetHalfDayString(),
           exch->GetHalfDaysString(),
-      };
-      exchs.push_back(jexch);
+      });
     }
-    json out = {"admin", name, action};
-    out.push_back(exchs);
-    Send(out.dump());
+    Send(json{"admin", name, action, exchs});
   } else if (action == "modify") {
     auto id = GetNum(j[3]);
     auto exch = const_cast<Exchange*>(inst.GetExchange(id));
     if (!exch) {
-      json out = {"admin", name, action, id, "Unknown exchange id"};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, "Unknown exchange id"});
       return;
     }
     auto values = j[4];
@@ -1890,8 +1779,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
         err = e.ParseHalfDays(str);
       }
       if (err.size()) {
-        json out = {"admin", name, action, id, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, id, err});
         return;
       }
     }
@@ -1918,8 +1806,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str();
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, id, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, id, e.what()});
       return;
     }
     for (auto i = 0u; i < values.size(); ++i) {
@@ -1957,8 +1844,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
         if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
       }
     }
-    json out = {"admin", name, action, id};
-    Send(out.dump());
+    Send(json{"admin", name, action, id});
   } else if (action == "add") {
     auto values = j[3];
     auto exch = new Exchange;
@@ -2003,8 +1889,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
         if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
       }
       if (err.size()) {
-        json out = {"admin", name, action, err};
-        Send(out.dump());
+        Send(json{"admin", name, action, err});
         return;
       }
     }
@@ -2026,8 +1911,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
       auto sql = Database::Session();
       *sql << ss.str(), soci::into(exch->id);
     } catch (const std::exception& e) {
-      json out = {"admin", name, action, e.what()};
-      Send(out.dump());
+      Send(json{"admin", name, action, e.what()});
       if (*exch->name) free(const_cast<char*>(exch->name));
       if (*exch->mic) free(const_cast<char*>(exch->mic));
       if (*exch->country) free(const_cast<char*>(exch->country));
@@ -2040,8 +1924,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
     std::atomic_thread_fence(std::memory_order_release);
     inst.exchanges_.emplace(exch->id, exch);
     inst.exchange_of_name_[exch->name] = exch;
-    json out = {"admin", name, action, exch->id};
-    Send(out.dump());
+    Send(json{"admin", name, action, exch->id});
   }
 }
 
