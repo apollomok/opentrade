@@ -1560,7 +1560,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
       return;
     }
     auto values = j[4];
-    ExchangeConnectivityAdapter* adapter;
+    ExchangeConnectivityAdapter* adapter = nullptr;
     for (auto i = 0u; i < values.size(); ++i) {
       auto v = values[i];
       auto key = Get<std::string>(v[0]);
