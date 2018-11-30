@@ -1,12 +1,11 @@
-#ifndef MD_BPIPE_BPIPE_H_
-#define MD_BPIPE_BPIPE_H_
+#ifndef ADAPTERS_BPIPE_BPIPE_H_
+#define ADAPTERS_BPIPE_BPIPE_H_
 
 #include <blpapi_name.h>
 #include <blpapi_service.h>
 #include <blpapi_session.h>
 #include <blpapi_sessionoptions.h>
 #include <tbb/concurrent_unordered_map.h>
-#include <tbb/concurrent_unordered_set.h>
 #include <atomic>
 
 #include "opentrade/market_data.h"
@@ -41,11 +40,11 @@ class BPIPE : public opentrade::MarketDataAdapter, public bbg::EventHandler {
   bbg::Identity identity_;
   std::atomic<int64_t> ticker_counter_ = 0;
   bbg::Service auth_service_;
-  tbb::concurrent_unordered_set<opentrade::Security::IdType> subs_;
+  tbb::concurrent_unordered_set<const opentrade::Security*> subs_;
   tbb::concurrent_unordered_map<int64_t, const opentrade::Security*> tickers_;
   opentrade::TaskPool tp_;
   int reconnect_interval_ = 5;
   bool depth_ = false;
 };
 
-#endif  // MD_BPIPE_BPIPE_H_
+#endif  // ADAPTERS_BPIPE_BPIPE_H_

@@ -38,10 +38,7 @@ static inline decltype(auto) CreateContract(const opentrade::Security& sec) {
 
 IB::IB() : client_(new EClientSocket(this, &os_signal_)) {}
 
-IB::~IB() {
-  if (reader_) delete reader_;
-  delete client_;
-}
+IB::~IB() { delete client_; }
 
 void IB::Start() noexcept {
   auto path = opentrade::kStorePath / (name() + "-session");
@@ -97,18 +94,18 @@ void IB::Connect(bool delay) {
   if (delay) {
     if (connected_ == -1) return;
     connected_ = -1;
-    reader_tp_.AddTask([this]() { Connect(host_.c_str(), port_, client_id_); },
-                       boost::posix_time::seconds(heartbeat_interval_));
+    tp_.AddTask([this]() { Connect(host_.c_str(), port_, client_id_); },
+                boost::posix_time::seconds(heartbeat_interval_));
     return;
   }
-  reader_tp_.AddTask([this]() { Connect(host_.c_str(), port_, client_id_); });
+  tp_.AddTask([this]() { Connect(host_.c_str(), port_, client_id_); });
 }
 
 void IB::Read() {
-  reader_tp_.AddTask([this]() {
+  tp_.AddTask([this, reader = reader_]() {
     if (!client_->isConnected()) return;
-    os_signal_.waitForSignal();
-    reader_->processMsgs();
+    os_signal_.waitForSignal();  // timeout already set
+    reader->processMsgs();
     Read();
   });
 }
@@ -144,25 +141,18 @@ bool IB::Connect(const char* host, unsigned int port, int client_id) {
   if (res && client_->isConnected()) {
     last_heartbeat_tm_ = time(nullptr);
     LOG_INFO(name() << ": Connected");
-    if (reader_) delete reader_;
-    reader_ = new EReader(client_, &os_signal_);
+    reader_.reset(new EReader(client_, &os_signal_));
     reader_->start();
-    tp_.AddTask([this, client_id]() {
-      for (auto id : subs_) {
-        auto sec = opentrade::SecurityManager::Instance().Get(id);
-        if (!sec) continue;
-        Subscribe2(*sec);
-      }
-
-      client_->reqOpenOrders();
-      ExecutionFilter f;
-      f.m_clientId = client_id;
-      client_->reqExecutions(++ticker_id_counter_, f);
-    });
+    for (auto sec : subs_) Subscribe2(*sec);
+    client_->reqOpenOrders();
+    ExecutionFilter f;
+    f.m_clientId = client_id;
+    client_->reqExecutions(++ticker_id_counter_, f);
     Read();
     connected_ = 1;
   } else {
     LOG_ERROR(name() << ": Failed to Connect");
+    connected_ = 0;
     Connect(true);
   }
   return res;
@@ -396,9 +386,11 @@ void IB::Subscribe2(const opentrade::Security& sec) {
 }
 
 void IB::Subscribe(const opentrade::Security& sec) noexcept {
-  if (!subs_.insert(sec.id).second) return;
-  if (!client_->isConnected()) return;
-  tp_.AddTask([&sec, this]() { Subscribe2(sec); });
+  tp_.AddTask([this, &sec]() {
+    if (!subs_.insert(&sec).second) return;
+    if (!client_->isConnected()) return;
+    Subscribe2(sec);
+  });
 }
 
 // https://interactivebrokers.github.io/tws-api/tick_types.html
