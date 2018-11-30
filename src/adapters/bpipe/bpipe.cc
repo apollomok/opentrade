@@ -239,9 +239,9 @@ inline void BPIPE::UpdateQuote(const bbg::Message& msg,
                                const bbg::Name& ask_sz_name,
                                const bbg::Name& bid_sz_name, int level) {
   auto ask = 0.;
-  auto ask_sz = 0.;
+  auto ask_sz = 0;
   auto bid = 0.;
-  auto bid_sz = 0.;
+  auto bid_sz = 0;
   if (msg.hasElement(ask_name, true)) {
     ask = msg.getElementAsFloat64(ask_name);
     if (msg.hasElement(ask_sz_name, true))
@@ -254,7 +254,7 @@ inline void BPIPE::UpdateQuote(const bbg::Message& msg,
   }
 
   if (ask > 0 && bid > 0) {
-    Update(sec.id, opentrade::MarketData::Quote{ask, ask_sz, bid, bid_sz},
+    Update(sec.id, opentrade::MarketData::Quote{ask, bid, ask_sz, bid_sz},
            level);
   } else if (ask > 0) {
     Update(sec.id, ask, ask_sz, false, level);
