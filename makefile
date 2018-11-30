@@ -11,10 +11,10 @@ backtest-release:
 	mkdir -p build/backtest-release; cd build/backtest-release; cmake ../../src -DCMAKE_BUILD_TYPE=Debug -DBACKTEST=1; make ${args}; cd -;
 
 lint:
-	./scripts/cpplint.py src/*/*h src/*/*cc src/sim/*/*cc src/md/*/*h src/md/*/*cc src/algo/*/*h src/algo/*/*cc
+	./scripts/cpplint.py src/*/*h src/*/*cc src/sim/*/*cc src/adapters/*/*h src/adapters/*/*cc src/algo/*/*h src/algo/*/*cc
 
 fmt:
-	clang-format -style=Google -i src/*/*h src/*/*cc src/sim/*/*cc src/md/*/*h src/md/*/*cc src/algo/*/*h src/algo/*/*cc
+	clang-format -style=Google -i src/*/*h src/*/*cc src/sim/*/*cc src/adapters/*/*h src/adapters/*/*cc src/algo/*/*h src/algo/*/*cc
 
 clean:
 	rm -rf build;

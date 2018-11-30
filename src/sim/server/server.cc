@@ -156,7 +156,7 @@ void SimServer::Start() noexcept {
         switch (type) {
           case 'T': {
             Update(sec->id, px, qty);
-            if (!qty && sec->type == opentrade::kForexPair) qty = 1e12;
+            if (!qty && sec->type == opentrade::kForexPair) qty = 1e9;
             if (px > 0 && qty > 0) {
               tp_.AddTask([sec, px, qty, this]() {
                 auto size = qty;
@@ -287,7 +287,7 @@ void SimServer::fromApp(const FIX::Message& msg,
       auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
       auto qty_q = is_buy ? q.ask_size : q.bid_size;
       auto px_q = is_buy ? q.ask_price : q.bid_price;
-      if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e12;
+      if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
       if (qty_q > 0 && px_q > 0) {
         if (qty_q > qty) qty_q = qty;
         resp.setField(FIX::ExecTransType('0'));
@@ -316,7 +316,7 @@ void SimServer::fromApp(const FIX::Message& msg,
       auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
       auto qty_q = is_buy ? q.ask_size : q.bid_size;
       auto px_q = is_buy ? q.ask_price : q.bid_price;
-      if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e12;
+      if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
       if (qty_q > 0 && px_q > 0) {
         if ((is_buy && px >= px_q) || (!is_buy && px <= px_q)) {
           if (qty_q > qty) qty_q = qty;

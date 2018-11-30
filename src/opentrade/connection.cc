@@ -1540,7 +1540,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     auto values = j[3];
     auto broker = new BrokerAccount;
     std::stringstream ss;
-    ss << "insert into \"sub_account\"(";
+    ss << "insert into \"broker_account\"(";
     for (auto i = 0u; i < values.size(); ++i) {
       auto v = values[i];
       if (i) ss << ",";
