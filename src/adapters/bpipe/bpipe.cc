@@ -108,24 +108,27 @@ void BPIPE::Start() noexcept {
 
   LOG_INFO(name() << ": Authentication Options = " << authOptions);
   options_.setAuthenticationOptions(authOptions.c_str());
-  session_ = new bbg::Session(options_, this);
-  session_->startAsync();
+  Reconnect();
 }
 
 void BPIPE::Reconnect() noexcept {
   tp_.AddTask([this]() {
     connected_ = 0;
-    session_->stop();
-    delete session_;  // release fd
+    if (session_) {
+      session_->stop();
+      delete session_;  // release fd
+    }
     session_ = new bbg::Session(options_, this);
     session_->startAsync();
   });
 }
 
 void BPIPE::Subscribe(const opentrade::Security& sec) noexcept {
-  if (!subs_.insert(sec.id).second) return;
-  if (!connected()) return;
-  tp_.AddTask([this, &sec] { Subscribe2(sec); });
+  tp_.AddTask([this, &sec] {
+    if (!subs_.insert(&sec).second) return;
+    if (!connected()) return;
+    Subscribe2(sec);
+  });
 }
 
 void BPIPE::Subscribe2(const opentrade::Security& sec) {
@@ -217,12 +220,10 @@ void BPIPE::ProcessResponse(const bbg::Event& evt) {
     auto msg = it.message();
     auto msg_type = msg.messageType();
     if (msg_type == "AuthorizationSuccess") {
-      connected_ = 1;
-      for (auto id : subs_) {
-        auto sec = opentrade::SecurityManager::Instance().Get(id);
-        if (!sec) continue;
-        Subscribe2(*sec);
-      }
+      tp_.AddTask([this]() {
+        connected_ = 1;
+        for (auto sec : subs_) Subscribe2(*sec);
+      });
       LOG_INFO(name() << ": Connected");
     } else if (msg_type == "AuthorizationFailure") {
       LOG_ERROR(name() << ": AuthorizationFailure");

@@ -249,7 +249,7 @@ class Fix : public FIX::Application,
 
   void SetTags(const Order& ord, FIX::Message* msg) {
     if (!ord.orig_id) {  // not cancel
-      if (ord.type != kMarket) {
+      if (ord.type != kMarket && ord.type != kStop) {
         msg->setField(FIX::Price(ord.price));
       }
       if (ord.stop_price) msg->setField(FIX::StopPx(ord.stop_price));

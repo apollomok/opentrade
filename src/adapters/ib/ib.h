@@ -1,5 +1,5 @@
-#ifndef IB_IB_H_
-#define IB_IB_H_
+#ifndef ADAPTERS_IB_IB_H_
+#define ADAPTERS_IB_IB_H_
 
 #include "jts/DefaultEWrapper.h"
 #include "jts/EClientSocket.h"
@@ -59,9 +59,9 @@ class IB : public opentrade::ExchangeConnectivityAdapter,
   void Heartbeat();
   void Subscribe2(const opentrade::Security& sec);
 
-  EReaderOSSignal os_signal_ = 2000;  // 2-seconds timeout
+  EReaderOSSignal os_signal_ = 10;  // 10 ms timeout for reader
   EClientSocket* const client_ = nullptr;
-  EReader* reader_ = nullptr;
+  std::shared_ptr<EReader> reader_;
   TickerId ticker_id_counter_ = 0;
 
   std::string host_;
@@ -69,7 +69,6 @@ class IB : public opentrade::ExchangeConnectivityAdapter,
   std::ofstream of_;
   opentrade::TaskPool tp_;
   opentrade::TaskPool io_tp_;
-  opentrade::TaskPool reader_tp_;
   int heartbeat_interval_ = 5;
   time_t last_heartbeat_tm_ = 0;
   int client_id_ = 1;
@@ -77,7 +76,7 @@ class IB : public opentrade::ExchangeConnectivityAdapter,
   tbb::concurrent_unordered_map<uint32_t, uint32_t> orders_;
   tbb::concurrent_unordered_map<uint32_t, uint32_t> orders2_;
   tbb::concurrent_unordered_map<TickerId, const opentrade::Security*> tickers_;
-  tbb::concurrent_unordered_set<opentrade::Security::IdType> subs_;
+  tbb::concurrent_unordered_set<const opentrade::Security*> subs_;
 };
 
-#endif  // IB_IB_H_
+#endif  // ADAPTERS_IB_IB_H_
