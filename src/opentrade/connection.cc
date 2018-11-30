@@ -1777,6 +1777,8 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
         err = e.ParseHalfDay(str);
       } else if (key == "half_days") {
         err = e.ParseHalfDays(str);
+      } else if (key == "params") {
+        err = e.set_params(str);
       }
       if (err.size()) {
         Send(json{"admin", name, action, id, err});
@@ -1839,6 +1841,8 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
         exch->ib_name = StrDup(str);
       } else if (key == "bb_name") {
         exch->bb_name = StrDup(str);
+      } else if (key == "params") {
+        exch->set_params(str);
       } else if (key == "tz") {
         exch->tz = StrDup(str);
         if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
@@ -1887,6 +1891,8 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
       } else if (key == "tz") {
         exch->tz = StrDup(str);
         if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
+      } else if (key == "params") {
+        exch->set_params(str);
       }
       if (err.size()) {
         Send(json{"admin", name, action, err});
