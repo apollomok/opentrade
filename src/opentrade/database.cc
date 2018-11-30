@@ -39,7 +39,7 @@ static const char create_tables_sql[] = R"(
     "ib_name" varchar(50),
     "bb_name" varchar(50),
     "tz" varchar(20),
-    "desc" varchar(1000),
+    params varchar(1000),
     odd_lot_allowed boolean,
     trade_period varchar(32), -- e.g. 09:30-15:00
     break_period varchar(32), -- e.g. 11:30-13:00
@@ -69,6 +69,7 @@ static const char create_tables_sql[] = R"(
     cusip varchar(30),
     isin varchar(30),
     sedol varchar(30),
+    ric varchar(30),
     rate float8,
     multiplier float8,
     tick_size float8,
@@ -86,7 +87,7 @@ static const char create_tables_sql[] = R"(
     strike_price float8,
     exchange_id int2 references exchange(id), -- on update cascade on delete cascade,
     underlying_id int4 references security(id), -- on update cascade on delete cascade,
-    name varchar(100),
+    params varchar(1000),
     primary key(id)
   );
   create unique index if not exists security_symbol_exchange_index on security(symbol, exchange_id);
@@ -186,6 +187,14 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   *sql << "alter table exchange alter column trade_period type varchar(32);";
   *sql << "alter table exchange alter column break_period type varchar(32);";
   *sql << "alter table exchange alter column half_day type varchar(32);";
+  try {
+    *sql << "alter table security drop column name;";
+    *sql << "alter table security add column ric varchar(30);";
+    *sql << "alter table security add column params varchar(1000);";
+    *sql << "alter table exchange drop column \"desc\";";
+    *sql << "alter table exchange add column params varchar(1000);";
+  } catch (...) {
+  }
 }
 
 }  // namespace opentrade

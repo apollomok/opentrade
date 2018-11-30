@@ -174,7 +174,7 @@ void SecurityManager::LoadFromDatabase() {
   auto sql = Database::Session();
 
   auto query = R"(
-    select id, "name", mic, "desc", country, ib_name, bb_name, tz, tick_size_table, 
+    select id, "name", mic, params, country, ib_name, bb_name, tz, tick_size_table, 
     odd_lot_allowed, trade_period, break_period, half_day, half_days from exchange
   )";
   soci::rowset<soci::row> st = sql->prepare << query;
@@ -186,7 +186,7 @@ void SecurityManager::LoadFromDatabase() {
     e->id = id;
     e->name = Database::GetValue(*it, i++, "");
     e->mic = Database::GetValue(*it, i++, "");
-    e->desc = Database::GetValue(*it, i++, "");
+    e->set_params(Database::GetValue(*it, i++, kEmptyStr));
     e->country = Database::GetValue(*it, i++, "");
     e->ib_name = Database::GetValue(*it, i++, "");
     e->bb_name = Database::GetValue(*it, i++, "");
@@ -208,8 +208,8 @@ void SecurityManager::LoadFromDatabase() {
   query = R"(
     select id, symbol, local_symbol, type, currency, exchange_id, underlying_id, rate,
            multiplier, tick_size, lot_size, close_price, strike_price, maturity_date,
-           put_or_call, opt_attribute, bbgid, cusip, isin, sedol,
-           adv20, market_cap, sector, industry_group, industry, sub_industry
+           put_or_call, opt_attribute, bbgid, cusip, isin, sedol, ric,
+           adv20, market_cap, sector, industry_group, industry, sub_industry, params
     from security
   )";
   st = sql->prepare << query;
@@ -249,12 +249,14 @@ void SecurityManager::LoadFromDatabase() {
     s->cusip = Database::GetValue(*it, i++, "");
     s->isin = Database::GetValue(*it, i++, "");
     s->sedol = Database::GetValue(*it, i++, "");
+    s->ric = Database::GetValue(*it, i++, "");
     s->adv20 = Database::GetValue(*it, i++, 0.);
     s->market_cap = Database::GetValue(*it, i++, 0.);
     s->sector = Database::GetValue(*it, i++, 0);
     s->industry_group = Database::GetValue(*it, i++, 0);
     s->industry = Database::GetValue(*it, i++, 0);
     s->sub_industry = Database::GetValue(*it, i++, 0);
+    s->set_params(Database::GetValue(*it, i++, kEmptyStr));
     std::atomic_thread_fence(std::memory_order_release);
     securities_.emplace(s->id, s);
   }

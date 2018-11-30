@@ -22,21 +22,12 @@ struct AccountBase {
   PositionValue position_value;
 };
 
-struct BrokerAccount : public AccountBase {
+struct BrokerAccount : public AccountBase, public ParamsBase {
   typedef uint16_t IdType;
   IdType id = 0;
   const char* name = "";
   const char* adapter_name = "";
   ExchangeConnectivityAdapter* adapter = nullptr;
-  typedef std::unordered_map<std::string, std::string> StrMap;
-  typedef std::shared_ptr<const StrMap> StrMapPtr;
-  std::string set_params(const std::string& params);
-  std::string GetParam(const std::string& k) const {
-    return FindInMap(params_, k);
-  }
-
- private:
-  StrMapPtr params_ = std::make_shared<const StrMap>();
 };
 
 struct SubAccount : public AccountBase {

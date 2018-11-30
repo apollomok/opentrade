@@ -12,7 +12,7 @@ namespace opentrade {
 
 struct Security;
 
-struct Exchange {
+struct Exchange : public ParamsBase {
   typedef uint16_t IdType;
   IdType id = 0;
   const char* name = "";
@@ -23,7 +23,6 @@ struct Exchange {
   const char* tz = "";
   bool odd_lot_allowed = false;
   int utc_time_offset = 0;
-  const char* desc = "";
   struct TickSizeTuple {
     double lower_bound = 0;
     double upper_bound = 0;
@@ -100,7 +99,7 @@ inline const std::string kCombo = "BAG";
 inline const std::string kWarrant = "WAR";
 inline const std::string kBond = "BOND";
 
-struct Security {
+struct Security : public ParamsBase {
   typedef uint32_t IdType;
   IdType id = 0;
   const char* symbol = "";
@@ -111,6 +110,7 @@ struct Security {
   const char* cusip = "";
   const char* isin = "";
   const char* sedol = "";
+  const char* ric = "";
   const Exchange* exchange = nullptr;
   const Security* underlying = nullptr;
   double rate = 1;

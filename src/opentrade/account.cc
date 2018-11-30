@@ -105,19 +105,4 @@ void AccountManager::Initialize() {
   }
 }
 
-std::string BrokerAccount::set_params(const std::string& params) {
-  auto tmp = std::make_shared<StrMap>();
-  for (auto& str : Split(params, ",;\n")) {
-    char k[str.size()];
-    char v[str.size()];
-    if (sscanf(str.c_str(), "%s=%s", k, v) != 2) {
-      return "Invalid params format, expect <name>=<value>[,;\n]...'";
-    }
-    tmp->emplace((const char*)k, (const char*)v);
-  }
-  std::atomic_thread_fence(std::memory_order_release);
-  this->params_ = tmp;
-  return {};
-}
-
 }  // namespace opentrade
