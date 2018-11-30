@@ -24,6 +24,8 @@ struct ParamsBase {
     return FindInMap(params_, k);
   }
 
+  StrMapPtr params() const { return params_; }
+
   std::string set_params(const std::string& params) {
     auto tmp = std::make_shared<StrMap>();
     for (auto& str : Split(params, ",;\n")) {

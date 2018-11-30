@@ -16,7 +16,7 @@
 #include <quickfix/ThreadedSocketAcceptor.h>
 #undef throw
 
-#include "fix/filelog.h"
+#include "filelog.h"
 #include "opentrade/logger.h"
 #include "opentrade/market_data.h"
 #include "opentrade/security.h"

@@ -5,8 +5,8 @@
 #include <blpapi_service.h>
 #include <blpapi_session.h>
 #include <blpapi_sessionoptions.h>
-#include <tbb/concurrent_unordered_set.h>
 #include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_unordered_set.h>
 #include <atomic>
 
 #include "opentrade/market_data.h"

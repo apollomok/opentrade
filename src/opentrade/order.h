@@ -83,7 +83,7 @@ struct Contract {
   };
   std::map<std::string,
            std::variant<bool, int64_t, double, std::string, std::any>>*
-      optional_ = nullptr;
+      optional = nullptr;
   OrderSide side = kBuy;
   OrderType type = kLimit;
   TimeInForce tif = kDay;

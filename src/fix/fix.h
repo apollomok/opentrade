@@ -9,6 +9,15 @@
 #include <quickfix/NullStore.h>
 #include <quickfix/Session.h>
 #include <quickfix/ThreadedSocketInitiator.h>
+#include <quickfix/fix42/Allocation.h>
+#include <quickfix/fix42/ExecutionReport.h>
+#include <quickfix/fix42/NewOrderSingle.h>
+#include <quickfix/fix42/OrderCancelReject.h>
+#include <quickfix/fix42/OrderCancelReplaceRequest.h>
+#include <quickfix/fix42/OrderCancelRequest.h>
+#include <quickfix/fix42/OrderStatusRequest.h>
+#include <quickfix/fix42/Reject.h>
+#include <quickfix/fix42/SettlementInstructions.h>
 #undef throw
 
 #include "filelog.h"
@@ -18,6 +27,9 @@
 #include "opentrade/utility.h"
 
 namespace opentrade {
+
+static inline const std::string kRemoveTag = "<remove>";
+static inline const std::string kTagPrefix = "tag";
 
 class Fix : public FIX::Application,
             public FIX::MessageCracker,
@@ -266,10 +278,44 @@ class Fix : public FIX::Application,
     msg->setField(FIX::TransactTime());
     msg->setField(FIX::OrdType(ord.type));
 
-    if (ord.sec->type == kOption) {
+    auto type = ord.sec->type;
+    if (type == kOption) {
       msg->setField(FIX::PutOrCall(ord.sec->put_or_call));
       msg->setField(FIX::OptAttribute('A'));
       msg->setField(FIX::StrikePrice(ord.sec->strike_price));
+      msg->setField(FIX::SecurityType(FIX::SecurityType_OPTION));
+      auto d = ord.sec->maturity_date;
+      msg->setField(FIX::MaturityMonthYear(std::to_string(d / 100)));
+      msg->setField(FIX::MaturityDay(std::to_string(d % 100)));
+    } else if (type == kStock) {
+      msg->setField(FIX::SecurityType(FIX::SecurityType_COMMON_STOCK));
+    } else if (type == kFuture || type == kCommodity) {
+      msg->setField(FIX::SecurityType(FIX::SecurityType_FUTURE));
+    } else if (type == kForexPair) {
+      msg->setField(FIX::Product(FIX::Product_CURRENCY));
+    }
+
+    auto cur = ord.sec->currency;
+    if (*cur) msg->setField(FIX::Currency(cur));
+
+    msg->setField(FIX::Symbol(ord.sec->symbol));
+    msg->setField(FIX::ExDestination(ord.sec->exchange->name));
+  }
+
+  void SetBrokerTags(const Order& ord, FIX::Message* msg) {
+    auto params = ord.broker_account->params();
+    for (auto& pair : *params) {
+      if (pair.first.find(kTagPrefix) == 0) {
+        auto tag = atoi(pair.first.c_str() + kTagPrefix.length());
+        if (!tag) continue;
+        if (msg->isHeaderField(tag)) {
+          msg->getHeader().setField(tag, pair.second);
+          if (pair.second == kRemoveTag) msg->getHeader().removeField(tag);
+        } else {
+          msg->setField(tag, pair.second);
+          if (pair.second == kRemoveTag) msg->removeField(tag);
+        }
+      }
     }
   }
 
@@ -284,8 +330,40 @@ class Fix : public FIX::Application,
 
   int64_t transact_time_ = 0;
   TaskPool tp_;
-  bool empty_store_ = false;
-};  // namespace opentrade
+  bool empty_store_ = true;
+};
+
+class Fix42 : public opentrade::Fix {
+ public:
+  void onMessage(const FIX42::ExecutionReport& msg, const FIX::SessionID& id) {
+    OnExecutionReport(msg, id);
+  }
+
+  void onMessage(const FIX42::OrderCancelReject& msg,
+                 const FIX::SessionID& id) {
+    OnCancelRejected(msg, id);
+  }
+
+  virtual std::string SetAndSend(const opentrade::Order& ord,
+                                 FIX::Message* msg) {
+    SetTags(ord, msg);
+    SetBrokerTags(ord, msg);
+    if (Send(msg))
+      return {};
+    else
+      return "Failed in FIX::Session::send()";
+  }
+
+  std::string Place(const opentrade::Order& ord) noexcept override {
+    FIX42::NewOrderSingle msg;
+    return SetAndSend(ord, &msg);
+  }
+
+  std::string Cancel(const opentrade::Order& ord) noexcept override {
+    FIX42::OrderCancelRequest msg;
+    return SetAndSend(ord, &msg);
+  }
+};
 
 }  // namespace opentrade
 
