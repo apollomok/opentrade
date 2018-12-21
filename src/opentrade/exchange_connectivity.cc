@@ -75,7 +75,8 @@ static inline void Handle(const std::string& name, Order::IdType id,
 static inline void HandleConfirmation(Order* ord, double qty, double price,
                                       const std::string& exec_id, int64_t tm,
                                       bool is_partial,
-                                      ExecTransType exec_trans_type) {
+                                      ExecTransType exec_trans_type,
+                                      Confirmation::StrMap* misc = nullptr) {
   auto cm = std::make_shared<Confirmation>();
   cm->order = ord;
   cm->exec_type = is_partial ? kPartiallyFilled : kFilled;
@@ -84,6 +85,7 @@ static inline void HandleConfirmation(Order* ord, double qty, double price,
   cm->exec_id = exec_id;
   cm->exec_trans_type = exec_trans_type;
   cm->transaction_time = tm ? tm : NowUtcInMicro();
+  cm->misc = misc;
   GlobalOrderBook::Instance().Handle(cm);
 }
 
@@ -244,7 +246,8 @@ void ExchangeConnectivityAdapter::HandlePendingNew(Order::IdType id,
 
 void ExchangeConnectivityAdapter::HandleFill(
     Order::IdType id, double qty, double price, const std::string& exec_id,
-    int64_t transaction_time, bool is_partial, ExecTransType exec_trans_type) {
+    int64_t transaction_time, bool is_partial, ExecTransType exec_trans_type,
+    Confirmation::StrMap* misc) {
   if (GlobalOrderBook::Instance().IsDupExecId(id, exec_id)) {
     LOG_DEBUG(name() << ": Duplicate exec id: " << exec_id << ", ignored");
     return;
@@ -261,7 +264,7 @@ void ExchangeConnectivityAdapter::HandleFill(
     return;
   }
   HandleConfirmation(ord, qty, price, exec_id, transaction_time, is_partial,
-                     exec_trans_type);
+                     exec_trans_type, misc);
 }
 
 void ExchangeConnectivityAdapter::HandleCanceled(Order::IdType id,

@@ -246,6 +246,10 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
              << ",side=" << static_cast<char>(ord->side)
              << ",type=" << static_cast<char>(ord->type) << ",id=" << ord->id;
           if (cm->exec_trans_type == kTransCancel) os << ",bust=1";
+          if (cm->misc) {
+            for (auto& pair : *cm->misc)
+              os << "," << pair.first << "=" << pair.second;
+          }
           desc = os.str();
           st.execute(true);
         } catch (const soci::postgresql_soci_error& e) {

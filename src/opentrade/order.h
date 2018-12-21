@@ -128,6 +128,8 @@ struct Confirmation {
   double last_px = 0;
   int64_t transaction_time = 0;  // utc in microseconds
   uint32_t seq = 0;
+  typedef std::map<std::string, std::string> StrMap;
+  StrMap* misc = nullptr;
 };
 
 class Connection;

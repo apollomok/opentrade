@@ -21,7 +21,8 @@ class ExchangeConnectivityAdapter : public virtual NetworkAdapter {
   void HandleFill(Order::IdType id, double qty, double price,
                   const std::string& exec_id, int64_t transaction_time = 0,
                   bool is_partial = false,
-                  ExecTransType exec_trans_type = kTransNew);
+                  ExecTransType exec_trans_type = kTransNew,
+                  Confirmation::StrMap* misc = nullptr);
   void HandleCanceled(Order::IdType id, Order::IdType orig_id,
                       const std::string& text, int64_t transaction_time = 0);
   void HandleNewRejected(Order::IdType id, const std::string& text,
