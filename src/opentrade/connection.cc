@@ -1457,8 +1457,8 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     json accs;
     for (auto& pair : inst.broker_accounts_) {
       auto acc = pair.second;
-      accs.push_back(
-          json{acc->id, acc->name, acc->adapter_name, acc->limits.GetString()});
+      accs.push_back(json{acc->id, acc->name, acc->adapter_name,
+                          acc->limits.GetString(), acc->GetParamsString()});
     }
     Send(json{"admin", name, action, accs});
   } else if (action == "modify") {
@@ -1747,6 +1747,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
           exch->GetBreakPeriodString(),
           exch->GetHalfDayString(),
           exch->GetHalfDaysString(),
+          exch->GetParamsString(),
       });
     }
     Send(json{"admin", name, action, exchs});

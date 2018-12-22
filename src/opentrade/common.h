@@ -41,6 +41,15 @@ struct ParamsBase {
     return {};
   }
 
+  std::string GetParamsString() const {
+    std::string out;
+    for (auto& pair : *params_) {
+      if (!out.empty()) out += "\n";
+      out += pair.first + "=" + pair.second;
+    }
+    return out;
+  }
+
  private:
   StrMapPtr params_ = std::make_shared<const StrMap>();
 };
