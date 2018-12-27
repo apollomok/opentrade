@@ -14,8 +14,6 @@ if(BACKTEST)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBACKTEST")
 endif()
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 find_path(QUICKFIX_INCLUDE_PATH quickfix/FixFields.h)
@@ -64,12 +62,12 @@ else()
 endif()
 
 find_package(PythonInterp 3 REQUIRED)
-FIND_PACKAGE(PythonLibs 3 REQUIRED)
-INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIRS})
-LINK_LIBRARIES(${PYTHON_LIBRARIES}) # Deprecated but so convenient!
+find_package(PythonLibs 3 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+link_libraries(${PYTHON_LIBRARIES}) # Deprecated but so convenient!
 
 find_package(Boost REQUIRED COMPONENTS system program_options date_time filesystem iostreams python3) 
-INCLUDE_DIRECTORIES({Boost_INCLUDE_DIRS})
+include_directories({Boost_INCLUDE_DIRS})
 
 add_subdirectory(opentrade)
 add_subdirectory(algo)
