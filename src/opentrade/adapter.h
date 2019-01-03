@@ -10,7 +10,7 @@
 
 namespace opentrade {
 
-inline const std::string kApiVersion = "1";
+static const char* kApiVersion = "1";
 
 class Adapter {
  public:
@@ -21,7 +21,7 @@ class Adapter {
   void set_config(const StrMap& config) { config_ = config; }
   std::string GetVersion() const {
 #ifdef BACKTEST
-    return "backtest_" + kApiVersion;
+    return std::string("backtest_") + kApiVersion;
 #endif
     return kApiVersion;
   }

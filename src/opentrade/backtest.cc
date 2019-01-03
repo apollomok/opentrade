@@ -252,7 +252,7 @@ std::string Backtest::Place(const Order& ord) noexcept {
           auto q = MarketDataManager::Instance().Get(*ord.sec).quote();
           auto qty_q = ord.IsBuy() ? q.ask_size : q.bid_size;
           auto px_q = ord.IsBuy() ? q.ask_price : q.bid_price;
-          if (!qty_q && ord.sec->type == kForexPair) qty_q = 1e12;
+          if (!qty_q && ord.sec->type == kForexPair) qty_q = 1e9;
           if (qty_q > 0 && px_q > 0) {
             HandleNew(id, "");
             if (qty_q > qty) qty_q = qty;
@@ -314,17 +314,17 @@ void Backtest::Start(const std::string& py, int latency) {
   acc_mngr.broker_accounts_.emplace(b->id, b);
   auto s = new SubAccount();
   s->name = "test";
-  auto tmp = std::make_shared<BrokerAccountMap>();
-  tmp->emplace(0, b);
-  s->set_broker_accounts(tmp);  //  0 is the default exchange
+  auto broker_accs = std::make_shared<SubAccount::BrokerAccountMap>();
+  broker_accs->emplace(0, b);
+  s->set_broker_accounts(broker_accs);  //  0 is the default exchange
   acc_mngr.sub_accounts_.emplace(s->id, s);
   acc_mngr.sub_account_of_name_.emplace(s->name, s);
-  const_cast<User::SubAccountMap*>(u->sub_accounts)->emplace(s->id, s);
+  auto sub_accs = std::make_shared<User::SubAccountMap>();
+  sub_accs->emplace(s->id, s);
+  u->set_sub_accounts(sub_accs);
 
-  auto tmp = getenv("PYTHONPATH");
-  std::string path = tmp ? tmp : "";
-  setenv("PYTHONPATH",
-         (fs::path(py).parent_path().string() + ":" + path).c_str(), 1);
+  bp::import("sys").attr("path").attr("insert")(
+      0, fs::path(py).parent_path().string());
   auto fn = fs::path(py).filename().string();
   auto module_name = fn.substr(0, fn.length() - 3);
   bp::object m;

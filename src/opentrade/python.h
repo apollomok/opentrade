@@ -46,7 +46,7 @@ class Python : public Algo {
   std::string test_token_;
 };
 
-void InitalizePy(const std::string& extra_python_path);
+void InitalizePy();
 void PrintPyError(const char*, bool fatal = false);
 bp::object GetCallable(const bp::object& m, const char* name);
 

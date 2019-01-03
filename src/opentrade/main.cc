@@ -124,7 +124,6 @@ int main(int argc, char *argv[]) {
   opentrade::Database::Initialize(db_url, db_pool_size, db_create_tables);
   opentrade::SecurityManager::Initialize();
 
-  std::string extra_python_path;
 #ifdef BACKTEST
   if (end_date < start_date) {
     LOG_FATAL("end_date < start_date");
@@ -132,7 +131,6 @@ int main(int argc, char *argv[]) {
   if (tick_file.empty()) {
     LOG_FATAL("empty tick_file");
   }
-  extra_python_path = fs::path(backtest_file).parent_path().string();
 #else
   if (!fs::exists(kStorePath)) {
     fs::create_directory(kStorePath);
@@ -194,7 +192,7 @@ int main(int argc, char *argv[]) {
   }
 #endif
 
-  opentrade::InitalizePy(extra_python_path);
+  opentrade::InitalizePy();
   LOG_INFO("Loading python algos from " << kAlgoPath);
   if (fs::is_directory(kAlgoPath)) {
     for (auto &entry :

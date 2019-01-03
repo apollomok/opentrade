@@ -647,16 +647,12 @@ bp::object GetCallable(const bp::object &m, const char *name) {
   return func;
 }
 
-void InitalizePy(const std::string &extra_python_path) {
-  auto tmp = getenv("PYTHONPATH");
-  std::string path = "./algos";
-  if (tmp) path = path + ":" + tmp;
-  if (extra_python_path.size()) path += ":" + extra_python_path;
-  setenv("PYTHONPATH", path.c_str(), 1);
+void InitalizePy() {
   PyImport_AppendInittab(const_cast<char *>("opentrade"), INIT_MODULE);
   Py_InitializeEx(0);  // no signal registration
   if (!PyEval_ThreadsInitialized()) PyEval_InitThreads();
   LockGIL lock;
+  bp::import("sys").attr("path").attr("insert")(0, "./algos");
   kOpentrade = bp::import("opentrade");
   LOG2_INFO("Python initialized");
   LOG2_INFO("Python PATH: " << getenv("PYTHONPATH"));
