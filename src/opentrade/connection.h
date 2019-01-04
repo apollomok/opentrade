@@ -49,6 +49,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   void OnTarget(const json& j, const std::string& msg);
   void OnLogin(const std::string& action, const json& j);
   void Send(Confirmation::Ptr cm);
+  void Send(const SubAccount& acc, const std::string& msg);
   void Send(const Algo& algo, const std::string& status,
             const std::string& body, uint32_t seq);
   void Close() { closed_ = true; }
