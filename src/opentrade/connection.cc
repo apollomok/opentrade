@@ -403,6 +403,8 @@ void Connection::OnMessageSync(const std::string& msg,
       OnAdmin(j);
     } else if (action == "position") {
       OnPosition(j, msg);
+    } else if (action == "target") {
+      OnTarget(j, msg);
     } else if (action == "offline") {
       if (j.size() > 2) {
         auto seq_algo = Get<int64_t>(j[2]);
@@ -795,6 +797,44 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
   Send(j);
 }
 
+auto LoadTargets(const json& j) {
+  auto targets = std::make_shared<PositionManager::Targets>();
+  for (auto it = j.begin(); it != j.end(); ++it) {
+    targets->emplace(Get<int64_t>((*it)[0]), GetNum((*it)[1]));
+  }
+  return targets;
+}
+
+void Connection::OnTarget(const json& j, const std::string& msg) {
+  auto sub_account = Get<std::string>(j[1]);
+  auto acc = AccountManager::Instance().GetSubAccount(sub_account);
+  if (!acc) {
+    json j = {"error", "target", "sub_account",
+              "Invalid sub_account: " + sub_account};
+    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    Send(j);
+    return;
+  }
+  auto& inst = PositionManager::Instance();
+  if (j.size() <= 2) {
+    auto targets = inst.GetTargets(*acc);
+    json out;
+    if (targets) {
+      for (auto& pair : *targets) {
+        out.push_back(json{pair.first, pair.second});
+      }
+    }
+    Send(json{"target", out});
+    return;
+  }
+  auto j2 = j[2];
+  std::ofstream os(
+      (kStorePath / ("target-" + std::to_string(acc->id) + ".json")).string());
+  inst.SetTargets(*acc, LoadTargets(j2));
+  os << j2;
+  Send(json{"target", "done"});
+}
+
 void Connection::OnAlgo(const json& j, const std::string& msg) {
   auto action = Get<std::string>(j[1]);
   if (action == "cancel") {
@@ -848,6 +888,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
           params) {
         throw std::runtime_error("Unknown algo name: " + algo_name);
       }
+      Send(json{"algo", "done"});
     } catch (const std::exception& err) {
       LOG_DEBUG(GetAddress() << ": " << err.what() << '\n' << msg);
       Send(json{"error", "algo", "invalid params", token, err.what()});
@@ -935,6 +976,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   (Contract&)* ord = c;
   ord->user = user_;
   ExchangeConnectivityManager::Instance().Place(ord);
+  Send(json{"order", "done"});
 }
 
 void Connection::OnSecurities(const json& j) {

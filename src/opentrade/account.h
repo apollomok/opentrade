@@ -103,6 +103,7 @@ class AccountManager : public Singleton<AccountManager> {
       broker_account_of_name_;
   friend class Connection;
   friend class Backtest;
+  friend class PositionManager;
 };
 
 }  // namespace opentrade

@@ -5,6 +5,7 @@
 #include <fstream>
 #include <mutex>
 
+#include "connection.h"
 #include "database.h"
 #include "logger.h"
 #include "task_pool.h"
@@ -163,6 +164,24 @@ void PositionManager::Initialize() {
     HandlePnl(p.qty, p.avg_px, sec->multiplier * sec->rate,
               sec->type == opentrade::kForexPair, &p2);
     p2.qty += p.qty;
+  }
+
+  for (auto& pair : AccountManager::Instance().sub_accounts_) {
+    auto acc = pair.second;
+    auto path = kStorePath / ("target-" + std::to_string(acc->id) + ".json");
+    if (fs::exists(path)) {
+      std::ifstream is(path.string());
+      std::stringstream buffer;
+      buffer << is.rdbuf();
+      try {
+        auto j = json::parse(buffer.str());
+        extern TargetsPtr LoadTargets(const json& j);
+        self.SetTargets(*acc, LoadTargets(j));
+        LOG_INFO(path << " loaded");
+      } catch (std::exception& e) {
+        LOG_ERROR("Failed to load " << path << ": " << e.what());
+      }
+    }
   }
 }
 

@@ -113,7 +113,7 @@ struct Security : public ParamsBase {
   const char* ric = "";
   const Exchange* exchange = nullptr;
   const Security* underlying = nullptr;
-  double rate = 1;
+  double rate = 1;  // currency rate
   double multiplier = 1;
   double tick_size = 0;
   double close_price = 0;

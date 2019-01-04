@@ -61,6 +61,12 @@ class PositionManager : public Singleton<PositionManager> {
       std::pair<SubAccount::IdType, Security::IdType>, Position>
       SubPositions;
   const SubPositions& sub_positions() const { return sub_positions_; }
+  typedef std::unordered_map<Security::IdType, double> Targets;
+  typedef std::shared_ptr<const Targets> TargetsPtr;
+  void SetTargets(const SubAccount& acc, TargetsPtr targets) {
+    sub_targets_[acc.id] = targets;
+  }
+  auto GetTargets(const SubAccount& acc) { return sub_targets_[acc.id]; }
 
  private:
   // holding the sql session exclusively for position update
@@ -74,6 +80,7 @@ class PositionManager : public Singleton<PositionManager> {
   tbb::concurrent_unordered_map<std::pair<User::IdType, Security::IdType>,
                                 Position>
       user_positions_;
+  tbb::concurrent_unordered_map<BrokerAccount::IdType, TargetsPtr> sub_targets_;
   struct Pnl {
     double realized = 0;
     double unrealized = 0;
