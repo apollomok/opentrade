@@ -824,7 +824,7 @@ void Connection::OnTarget(const json& j, const std::string& msg) {
         out.push_back(json{pair.first, pair.second});
       }
     }
-    Send(json{"target", out});
+    Send(json{"target", sub_account, out});
     return;
   }
   auto j2 = j[2];
