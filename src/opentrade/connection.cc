@@ -1083,6 +1083,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     auto accs = user->sub_accounts();
     for (auto& pair : *accs) {
       Send(json{"sub_account", pair.first, pair.second->name});
+      if (!user->is_admin) OnTarget(json{"target", pair.second->name}, "");
     }
     if (user->is_admin) {
       for (auto& pair : AccountManager::Instance().users_) {
@@ -1091,6 +1092,9 @@ void Connection::OnLogin(const std::string& action, const json& j) {
           Send(json{"user_sub_account", pair.first, pair2.first,
                     pair2.second->name});
         }
+      }
+      for (auto& pair : AccountManager::Instance().sub_accounts_) {
+        OnTarget(json{"target", pair.second->name}, "");
       }
     }
     for (auto& pair : AccountManager::Instance().broker_accounts_) {
