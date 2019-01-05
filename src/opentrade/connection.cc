@@ -832,7 +832,7 @@ void Connection::OnTarget(const json& j, const std::string& msg) {
         out.push_back(json{pair.first, pair.second});
       }
     }
-    Send(json{"target", sub_account, out});
+    Send(json{"target", acc->id, acc->name, out});
     return;
   }
   auto j2 = j[2];
@@ -841,7 +841,7 @@ void Connection::OnTarget(const json& j, const std::string& msg) {
   inst.SetTargets(*acc, LoadTargets(j2));
   os << j2;
   Send(json{"target", "done"});
-  Server::Publish(*acc, j.dump());
+  Server::Publish(*acc, json{"target", acc->id, acc->name, j[2]}.dump());
 }
 
 void Connection::OnAlgo(const json& j, const std::string& msg) {
