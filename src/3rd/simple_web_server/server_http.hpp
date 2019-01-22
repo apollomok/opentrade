@@ -63,7 +63,11 @@ namespace SimpleWeb {
       std::shared_ptr<Session> session;
       long timeout_content;
 
-      asio::io_service::strand strand;
+#if BOOST_VERSION < 106600
+  boost::asio::strand strand;
+#else
+  boost::asio::io_context::strand strand;
+#endif
       std::list<std::pair<std::shared_ptr<asio::streambuf>, std::function<void(const error_code &)>>> send_queue;
 
       Response(std::shared_ptr<Session> session_, long timeout_content) noexcept : std::ostream(nullptr), session(std::move(session_)), timeout_content(timeout_content), strand(session->connection->socket->get_io_service()) {

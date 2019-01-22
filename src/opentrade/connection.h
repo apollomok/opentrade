@@ -73,7 +73,11 @@ class Connection : public std::enable_shared_from_this<Connection> {
   Transport::Ptr transport_;
   const User* user_ = nullptr;
   std::unordered_map<Security::IdType, std::pair<MarketData, uint32_t>> subs_;
+#if BOOST_VERSION < 106600
   boost::asio::strand strand_;
+#else
+  boost::asio::io_context::strand strand_;
+#endif
   boost::asio::deadline_timer timer_;
   std::map<std::string, bool> ecs_;
   std::map<std::string, bool> mds_;

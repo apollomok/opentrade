@@ -210,7 +210,11 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   };
   std::vector<StrandMock> strands_;
 #else
+#if BOOST_VERSION < 106600
   std::vector<boost::asio::strand> strands_;
+#else
+  std::vector<boost::asio::io_context::strand> strands_;
+#endif
 #endif
   std::ofstream of_;
   uint32_t seq_counter_ = 0;

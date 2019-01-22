@@ -207,7 +207,11 @@ namespace SimpleWeb {
         return true;
       }
 
-      asio::io_service::strand strand;
+#if BOOST_VERSION < 106600
+  boost::asio::strand strand;
+#else
+  boost::asio::io_context::strand strand;
+#endif
 
       class OutData {
       public:
