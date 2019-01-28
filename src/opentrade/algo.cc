@@ -88,7 +88,19 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
     algo = Python::LoadTest(name, token);
     if (!algo) return nullptr;
   }
-  algo->id_ = ++algo_id_counter_;
+  for (;;) {
+    algo->id_ = ++algo_id_counter_;
+    // assign python algo on 0th thread, the others shares the other threads
+    if (threads_.size() > 1) {
+      if (dynamic_cast<Python*>(algo)) {
+        if (algo->id_ % threads_.size() == 0) break;
+      } else {
+        if (algo->id_ % threads_.size() != 0) break;
+      }
+    } else {
+      break;
+    }
+  }
   algo->user_ = &user;
   algo->token_ = token;
   algos_.emplace(algo->id_, algo);
