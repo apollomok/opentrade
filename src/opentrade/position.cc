@@ -238,18 +238,18 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           static double qty;
           static double avg_px;
           static double realized_pnl;
-          static std::string desc;
+          static std::string info;
           static const char* cmd = R"(
             insert into position(user_id, sub_account_id, security_id, 
-            broker_account_id, qty, avg_px, realized_pnl, tm, "desc") 
+            broker_account_id, qty, avg_px, realized_pnl, tm, info) 
             values(:user_id, :sub_account_id, :security_id, :broker_account_id,
-            :qty, :avg_px, :realized_pnl, now() at time zone 'utc', :desc)
+            :qty, :avg_px, :realized_pnl, now() at time zone 'utc', :info)
         )";
           static soci::statement st =
               (this->sql_->prepare << cmd, soci::use(user_id),
                soci::use(sub_account_id), soci::use(security_id),
                soci::use(broker_account_id), soci::use(qty), soci::use(avg_px),
-               soci::use(realized_pnl), soci::use(desc));
+               soci::use(realized_pnl), soci::use(info));
           auto ord = cm->order;
           user_id = ord->user->id;
           sub_account_id = ord->sub_account->id;
@@ -258,18 +258,17 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           qty = pos.qty;
           avg_px = pos.avg_px;
           realized_pnl = pos.realized_pnl;
-          static std::stringstream os;
-          os.str("");
-          os << std::setprecision(15) << "tm=" << cm->transaction_time
-             << ",qty=" << cm->last_shares << ",px=" << cm->last_px
-             << ",side=" << static_cast<char>(ord->side)
-             << ",type=" << static_cast<char>(ord->type) << ",id=" << ord->id;
-          if (cm->exec_trans_type == kTransCancel) os << ",bust=1";
+          json j = {{"tm", cm->transaction_time},
+                    {"qty", cm->last_shares},
+                    {"px", cm->last_px},
+                    {"side", static_cast<char>(ord->side)},
+                    {"type", static_cast<char>(ord->type)},
+                    {"id", ord->id}};
+          if (cm->exec_trans_type == kTransCancel) j["bust"] = true;
           if (cm->misc) {
-            for (auto& pair : *cm->misc)
-              os << "," << pair.first << "=" << pair.second;
+            for (auto& pair : *cm->misc) j[pair.first] = pair.second;
           }
-          desc = os.str();
+          info = j.dump();
           st.execute(true);
         } catch (const soci::postgresql_soci_error& e) {
           LOG_FATAL("Trying update position to database: \n"

@@ -159,7 +159,7 @@ static const char create_tables_sql[] = R"(
     qty float8 not null,
     avg_px float8 not null,
     realized_pnl float8 not null,
-    "desc" varchar(1000),
+    info json,
     primary key(id)
   );
   create index if not exists position__index on position(sub_account_id, security_id, id desc);
@@ -193,6 +193,11 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
     *sql << "alter table security add column params varchar(1000);";
     *sql << "alter table exchange drop column \"desc\";";
     *sql << "alter table exchange add column params varchar(1000);";
+  } catch (...) {
+  }
+  try {
+    *sql << "alter table position drop column \"desc\";";
+    *sql << "alter table position add column info json;";
   } catch (...) {
   }
 }
