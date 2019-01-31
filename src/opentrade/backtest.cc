@@ -128,6 +128,11 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
   LOG_DEBUG("Start to play back " << fn);
   std::string line;
   auto seed = 0u;
+  int trade_hit_ratio = 50;
+  auto trade_hit_ratio_str = getenv("TRADE_HIT_RATIO");
+  if (trade_hit_ratio) {
+    trade_hit_ratio = atof(trade_hit_ratio_str) * 100;
+  }
   while (std::getline(ifs, line)) {
     uint32_t hmsm;
     uint32_t i;
@@ -155,8 +160,9 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
     switch (type) {
       case 'T': {
         Update(sec->id, px, qty);
-        if (!qty && sec->type == kForexPair) qty = 1e12;
-        if (px > 0 && qty > 0 && rand_r(&seed) % 100 > 50) {
+        if (!qty && sec->type == kForexPair) qty = 1e9;
+        if (px > 0 && qty > 0 &&
+            rand_r(&seed) % 100 >= (100 - trade_hit_ratio)) {
           auto size = qty;
           auto& actives = active_orders_[sec->id];
           if (actives.empty()) continue;
@@ -177,6 +183,9 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
             HandleFill(tuple.id, n, tuple.px,
                        boost::uuids::to_string(kUuidGen()), 0,
                        tuple.leaves > 0);
+            of_ << std::setprecision(15) << GetNowStr() << ',' << sec->symbol
+                << ',' << (tuple.is_buy ? 'B' : 'S') << ',' << n << ','
+                << tuple.px << ',' << tuple.acc->name << '\n';
             if (tuple.leaves <= 0)
               it = actives.erase(it);
             else
@@ -258,6 +267,9 @@ std::string Backtest::Place(const Order& ord) noexcept {
             if (qty_q > qty) qty_q = qty;
             HandleFill(id, qty_q, px_q, boost::uuids::to_string(kUuidGen()), 0,
                        qty_q != qty);
+            of_ << std::setprecision(15) << GetNowStr() << ','
+                << ord.sec->symbol << ',' << (ord.IsBuy() ? 'B' : 'S') << ','
+                << qty_q << ',' << px_q << ',' << ord.acc->name << '\n';
             if (qty_q != qty) {
               HandleCanceled(id, id, "");
             }
@@ -269,7 +281,7 @@ std::string Backtest::Place(const Order& ord) noexcept {
         } else {
           HandleNew(id, "");
         }
-        OrderTuple tuple{id, qty, ord.price, ord.IsBuy()};
+        OrderTuple tuple{id, qty, ord.price, ord.IsBuy(), ord.acc};
         active_orders_[ord.sec->id][id] = tuple;
       },
       latency_);
@@ -294,6 +306,21 @@ std::string Backtest::Cancel(const Order& ord) noexcept {
   return {};
 }
 
+SubAccount* Backtest::CreateSubAccount(const std::string& name) {
+  auto& acc_mngr = AccountManager::Instance();
+  auto s = new SubAccount();
+  s->name = strdup(name.c_str());
+  auto broker_accs = std::make_shared<SubAccount::BrokerAccountMap>();
+  broker_accs->emplace(0, acc_mngr.GetBrokerAccount(0));
+  s->set_broker_accounts(broker_accs);  //  0 is the default exchange
+  acc_mngr.sub_accounts_.emplace(s->id, s);
+  acc_mngr.sub_account_of_name_.emplace(s->name, s);
+  auto sub_accs = std::make_shared<User::SubAccountMap>();
+  sub_accs->emplace(s->id, s);
+  const_cast<User*>(acc_mngr.GetUser(0))->set_sub_accounts(sub_accs);
+  return s;
+}
+
 void Backtest::Start(const std::string& py, int latency) {
   obj_ = bp::object(bp::ptr(this));
   latency_ = latency;
@@ -312,16 +339,7 @@ void Backtest::Start(const std::string& py, int latency) {
   b->name = "backtest";
   b->adapter = this;
   acc_mngr.broker_accounts_.emplace(b->id, b);
-  auto s = new SubAccount();
-  s->name = "test";
-  auto broker_accs = std::make_shared<SubAccount::BrokerAccountMap>();
-  broker_accs->emplace(0, b);
-  s->set_broker_accounts(broker_accs);  //  0 is the default exchange
-  acc_mngr.sub_accounts_.emplace(s->id, s);
-  acc_mngr.sub_account_of_name_.emplace(s->name, s);
-  auto sub_accs = std::make_shared<User::SubAccountMap>();
-  sub_accs->emplace(s->id, s);
-  u->set_sub_accounts(sub_accs);
+  CreateSubAccount("test");
 
   bp::import("sys").attr("path").attr("insert")(
       0, fs::path(py).parent_path().string());
@@ -354,6 +372,7 @@ void Backtest::End() {
   } catch (const bp::error_already_set& err) {
     PrintPyError("on_end", true);
   }
+  of_.close();
 }
 
 }  // namespace opentrade

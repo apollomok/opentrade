@@ -106,6 +106,14 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
   algo->token_ = token;
   algos_.emplace(algo->id_, algo);
   if (!token.empty()) algo_of_token_.emplace(token, algo);
+  for (auto& pair : *params) {
+    if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
+      if (pval->acc && pval->sec) {
+        algos_of_sec_acc_.insert(
+            std::make_pair(std::make_pair(pval->sec->id, pval->acc->id), algo));
+      }
+    }
+  }
   Persist(*algo, "new", params ? params_raw : "{\"test\":true}");
   strands_[algo->id_ % threads_.size()].post([params, algo]() {
     kError = params ? algo->OnStart(*params.get()) : algo->Test();
@@ -265,6 +273,13 @@ void AlgoManager::Stop(const std::string& token) {
   auto algo = FindInMap(algo_of_token_, token);
   if (algo)
     strands_[algo->id_ % threads_.size()].post([algo]() { algo->Stop(); });
+}
+
+void AlgoManager::Stop(Security::IdType sec, SubAccount::IdType acc) {
+  auto range = algos_of_sec_acc_.equal_range(std::make_pair(sec, acc));
+  for (auto it = range.first; it != range.second; ++it) {
+    if (it->second->is_active()) Stop(it->second->id());
+  }
 }
 
 void AlgoManager::Persist(const Algo& algo, const std::string& status,

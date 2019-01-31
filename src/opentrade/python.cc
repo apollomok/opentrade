@@ -491,7 +491,11 @@ BOOST_PYTHON_MODULE(opentrade) {
   bp::def("get_account",
           bp::make_function(
               +[](const std::string &name) {
-                return AccountManager::Instance().GetSubAccount(name);
+                auto acc = AccountManager::Instance().GetSubAccount(name);
+#ifdef BACKTEST
+                if (!acc) acc = Backtest::Instance().CreateSubAccount(name);
+#endif
+                return acc;
               },
               bp::return_value_policy<bp::reference_existing_object>()));
 
@@ -536,7 +540,7 @@ BOOST_PYTHON_MODULE(opentrade) {
   });
 
 #ifdef BACKTEST
-  bp::class_<Backtest>("Backtest", bp::no_init)
+  bp::class_<Backtest, boost::noncopyable>("Backtest", bp::no_init)
       .def("clear", &Backtest::Clear)
       .def("set_timeout",
            +[](Backtest &, bp::object func, int milliseconds) {
@@ -550,6 +554,10 @@ BOOST_PYTHON_MODULE(opentrade) {
                }
              });
            })
+      .def("cancel_algo", bp::make_function(+[](Backtest &, const Security &sec,
+                                                const SubAccount &acc) {
+             AlgoManager::Instance().Stop(sec.id, acc.id);
+           }))
       .def("start_algo",
            bp::make_function(
                +[](Backtest &, const std::string &name, bp::dict params) {
@@ -569,9 +577,11 @@ BOOST_PYTHON_MODULE(opentrade) {
                  }
                  for (auto &pair : *params_ptr) {
                    if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-                     pval->acc = AccountManager::Instance().GetSubAccount(0);
-                     params[pair.first].attr("acc") =
-                         bp::object(bp::ptr(pval->acc));
+                     if (!pval->acc) {
+                       pval->acc = AccountManager::Instance().GetSubAccount(0);
+                       params[pair.first].attr("acc") =
+                           bp::object(bp::ptr(pval->acc));
+                     }
                    }
                  }
                  return AlgoManager::Instance().Spawn(params_ptr, name, *user,

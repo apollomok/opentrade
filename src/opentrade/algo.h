@@ -99,6 +99,7 @@ class Algo : public Adapter {
   std::string token_;
   std::set<Instrument*> instruments_;
   friend class AlgoManager;
+  friend class Backtest;
 };
 
 class Instrument {
@@ -184,8 +185,9 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   void Run(int nthreads);
   void Update(DataSrc::IdType src, Security::IdType id);
   void Stop();
-  void Stop(Security::IdType id);
+  void Stop(Algo::IdType id);
   void Stop(const std::string& token);
+  void Stop(Security::IdType sec, SubAccount::IdType acc);
   void Handle(Confirmation::Ptr cm);
   void SetTimeout(Algo::IdType id, std::function<void()> func,
                   int milliseconds);
@@ -206,6 +208,9 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   std::atomic<Algo::IdType> algo_id_counter_ = 0;
   tbb::concurrent_unordered_map<Algo::IdType, Algo*> algos_;
   tbb::concurrent_unordered_map<std::string, Algo*> algo_of_token_;
+  tbb::concurrent_unordered_multimap<
+      std::pair<Security::IdType, SubAccount::IdType>, Algo*>
+      algos_of_sec_acc_;
   tbb::concurrent_unordered_map<std::pair<DataSrc::IdType, Security::IdType>,
                                 tbb::atomic<uint32_t>>
       md_refs_;

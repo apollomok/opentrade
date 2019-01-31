@@ -3,6 +3,7 @@
 #ifdef BACKTEST
 
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <fstream>
 #include <unordered_map>
 
 #include "exchange_connectivity.h"
@@ -17,7 +18,7 @@ class Backtest : public ExchangeConnectivityAdapter,
                  public MarketDataAdapter,
                  public Singleton<Backtest> {
  public:
-  Backtest() { connected_ = 1; }
+  Backtest() : of_("trades.txt") { connected_ = 1; }
   void Start() noexcept override {}
   void Reconnect() noexcept override {}
   void Subscribe(const opentrade::Security& sec) noexcept override {}
@@ -26,6 +27,7 @@ class Backtest : public ExchangeConnectivityAdapter,
   void PlayTickFile(const std::string& fn_tmpl,
                     const boost::gregorian::date& date);
   void Start(const std::string& py, int latency);
+  SubAccount* CreateSubAccount(const std::string& name);
   void End();
   void Clear();
 
@@ -36,6 +38,7 @@ class Backtest : public ExchangeConnectivityAdapter,
     double leaves = 0;
     double px = 0;
     bool is_buy = false;
+    const SubAccount* acc = nullptr;
   };
   std::unordered_map<Security::IdType,
                      std::unordered_map<Order::IdType, OrderTuple>>
@@ -45,6 +48,7 @@ class Backtest : public ExchangeConnectivityAdapter,
   bp::object on_end_of_day_;
   bp::object on_end_;
   int latency_ = 0;  // in milliseconds
+  std::ofstream of_;
 };
 
 }  // namespace opentrade
