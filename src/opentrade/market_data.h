@@ -120,8 +120,9 @@ class MarketDataManager : public AdapterManager<MarketDataAdapter>,
  public:
   MarketDataAdapter* Subscribe(const Security& sec, DataSrc::IdType src);
   void Add(MarketDataAdapter* adapter);
-  const MarketData& Get(Security::IdType id, DataSrc::IdType src = 0);
   const MarketData& Get(const Security& sec, DataSrc::IdType src = 0);
+  // Lite version without subscription
+  const MarketData& GetLite(Security::IdType id, DataSrc::IdType src = 0);
   MarketDataAdapter* GetDefault() const { return default_; }
 
  private:

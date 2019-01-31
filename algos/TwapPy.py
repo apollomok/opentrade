@@ -20,6 +20,7 @@ def get_param_defs():
       ('MinSize', 0, False, 0, 10000000),
       ('MaxPov', 0.0, False, 0, 1, 2),
       ('Aggression', ('Low', 'Medium', 'High', 'Highest'), True),
+      ('InternalCross', ('Yes', 'No'), False),
   )
 
 
@@ -31,7 +32,7 @@ def on_start(self, params):
   log_debug(params)
   self.volume = 0
   self.st = st = params['Security']
-  self.instrument = self.subscribe(st.sec, st.src)
+  self.inst = self.subscribe(st.sec, st.src)
   seconds = params.get('ValidSeconds', 0)
   if seconds < 60:
     return 'Too short ValidSeconds, must be >= 60'
@@ -48,6 +49,8 @@ def on_start(self, params):
   self.max_pov = params.get('MaxPov', 0.0)
   if self.max_pov > 1: self.max_pov = 1
   self.agg = params.get('Aggression')
+  if params.get('InternalCross') == 'Yes':
+    self.cross(st.qty, self.price, st.side, st.acc, self.inst)
   timer(self)
   log_debug('[' + self.name + ' ' + str(self.id) + '] started')
 
@@ -60,17 +63,19 @@ def on_stop(self):
   log_debug('[', self.name, self.id, '] stopped')
 
 
-def on_market_trade(self, instrument):
-  md = instrument.md
-  log_debug(instrument.sec.symbol, 'trade:', md.open, md.high, md.low, md.close,
+def on_market_trade(self, inst):
+  md = inst.md
+  log_debug(inst.sec.symbol, 'trade:', md.open, md.high, md.low, md.close,
             md.qty, md.vwap, md.volume)
+  # here is a bug, because on_market_trade is a snapshot, we do not ensure every
+  # tick will call this. Please use method in its C++ version
   self.volume += md.qty
 
 
-def on_market_quote(self, instrument):
-  md = instrument.md
-  log_debug(instrument.sec.symbol, 'quote:', md.ask_price, md.ask_size,
-            md.bid_price, md.bid_size)
+def on_market_quote(self, inst):
+  md = inst.md
+  log_debug(inst.sec.symbol, 'quote:', md.ask_price, md.ask_size, md.bid_price,
+            md.bid_size)
 
 
 def on_confirmation(self, confirmation):
@@ -81,7 +86,7 @@ def on_confirmation(self, confirmation):
             'cum_qty=', o.cum_qty, 'avg_px=', o.avg_px, 'qty=', o.qty, 'price=',
             o.price, 'type=', o.type, 'text=', c.text)
   if c.last_shares > 0:
-    qty = self.instrument.total_qty
+    qty = self.inst.total_qty
     log_debug('finished', qty, 'leaves', self.st.qty - qty, 'time elapsed',
               get_time() - self.begin_time, '/',
               self.end_time - self.begin_time)
@@ -90,7 +95,7 @@ def on_confirmation(self, confirmation):
 
 def timer(self):
   if not self.is_active: return
-  inst = self.instrument
+  inst = self.inst
   st = self.st
   now = get_time()
   if now > self.end_time:

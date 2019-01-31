@@ -17,6 +17,7 @@ namespace opentrade {
 
 struct Position : public PositionValue {
   double qty = 0;
+  double cx_qty = 0;  // internal crossed
   double avg_px = 0;
   double unrealized_pnl = 0;
   double realized_pnl = 0;
@@ -29,13 +30,15 @@ struct Position : public PositionValue {
   void HandleNew(bool is_buy, double qty, double price, double multiplier,
                  bool is_fx);
   void HandleTrade(bool is_buy, double qty, double price, double price0,
-                   double multiplier, bool is_bust, bool is_otc, bool is_fx);
+                   double multiplier, bool is_bust, bool is_otc, bool is_fx,
+                   bool is_cx);
   void HandleFinish(bool is_buy, double leaves_qty, double price0,
                     double multiplier, bool is_fx);
 };
 
 struct Bod {
   double qty = 0;
+  double cx_qty = 0;
   double avg_px = 0;
   double realized_pnl = 0;
   time_t tm = 0;

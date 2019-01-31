@@ -72,11 +72,10 @@ static inline void Handle(const std::string& name, Order::IdType id,
   Handle(name, orig_id, desc, exec_type, text, transaction_time);
 }
 
-static inline void HandleConfirmation(Order* ord, double qty, double price,
-                                      const std::string& exec_id, int64_t tm,
-                                      bool is_partial,
-                                      ExecTransType exec_trans_type,
-                                      Confirmation::StrMap* misc = nullptr) {
+static inline void HandleConfirmation(
+    Order* ord, double qty, double price, const std::string& exec_id,
+    int64_t tm, bool is_partial, ExecTransType exec_trans_type,
+    Confirmation::StrMapPtr misc = Confirmation::StrMapPtr{}) {
   auto cm = std::make_shared<Confirmation>();
   cm->order = ord;
   cm->exec_type = is_partial ? kPartiallyFilled : kFilled;
@@ -87,6 +86,13 @@ static inline void HandleConfirmation(Order* ord, double qty, double price,
   cm->transaction_time = tm ? tm : NowUtcInMicro();
   cm->misc = misc;
   GlobalOrderBook::Instance().Handle(cm);
+}
+
+void ExchangeConnectivityManager::HandleFilled(Order* ord, double qty,
+                                               double price,
+                                               const std::string& exec_id) {
+  HandleConfirmation(ord, qty, price, exec_id, NowUtcInMicro(), true,
+                     kTransNew);
 }
 
 static inline bool CheckAdapter(ExchangeConnectivityAdapter* adapter,
@@ -136,13 +142,17 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     return false;
   }
   ord->broker_account = broker;
+  ord->leaves_qty = ord->qty;
   if (ord->type == kOTC) {
     ord->id = GlobalOrderBook::Instance().NewOrderId();
-    ord->leaves_qty = ord->qty;
     HandleConfirmation(ord, kUnconfirmedNew);
     HandleConfirmation(ord, ord->qty, ord->price,
                        "OTC-" + std::to_string(ord->id), NowUtcInMicro(), false,
                        kTransNew);
+    return true;
+  } else if (ord->type == kCX) {
+    ord->id = GlobalOrderBook::Instance().NewOrderId();
+    HandleConfirmation(ord, kUnconfirmedNew);
     return true;
   }
   auto adapter = ord->broker_account->adapter;
@@ -169,7 +179,6 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     HandleConfirmation(ord, kRiskRejected, kRiskError);
     return false;
   }
-  ord->leaves_qty = ord->qty;
   ord->id = GlobalOrderBook::Instance().NewOrderId();
   ord->tm = NowUtcInMicro();
   HandleConfirmation(ord, kUnconfirmedNew, "", ord->tm);
@@ -211,6 +220,7 @@ static inline bool Cancel(Order* cancel_order) {
 }
 
 bool ExchangeConnectivityManager::Cancel(const Order& orig_ord) {
+  if (orig_ord.type == kOTC || orig_ord.type == kCX) return false;
   assert(orig_ord.sub_account);
   assert(orig_ord.sec);
   assert(orig_ord.user);
@@ -247,7 +257,7 @@ void ExchangeConnectivityAdapter::HandlePendingNew(Order::IdType id,
 void ExchangeConnectivityAdapter::HandleFill(
     Order::IdType id, double qty, double price, const std::string& exec_id,
     int64_t transaction_time, bool is_partial, ExecTransType exec_trans_type,
-    Confirmation::StrMap* misc) {
+    Confirmation::StrMapPtr misc) {
   if (GlobalOrderBook::Instance().IsDupExecId(id, exec_id)) {
     LOG_DEBUG(name() << ": Duplicate exec id: " << exec_id << ", ignored");
     return;

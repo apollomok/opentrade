@@ -60,11 +60,7 @@ class Algo : public Adapter {
   typedef uint32_t IdType;
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
   typedef std::shared_ptr<ParamMap> ParamMapPtr;
-
-  Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{});
-  void Stop();
   void SetTimeout(std::function<void()> func, int milliseconds);
-  Order* Place(const Contract& contract, Instrument* inst);
   static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept = 0;
@@ -89,6 +85,13 @@ class Algo : public Adapter {
   const std::string& token() const { return token_; }
   const User& user() const { return *user_; }
 
+ protected:
+  Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{});
+  void Stop();
+  Order* Place(const Contract& contract, Instrument* inst);
+  void Cross(double qty, double price, OrderSide side, const SubAccount* acc,
+             Instrument* inst);
+
  private:
   const User* user_ = nullptr;
   bool is_active_ = true;
@@ -104,6 +107,7 @@ class Instrument {
   Instrument(Algo* algo, const Security& sec, DataSrc src)
       : algo_(algo), sec_(sec), src_(src) {}
   Algo& algo() { return *algo_; }
+  const Algo& algo() const { return *algo_; }
   const Security& sec() const { return sec_; }
   DataSrc src() const { return src_; }
   const MarketData& md() const { return *md_; }
@@ -124,6 +128,10 @@ class Instrument {
     return total_qty() + total_outstanding_qty();
   }
   size_t id() const { return id_; }
+
+  void Cancel() {
+    for (auto ord : active_orders_) algo_->Cancel(*ord);
+  }
 
  private:
   Algo* algo_ = nullptr;
@@ -192,6 +200,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   Algo* Get(const std::string& token) {
     return FindInMap(algo_of_token_, token);
   }
+  void Cancel(Instrument* inst);
 
  private:
   std::atomic<Algo::IdType> algo_id_counter_ = 0;

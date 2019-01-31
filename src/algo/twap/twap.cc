@@ -43,6 +43,9 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
     agg_ = kAggHighest;
   else
     return "Invalid aggression, must be in (Low, Medium, High, Highest)";
+  if (GetParam(params, "InternalCross", kEmptyStr) == "Yes") {
+    Cross(qty_, price_, side_, acc_, inst_);
+  }
   Timer();
   LOG_DEBUG('[' << name() << ' ' << id() << "] started");
   return {};
@@ -85,6 +88,7 @@ const ParamDefs& TWAP::GetParamDefs() noexcept {
       {"MaxPov", 0.0, false, 0, 1, 2},
       {"Aggression", ParamDef::ValueVector{"Low", "Medium", "High", "Highest"},
        true},
+      {"InternalCross", ParamDef::ValueVector{"Yes", "No"}, false},
   };
   return defs;
 }
@@ -99,7 +103,7 @@ void TWAP::Timer() {
   SetTimeout([this]() { Timer(); }, 1000);
   if (!inst_->sec().IsInTradePeriod()) return;
 
-  auto md = inst_->md();
+  auto& md = inst_->md();
   auto bid = md.quote().bid_price;
   auto ask = md.quote().ask_price;
   auto last_px = md.trade.close;

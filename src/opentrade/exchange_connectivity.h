@@ -22,7 +22,7 @@ class ExchangeConnectivityAdapter : public virtual NetworkAdapter {
                   const std::string& exec_id, int64_t transaction_time = 0,
                   bool is_partial = false,
                   ExecTransType exec_trans_type = kTransNew,
-                  Confirmation::StrMap* misc = nullptr);
+                  Confirmation::StrMapPtr misc = Confirmation::StrMapPtr{});
   void HandleCanceled(Order::IdType id, Order::IdType orig_id,
                       const std::string& text, int64_t transaction_time = 0);
   void HandleNewRejected(Order::IdType id, const std::string& text,
@@ -45,6 +45,8 @@ class ExchangeConnectivityManager
     if (out) return out;
     return GetAdapter("ec_" + name);
   }
+  void HandleFilled(Order* ord, double qty, double price,
+                    const std::string& exec_id);
 };
 
 }  // namespace opentrade

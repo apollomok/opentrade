@@ -99,7 +99,7 @@ inline void GlobalOrderBook::UpdateOrder(Confirmation::Ptr cm) {
 }
 
 void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
-  if (cm->order->id <= 0) {  // risk rejected
+  if (cm->order->id <= 0) {  // risk rejected, not persist
     assert(!offline);
     Server::Publish(cm);
     if (cm->order->inst) AlgoManager::Instance().Handle(cm);

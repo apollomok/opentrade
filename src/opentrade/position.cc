@@ -49,7 +49,8 @@ inline void HandlePnl(double qty, double price, double multiplier, bool is_fx,
 
 inline void Position::HandleTrade(bool is_buy, double qty, double price,
                                   double price0, double multiplier,
-                                  bool is_bust, bool is_otc, bool is_fx) {
+                                  bool is_bust, bool is_otc, bool is_fx,
+                                  bool is_cx) {
   assert(qty > 0);
   PositionValue::HandleTrade(is_buy, qty, price, price0, multiplier, is_bust,
                              is_otc, is_fx);
@@ -75,6 +76,7 @@ inline void Position::HandleTrade(bool is_buy, double qty, double price,
   if (is_bust) qty = -qty;
   HandlePnl(qty, price, multiplier, is_fx, this);
   this->qty += qty;
+  if (is_cx) this->cx_qty += qty;
 }
 
 inline void Position::HandleFinish(bool is_buy, double leaves_qty,
@@ -132,7 +134,7 @@ void PositionManager::Initialize() {
   auto query = R"(
     select distinct on (sub_account_id, security_id)
       sub_account_id, broker_account_id, security_id,
-      qty, avg_px, realized_pnl, tm
+      qty, cx_qty, avg_px, realized_pnl, tm
     from position
     where tm < :tm
     order by sub_account_id, security_id, id desc
@@ -147,10 +149,12 @@ void PositionManager::Initialize() {
     auto sec = SecurityManager::Instance().Get(security_id);
     if (!sec) continue;
     p.qty = Database::GetValue(*it, i++, 0.);
+    p.cx_qty = Database::GetValue(*it, i++, 0.);
     p.avg_px = Database::GetValue(*it, i++, 0.);
     p.realized_pnl = Database::GetValue(*it, i++, 0.);
     Bod bod{};
     bod.qty = p.qty;
+    bod.cx_qty = p.cx_qty;
     bod.avg_px = p.avg_px;
     bod.realized_pnl = p.realized_pnl;
     bod.broker_account_id = broker_account_id;
@@ -164,6 +168,7 @@ void PositionManager::Initialize() {
     HandlePnl(p.qty, p.avg_px, sec->multiplier * sec->rate,
               sec->type == opentrade::kForexPair, &p2);
     p2.qty += p.qty;
+    p2.cx_qty += p.cx_qty;
   }
 
   for (auto& pair : AccountManager::Instance().sub_accounts_) {
@@ -177,7 +182,7 @@ void PositionManager::Initialize() {
         auto j = json::parse(buffer.str());
         extern TargetsPtr LoadTargets(const json& j);
         self.SetTargets(*acc, LoadTargets(j));
-        LOG_INFO(path << " loaded");
+        LOG_INFO("Target file " << path << " loaded");
       } catch (std::exception& e) {
         LOG_ERROR("Failed to load " << path << ": " << e.what());
       }
@@ -192,8 +197,9 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
   auto sec = ord->sec;
   auto multiplier = sec->rate * sec->multiplier;
   bool is_buy = ord->IsBuy();
-  auto is_otc = ord->type == kOTC;
+  auto is_otc = ord->type == kOTC || ord->type == kCX;
   auto is_fx = sec->type == kForexPair;
+  auto is_cx = ord->type == kCX;
   assert(cm && ord->id > 0);
   static std::mutex kMutex;
   std::lock_guard<std::mutex> lock(kMutex);
@@ -211,12 +217,13 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       auto px = cm->last_px;
       auto px0 = ord->price;
       auto& pos = sub_positions_[std::make_pair(ord->sub_account->id, sec->id)];
-      pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx);
+      pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx,
+                      is_cx);
       broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
-          .HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc,
-                       is_fx);
+          .HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx,
+                       is_cx);
       user_positions_[std::make_pair(ord->user->id, sec->id)].HandleTrade(
-          is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx);
+          is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx, is_cx);
       const_cast<SubAccount*>(ord->sub_account)
           ->position_value.HandleTrade(is_buy, qty, px, px0, multiplier,
                                        is_bust, is_otc, is_fx);
@@ -236,26 +243,28 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           static Security::IdType security_id;
           static BrokerAccount::IdType broker_account_id;
           static double qty;
+          static double cx_qty;
           static double avg_px;
           static double realized_pnl;
           static std::string info;
           static const char* cmd = R"(
             insert into position(user_id, sub_account_id, security_id, 
-            broker_account_id, qty, avg_px, realized_pnl, tm, info) 
+            broker_account_id, qty, cx_qty, avg_px, realized_pnl, tm, info) 
             values(:user_id, :sub_account_id, :security_id, :broker_account_id,
-            :qty, :avg_px, :realized_pnl, now() at time zone 'utc', :info)
+            :qty, :cx_qty, :avg_px, :realized_pnl, now() at time zone 'utc', :info)
         )";
           static soci::statement st =
               (this->sql_->prepare << cmd, soci::use(user_id),
                soci::use(sub_account_id), soci::use(security_id),
-               soci::use(broker_account_id), soci::use(qty), soci::use(avg_px),
-               soci::use(realized_pnl), soci::use(info));
+               soci::use(broker_account_id), soci::use(qty), soci::use(cx_qty),
+               soci::use(avg_px), soci::use(realized_pnl), soci::use(info));
           auto ord = cm->order;
           user_id = ord->user->id;
           sub_account_id = ord->sub_account->id;
           security_id = ord->sec->id;
           broker_account_id = ord->broker_account->id;
           qty = pos.qty;
+          cx_qty = pos.cx_qty;
           avg_px = pos.avg_px;
           realized_pnl = pos.realized_pnl;
           json j = {{"tm", cm->transaction_time},
@@ -265,6 +274,10 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
                     {"type", static_cast<char>(ord->type)},
                     {"id", ord->id}};
           if (cm->exec_trans_type == kTransCancel) j["bust"] = true;
+          if (ord->type == kOTC)
+            j["otc"] = true;
+          else if (ord->type == kCX)
+            j["cx"] = true;
           if (cm->misc) {
             for (auto& pair : *cm->misc) j[pair.first] = pair.second;
           }
@@ -301,22 +314,24 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
     case kRejected:
     case kExpired:
     case kCalculated:
-    case kDoneForDay: {
-      auto qty = cm->leaves_qty;
-      auto px = ord->price;
-      sub_positions_[std::make_pair(ord->sub_account->id, sec->id)]
-          .HandleFinish(is_buy, qty, px, multiplier, is_fx);
-      broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
-          .HandleFinish(is_buy, qty, px, multiplier, is_fx);
-      user_positions_[std::make_pair(ord->user->id, sec->id)].HandleFinish(
-          is_buy, qty, px, multiplier, is_fx);
-      const_cast<SubAccount*>(ord->sub_account)
-          ->position_value.HandleFinish(is_buy, qty, px, multiplier, is_fx);
-      const_cast<BrokerAccount*>(ord->broker_account)
-          ->position_value.HandleFinish(is_buy, qty, px, multiplier, is_fx);
-      const_cast<User*>(ord->user)->position_value.HandleFinish(
-          is_buy, qty, px, multiplier, is_fx);
-    } break;
+    case kDoneForDay:
+      if (!is_otc) {
+        auto qty = cm->leaves_qty;
+        auto px = ord->price;
+        sub_positions_[std::make_pair(ord->sub_account->id, sec->id)]
+            .HandleFinish(is_buy, qty, px, multiplier, is_fx);
+        broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
+            .HandleFinish(is_buy, qty, px, multiplier, is_fx);
+        user_positions_[std::make_pair(ord->user->id, sec->id)].HandleFinish(
+            is_buy, qty, px, multiplier, is_fx);
+        const_cast<SubAccount*>(ord->sub_account)
+            ->position_value.HandleFinish(is_buy, qty, px, multiplier, is_fx);
+        const_cast<BrokerAccount*>(ord->broker_account)
+            ->position_value.HandleFinish(is_buy, qty, px, multiplier, is_fx);
+        const_cast<User*>(ord->user)->position_value.HandleFinish(
+            is_buy, qty, px, multiplier, is_fx);
+      }
+      break;
     default:
       break;
   }

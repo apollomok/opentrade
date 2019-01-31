@@ -28,6 +28,7 @@ enum OrderType : char {
   kStop = '3',
   kStopLimit = '4',
   kOTC = 'o',
+  kCX = 'x',  // internal cross order
 };
 
 enum OrderStatus : char {
@@ -95,7 +96,10 @@ class Instrument;
 
 struct Order : public Contract {
   OrderStatus status = kUnconfirmedNew;
+
+  // in case inst of offline order is nullptr, for frontend only
   uint32_t algo_id = 0;
+
   typedef uint32_t IdType;
   IdType id = 0;
   IdType orig_id = 0;
@@ -129,7 +133,8 @@ struct Confirmation {
   int64_t transaction_time = 0;  // utc in microseconds
   uint32_t seq = 0;
   typedef std::map<std::string, std::string> StrMap;
-  StrMap* misc = nullptr;
+  typedef std::shared_ptr<StrMap> StrMapPtr;
+  StrMapPtr misc;
 };
 
 class Connection;

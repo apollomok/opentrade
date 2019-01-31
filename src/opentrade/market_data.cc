@@ -32,8 +32,8 @@ const MarketData& MarketDataManager::Get(const Security& sec,
   return it->second;
 }
 
-const MarketData& MarketDataManager::Get(Security::IdType id,
-                                         DataSrc::IdType src) {
+const MarketData& MarketDataManager::GetLite(Security::IdType id,
+                                             DataSrc::IdType src) {
   auto it = md_of_src_.find(src);
   static const MarketData kMd{};
   if (it == md_of_src_.end()) return kMd;

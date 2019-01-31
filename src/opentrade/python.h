@@ -39,6 +39,18 @@ class Python : public Algo {
   const ParamDefs& GetParamDefs() noexcept override;
   void SetTimeout(bp::object func, int milliseconds);
 
+  Instrument* Subscribe(const Security& sec, DataSrc src) {
+    return Algo::Subscribe(sec, src);
+  }
+  void Stop() { Algo::Stop(); }
+  Order* Place(const Contract& contract, Instrument* inst) {
+    return Algo::Place(contract, inst);
+  }
+  void Cross(double qty, double price, OrderSide side, const SubAccount* acc,
+             Instrument* inst) {
+    return Algo::Cross(qty, price, side, acc, inst);
+  }
+
  private:
   PyModule py_;
   ParamDefs def_;

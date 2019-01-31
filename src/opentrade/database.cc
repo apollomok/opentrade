@@ -157,6 +157,7 @@ static const char create_tables_sql[] = R"(
     security_id int2 references security(id), -- on update cascade on delete cascade,
     tm timestamp not null,
     qty float8 not null,
+    cx_qty float8,
     avg_px float8 not null,
     realized_pnl float8 not null,
     info json,
@@ -198,6 +199,10 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   try {
     *sql << "alter table position drop column \"desc\";";
     *sql << "alter table position add column info json;";
+  } catch (...) {
+  }
+  try {
+    *sql << "alter table position add column cx_qty float8;";
   } catch (...) {
   }
 }

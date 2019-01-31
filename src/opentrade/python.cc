@@ -226,6 +226,7 @@ BOOST_PYTHON_MODULE(opentrade) {
              return ss.str();
            })
       .def_readonly("qty", &Position::qty)
+      .def_readonly("cx_qty", &Position::cx_qty)
       .def_readonly("avg_px", &Position::avg_px)
       .def_readonly("unrealized_pnl", &Position::unrealized_pnl)
       .def_readonly("realized_pnl", &Position::realized_pnl)
@@ -421,7 +422,6 @@ BOOST_PYTHON_MODULE(opentrade) {
                     bp::make_function(+[](const Order &o) { return o.inst; },
                                       bp::return_internal_reference<>()))
       .def_readonly("status", &Order::status)
-      .def_readonly("algo_id", &Order::algo_id)
       .def_readonly("id", &Order::id)
       .def_readonly("orig_id", &Order::orig_id)
       .def_readonly("avg_px", &Order::avg_px)
@@ -460,14 +460,15 @@ BOOST_PYTHON_MODULE(opentrade) {
       });
 
   bp::class_<Python>("Algo", bp::no_init)
-      .def("subscribe", &Algo::Subscribe, bp::return_internal_reference<>())
-      .def("place", &Algo::Place, bp::return_internal_reference<>())
+      .def("subscribe", &Python::Subscribe, bp::return_internal_reference<>())
+      .def("place", &Python::Place, bp::return_internal_reference<>())
       .def("cancel",
            +[](Python &algo, const Order *ord) {
              if (ord) return algo.Cancel(*ord);
              return false;
            })
-      .def("stop", &Algo::Stop)
+      .def("stop", &Python::Stop)
+      .def("cross", &Python::Cross)
       .def("set_timeout", &Python::SetTimeout)
       .add_property("id", &Algo::id)
       .add_property("name", +[](const Python &algo) { return algo.name(); })
@@ -655,7 +656,6 @@ void InitalizePy() {
   bp::import("sys").attr("path").attr("insert")(0, "./algos");
   kOpentrade = bp::import("opentrade");
   LOG2_INFO("Python initialized");
-  LOG2_INFO("Python PATH: " << getenv("PYTHONPATH"));
 }
 
 PyModule LoadPyModule(const std::string &module_name) {

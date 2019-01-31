@@ -252,7 +252,7 @@ void Connection::PublishMarketdata() {
     json j = {"md"};
     for (auto& pair : self->subs_) {
       auto id = pair.first;
-      auto& md = MarketDataManager::Instance().Get(id);
+      auto& md = MarketDataManager::Instance().GetLite(id);
       GetMarketData(md, pair.second.first, id, &j);
       pair.second.first = md;
     }
@@ -631,6 +631,9 @@ static inline const char* GetType(OrderType c) {
       break;
     case kOTC:
       type = "otc";
+      break;
+    case kCX:
+      type = "cx";
       break;
     default:
       break;

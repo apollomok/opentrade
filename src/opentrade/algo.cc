@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "connection.h"
+#include "cross_engine.h"
 #include "exchange_connectivity.h"
 #include "logger.h"
 #include "python.h"
@@ -30,7 +31,7 @@ inline void AlgoRunner::operator()() {
       key = *it;
       dirties_.erase(it);
     }
-    auto md = MarketDataManager::Instance().Get(key.second, key.first);
+    auto md = MarketDataManager::Instance().GetLite(key.second, key.first);
     auto& pair = instruments_[key];
     auto& md0 = pair.first;
     bool trade_update = md0.trade != md.trade;
@@ -177,12 +178,15 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
       case kFilled:
         if (cm->exec_trans_type == kTransNew) {
           if (cm->order->IsBuy()) {
-            inst->outstanding_buy_qty_ -= cm->last_shares;
+            if (cm->order->type != kCX)
+              inst->outstanding_buy_qty_ -= cm->last_shares;
             inst->bought_qty_ += cm->last_shares;
           } else {
-            inst->outstanding_sell_qty_ -= cm->last_shares;
+            if (cm->order->type != kCX)
+              inst->outstanding_sell_qty_ -= cm->last_shares;
             inst->sold_qty_ += cm->last_shares;
           }
+          if (cm->order->type != kCX) CrossEngine::Instance().UpdateTrade(cm);
         } else if (cm->exec_trans_type == kTransCancel) {
           if (cm->order->IsBuy())
             inst->bought_qty_ -= cm->last_shares;
@@ -213,8 +217,7 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
         return;
     }
   }
-  strands_[cm->order->algo_id % threads_.size()].post([cm, inst]() {
-    assert(cm->order->algo_id == inst->algo().id_);
+  strands_[inst->algo().id() % threads_.size()].post([cm, inst]() {
     switch (cm->exec_type) {
       case kPartiallyFilled:
       case kFilled:
@@ -344,11 +347,7 @@ Instrument* Algo::Subscribe(const Security& sec, DataSrc src) {
 void Algo::Stop() {
   if (is_active_) {
     is_active_ = false;
-    for (auto inst : instruments_) {
-      for (auto ord : inst->active_orders_) {
-        Cancel(*ord);
-      }
-    }
+    for (auto inst : instruments_) inst->Cancel();
     AlgoManager::Instance().Persist(
         *this, kError.empty() ? "teminated" : "failed", kError);
     OnStop();
@@ -375,10 +374,14 @@ void AlgoManager::SetTimeout(Algo::IdType id, std::function<void()> func,
 #endif
 }
 
+void AlgoManager::Cancel(Instrument* inst) {
+  strands_[inst->algo().id() % threads_.size()].post([=]() { inst->Cancel(); });
+}
+
 Order* Algo::Place(const Contract& contract, Instrument* inst) {
   assert(inst);
   if (!is_active_ || !inst) return nullptr;
-  auto ord = new Order{};
+  auto ord = contract.type == kCX ? new CrossOrder{} : new Order{};
   (Contract&)* ord = contract;
   ord->algo_id = id_;
   ord->user = user_;
@@ -386,12 +389,25 @@ Order* Algo::Place(const Contract& contract, Instrument* inst) {
   ord->sec = &inst->sec();
   auto ok = ExchangeConnectivityManager::Instance().Place(ord);
   if (!ok) return nullptr;
+  if (contract.type == kCX) return ord;
   inst->active_orders_.insert(ord);
   if (ord->IsBuy())
     inst->outstanding_buy_qty_ += ord->qty;
   else
     inst->outstanding_sell_qty_ += ord->qty;
   return ord;
+}
+
+void Algo::Cross(double qty, double price, OrderSide side,
+                 const SubAccount* acc, Instrument* inst) {
+  Contract c;
+  c.side = side;
+  c.qty = qty;
+  c.price = price;
+  c.sub_account = acc;
+  c.type = kCX;
+  auto ord = Place(c, inst);
+  if (ord) CrossEngine::Instance().Place(static_cast<CrossOrder*>(ord));
 }
 
 bool Algo::Cancel(const Order& ord) {
