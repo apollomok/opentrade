@@ -1,5 +1,5 @@
-#ifndef ALGO_TWAP_TWAP_H_
-#define ALGO_TWAP_TWAP_H_
+#ifndef ALGOS_TWAP_TWAP_H_
+#define ALGOS_TWAP_TWAP_H_
 
 #include "opentrade/algo.h"
 #include "opentrade/security.h"
@@ -42,4 +42,4 @@ class TWAP : public Algo {
 
 }  // namespace opentrade
 
-#endif  // ALGO_TWAP_TWAP_H_
+#endif  // ALGOS_TWAP_TWAP_H_

@@ -19,7 +19,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 * Post-trade risk integrated with [OpenRisk](https://github.com/opentradesolutions/openrisk)
 * Edit and test **Python** algo online
 * **Backtest**
-* **internal cross**
+* **Internal cross**
 * [Multi-theme web frontend](http://demo.opentradesolutions.com)
 * Fully thread-safe design, everything can be modified during runtime, e.g., reload symbol list, modify tick size table, lot-size, exchange timezone and trading/break period etc.
 * Built-in execution simulator

@@ -70,7 +70,7 @@ find_package(Boost REQUIRED COMPONENTS system program_options date_time filesyst
 include_directories({Boost_INCLUDE_DIRS})
 
 add_subdirectory(opentrade)
-add_subdirectory(algo)
+add_subdirectory(algos)
 if(NOT BACKTEST)
 add_subdirectory(adapters)
 add_subdirectory(fix)
