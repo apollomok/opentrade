@@ -39,8 +39,8 @@ class Python : public Algo {
   const ParamDefs& GetParamDefs() noexcept override;
   void SetTimeout(bp::object func, int milliseconds);
 
-  Instrument* Subscribe(const Security& sec, DataSrc src) {
-    return Algo::Subscribe(sec, src);
+  Instrument* Subscribe(const Security& sec, DataSrc src, bool listen) {
+    return Algo::Subscribe(sec, src, listen);
   }
   void Stop() { Algo::Stop(); }
   Order* Place(const Contract& contract, Instrument* inst) {
@@ -56,7 +56,7 @@ class Python : public Algo {
   ParamDefs def_;
   bp::object obj_;
   std::string test_token_;
-};
+};  // namespace opentrade
 
 void InitalizePy();
 void PrintPyError(const char*, bool fatal = false);

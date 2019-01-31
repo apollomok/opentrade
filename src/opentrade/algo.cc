@@ -40,7 +40,7 @@ inline void AlgoRunner::operator()() {
     auto it = insts.begin();
     while (it != insts.end()) {
       auto& algo = (*it)->algo();
-      if (!algo.is_active()) {
+      if (!algo.is_active() || !(*it)->listen()) {
         it = insts.erase(it);
         md_refs_[key]--;
         assert(md_refs_[key] == insts.size());
@@ -348,14 +348,15 @@ Algo::~Algo() {
   for (auto& inst : instruments_) delete inst;
 }
 
-Instrument* Algo::Subscribe(const Security& sec, DataSrc src) {
+Instrument* Algo::Subscribe(const Security& sec, DataSrc src, bool listen) {
   auto adapter = MarketDataManager::Instance().Subscribe(sec, src);
   assert(adapter);
   auto inst = new Instrument(this, sec, DataSrc(adapter->src()));
   inst->md_ = &MarketDataManager::Instance().Get(sec, adapter->src());
   inst->id_ = ++Instrument::kIdCounter;
+  inst->listen_ = listen;
   instruments_.insert(inst);
-  AlgoManager::Instance().Register(inst);
+  if (listen) AlgoManager::Instance().Register(inst);
   return inst;
 }
 

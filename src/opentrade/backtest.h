@@ -38,7 +38,7 @@ class Backtest : public ExchangeConnectivityAdapter,
     double leaves = 0;
     double px = 0;
     bool is_buy = false;
-    const SubAccount* acc = nullptr;
+    Algo::IdType algo_id = 0;
   };
   std::unordered_map<Security::IdType,
                      std::unordered_map<Order::IdType, OrderTuple>>

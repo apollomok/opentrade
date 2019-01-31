@@ -185,7 +185,7 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
                        tuple.leaves > 0);
             of_ << std::setprecision(15) << GetNowStr() << ',' << sec->symbol
                 << ',' << (tuple.is_buy ? 'B' : 'S') << ',' << n << ','
-                << tuple.px << ',' << tuple.acc->name << '\n';
+                << tuple.px << ',' << tuple.algo_id << '\n';
             if (tuple.leaves <= 0)
               it = actives.erase(it);
             else
@@ -257,6 +257,7 @@ std::string Backtest::Place(const Order& ord) noexcept {
           HandleNewRejected(id, "invalid price");
           return;
         }
+        auto algo_id = ord.inst ? ord.inst->algo().id() : 0;
         if (ord.type == kMarket) {
           auto q = MarketDataManager::Instance().Get(*ord.sec).quote();
           auto qty_q = ord.IsBuy() ? q.ask_size : q.bid_size;
@@ -269,7 +270,7 @@ std::string Backtest::Place(const Order& ord) noexcept {
                        qty_q != qty);
             of_ << std::setprecision(15) << GetNowStr() << ','
                 << ord.sec->symbol << ',' << (ord.IsBuy() ? 'B' : 'S') << ','
-                << qty_q << ',' << px_q << ',' << ord.acc->name << '\n';
+                << qty_q << ',' << px_q << ',' << algo_id << '\n';
             if (qty_q != qty) {
               HandleCanceled(id, id, "");
             }
@@ -281,7 +282,7 @@ std::string Backtest::Place(const Order& ord) noexcept {
         } else {
           HandleNew(id, "");
         }
-        OrderTuple tuple{id, qty, ord.price, ord.IsBuy(), ord.acc};
+        OrderTuple tuple{id, qty, ord.price, ord.IsBuy(), algo_id};
         active_orders_[ord.sec->id][id] = tuple;
       },
       latency_);

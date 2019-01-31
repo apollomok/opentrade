@@ -86,7 +86,8 @@ class Algo : public Adapter {
   const User& user() const { return *user_; }
 
  protected:
-  Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{});
+  Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{},
+                        bool listen = true);
   void Stop();
   Order* Place(const Contract& contract, Instrument* inst);
   void Cross(double qty, double price, OrderSide side, const SubAccount* acc,
@@ -134,6 +135,9 @@ class Instrument {
     for (auto ord : active_orders_) algo_->Cancel(*ord);
   }
 
+  void UnListen() { listen_ = false; }
+  bool listen() const { return listen_; }
+
  private:
   Algo* algo_ = nullptr;
   const Security& sec_;
@@ -145,6 +149,7 @@ class Instrument {
   double outstanding_buy_qty_ = 0;
   double outstanding_sell_qty_ = 0;
   size_t id_ = 0;
+  bool listen_ = true;
   friend class AlgoManager;
   friend class Algo;
   static inline std::atomic<size_t> kIdCounter = 0;

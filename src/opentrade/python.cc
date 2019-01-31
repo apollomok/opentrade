@@ -455,12 +455,15 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("net_qty", &Instrument::net_qty)
       .add_property("total_qty", &Instrument::total_qty)
       .add_property("id", &Instrument::id)
+      .def("unlisten", &Instrument::UnListen)
       .add_property("active_orders", +[](const Instrument &inst) {
         return OrdersWrapper(&inst.active_orders());
       });
 
   bp::class_<Python>("Algo", bp::no_init)
-      .def("subscribe", &Python::Subscribe, bp::return_internal_reference<>())
+      .def("subscribe", &Python::Subscribe,
+           (bp::arg("self"), bp::arg("sec"), bp::arg("src") = DataSrc{},
+            bp::arg("listen") = true), bp::return_internal_reference<>())
       .def("place", &Python::Place, bp::return_internal_reference<>())
       .def("cancel",
            +[](Python &algo, const Order *ord) {
