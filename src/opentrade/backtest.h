@@ -30,25 +30,42 @@ class Backtest : public ExchangeConnectivityAdapter,
   SubAccount* CreateSubAccount(const std::string& name);
   void End();
   void Clear();
+  void SetInterval(int milliseconds) { interval_ = milliseconds; }
+  void Skip() { skip_ = true; }
+
+ private:
+  struct OrderTuple {
+    double leaves = 0;
+    const Order* order = nullptr;
+  };
+  struct Orders {
+    typedef std::multimap<double, OrderTuple> Map;
+    Map buys;
+    Map sells;
+    std::unordered_map<Order::IdType, Map::iterator> all;
+  };
+  typedef std::tuple<const Security*, double, double, Orders*> SecTuple;
+  void HandleTick(uint32_t hmsm, char type, double px, double qty,
+                  const SecTuple& st);
+  double TryFillBuy(double px, double qty, Orders* m);
+  double TryFillSell(double px, double qty, Orders* m);
 
  private:
   bp::object obj_;
-  struct OrderTuple {
-    Order::IdType id = 0;
-    double leaves = 0;
-    double px = 0;
-    bool is_buy = false;
-    Algo::IdType algo_id = 0;
-  };
-  std::unordered_map<Security::IdType,
-                     std::unordered_map<Order::IdType, OrderTuple>>
-      active_orders_;
+  std::unordered_map<Security::IdType, Orders> active_orders_;
   bp::object on_start_;
   bp::object on_start_of_day_;
   bp::object on_end_of_day_;
   bp::object on_end_;
-  int latency_ = 0;  // in milliseconds
+  bp::object on_interval_;
+  int latency_ = 0;   // in milliseconds
+  int interval_ = 0;  // in milliseconds
+  time_t tm0_ = 0;
+  int next_interval_ = 0;
+  uint32_t seed_ = 0;
+  double trade_hit_ratio_ = 0;
   std::ofstream of_;
+  bool skip_;
 };
 
 }  // namespace opentrade

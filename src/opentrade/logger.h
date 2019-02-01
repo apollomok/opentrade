@@ -70,11 +70,30 @@ log4j.appender.sql.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss,SSS} %5p - %m
 
 }  // namespace opentrade
 
+#ifdef BACKTEST
+#include "utility.h"
+#define LOG_TRACE(msg)                                            \
+  LOG4CXX_TRACE(opentrade::Logger::logger, opentrade::GetNowStr() \
+                                               << " - " << msg)
+#define LOG_DEBUG(msg)                                            \
+  LOG4CXX_DEBUG(opentrade::Logger::logger, opentrade::GetNowStr() \
+                                               << " - " << msg)
+#define LOG_INFO(msg)                                            \
+  LOG4CXX_INFO(opentrade::Logger::logger, opentrade::GetNowStr() \
+                                              << " - " << msg)
+#define LOG_WARN(msg)                                            \
+  LOG4CXX_WARN(opentrade::Logger::logger, opentrade::GetNowStr() \
+                                              << " - " << msg)
+#define LOG_ERROR(msg)                                            \
+  LOG4CXX_ERROR(opentrade::Logger::logger, opentrade::GetNowStr() \
+                                               << " - " << msg)
+#else
 #define LOG_TRACE(msg) LOG4CXX_TRACE(opentrade::Logger::logger, msg)
 #define LOG_DEBUG(msg) LOG4CXX_DEBUG(opentrade::Logger::logger, msg)
 #define LOG_INFO(msg) LOG4CXX_INFO(opentrade::Logger::logger, msg)
 #define LOG_WARN(msg) LOG4CXX_WARN(opentrade::Logger::logger, msg)
 #define LOG_ERROR(msg) LOG4CXX_ERROR(opentrade::Logger::logger, msg)
+#endif
 #define LOG_FATAL(msg)                                             \
   {                                                                \
     LOG4CXX_FATAL(opentrade::Logger::logger, msg);                 \

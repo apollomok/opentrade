@@ -10,7 +10,11 @@
 
 namespace opentrade {
 
-static const char* kApiVersion = "1";
+static const char* kApiVersion =
+#ifdef BACKTEST
+    "backtest_"
+#endif
+    "1";
 
 class Adapter {
  public:
@@ -19,12 +23,7 @@ class Adapter {
   const std::string& name() const { return name_; }
   void set_name(const std::string& name) { name_ = name; }
   void set_config(const StrMap& config) { config_ = config; }
-  std::string GetVersion() const {
-#ifdef BACKTEST
-    return std::string("backtest_") + kApiVersion;
-#endif
-    return kApiVersion;
-  }
+  std::string GetVersion() const { return kApiVersion; }
   typedef Adapter* (*CFunc)();
   typedef std::function<Adapter*()> Func;
   Adapter* Clone() {

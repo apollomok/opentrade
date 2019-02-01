@@ -43,9 +43,11 @@ inline void AlgoRunner::operator()() {
       if (!algo.is_active() || !(*it)->listen()) {
         it = insts.erase(it);
         md_refs_[key]--;
+        assert(md_refs_[key] >= 0);
         assert(md_refs_[key] == insts.size());
         assert(AlgoManager::Instance().md_refs_[key] > 0);
         AlgoManager::Instance().md_refs_[key]--;
+        assert(AlgoManager::Instance().md_refs_[key] >= 0);
         continue;
       }
       if (trade_update) algo.OnMarketTrade(**it, md, md0);

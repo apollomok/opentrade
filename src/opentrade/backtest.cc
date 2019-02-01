@@ -82,14 +82,118 @@ decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
   return out;
 }
 
+inline double Backtest::TryFillBuy(double px, double qty, Orders* m) {
+  for (auto it = m->buys.begin();
+       it != m->buys.end() && qty > 0 && px <= it->first;) {
+    auto& tuple = it->second;
+    auto n = std::min(qty, tuple.leaves);
+    qty -= n;
+    tuple.leaves -= n;
+    assert(qty >= 0);
+    assert(tuple.leaves >= 0);
+    HandleFill(tuple.order->id, n, it->first,
+               boost::uuids::to_string(kUuidGen()), 0, tuple.leaves > 0);
+    auto algo_id = tuple.order->inst ? tuple.order->inst->algo().id() : 0;
+    of_ << std::setprecision(15) << GetNowStr() << ','
+        << tuple.order->sec->symbol << ',' << (tuple.order->IsBuy() ? 'B' : 'S')
+        << ',' << n << ',' << it->first << ',' << algo_id << '\n';
+    if (tuple.leaves <= 0) {
+      m->all.erase(tuple.order->id);
+      it = m->buys.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  return qty;
+}
+
+inline double Backtest::TryFillSell(double px, double qty, Orders* m) {
+  for (auto it = m->sells.rbegin();
+       it != m->sells.rend() && qty > 0 && px >= it->first;) {
+    auto& tuple = it->second;
+    auto n = std::min(qty, tuple.leaves);
+    qty -= n;
+    tuple.leaves -= n;
+    assert(qty >= 0);
+    assert(tuple.leaves >= 0);
+    HandleFill(tuple.order->id, n, it->first,
+               boost::uuids::to_string(kUuidGen()), 0, tuple.leaves > 0);
+    auto algo_id = tuple.order->inst ? tuple.order->inst->algo().id() : 0;
+    of_ << std::setprecision(15) << GetNowStr() << ','
+        << tuple.order->sec->symbol << ',' << (tuple.order->IsBuy() ? 'B' : 'S')
+        << ',' << n << ',' << it->first << ',' << algo_id << '\n';
+    if (tuple.leaves <= 0) {
+      m->all.erase(tuple.order->id);
+      m->buys.erase(
+          (++it).base());  // here must be (it + 1).base() rather than it.base()
+    } else {
+      ++it;
+    }
+  }
+  return qty;
+}
+
+inline void Backtest::HandleTick(uint32_t hmsm, char type, double px,
+                                 double qty, const SecTuple& st) {
+  auto hms = hmsm / 1000;
+  auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
+  if (interval_ > 0) {
+    int ms = nsecond * 1000 + hmsm % 1000;
+    while (ms >= next_interval_ && on_interval_ && !skip_) {
+      try {
+        on_interval_(obj_, next_interval_);
+      } catch (const bp::error_already_set& err) {
+        PrintPyError("on_interval", true);
+        return;
+      }
+      next_interval_ += interval_;
+    }
+  }
+  kTime = (tm0_ + nsecond) * 1000000lu + hmsm % 1000 * 1000;
+  auto it = kTimers.begin();
+  while (it != kTimers.end() && it->first < kTime) {
+    it->second();
+    kTimers.erase(it);
+    it = kTimers.begin();
+  }
+  auto sec = std::get<0>(st);
+  if (!sec) return;
+  px *= std::get<1>(st);
+  qty *= std::get<2>(st);
+  auto m = std::get<3>(st);
+  switch (type) {
+    case 'T': {
+      Update(sec->id, px, qty);
+      if (m->all.empty()) return;
+      if (!qty && sec->type == kForexPair) qty = 1e9;
+      if (px > 0 && qty > 0 &&
+          rand_r(&seed_) % 100 / 100. >= (1 - trade_hit_ratio_)) {
+        qty = TryFillBuy(px, qty, m);
+        TryFillSell(px, qty, m);
+      }
+    } break;
+    case 'A':
+      Update(sec->id, px, qty, false);
+      TryFillBuy(px, qty, m);
+      break;
+    case 'B':
+      Update(sec->id, px, qty, true);
+      TryFillSell(px, qty, m);
+      break;
+    default:
+      break;
+  }
+}
+
 void Backtest::PlayTickFile(const std::string& fn_tmpl,
                             const boost::gregorian::date& date) {
+  skip_ = false;
   boost::posix_time::ptime pt(date);
   auto tm = boost::posix_time::to_tm(pt);
-  auto tm0 = mktime(&tm);
-  kTime = tm0 * 1000000lu;
+  tm0_ = mktime(&tm);
+  kTime = tm0_ * 1000000lu;
 
-  localtime_r(&tm0, &tm);
+  localtime_r(&tm0_, &tm);
   for (auto& pair : SecurityManager::Instance().exchanges()) {
     pair.second->utc_time_offset = tm.tm_gmtoff;
   }
@@ -110,7 +214,7 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
   }
 
   auto secs0 = GetSecurities(ifs, fn);
-  std::vector<std::tuple<const Security*, double, double>> secs;
+  std::vector<SecTuple> secs;
   secs.resize(secs0.size());
   auto date_num = date.year() * 10000 + date.month() * 100 + date.day();
   for (auto i = 0u; i < secs0.size(); ++i) {
@@ -119,21 +223,23 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
     auto& adjs = sec->adjs;
     auto it = std::upper_bound(sec->adjs.begin(), sec->adjs.end(),
                                Security::Adj(date_num));
+    auto orders = &active_orders_[sec->id];
     if (it == adjs.end())
-      secs[i] = std::make_tuple(sec, 1., 1.);
+      secs[i] = std::make_tuple(sec, 1., 1., orders);
     else
-      secs[i] = std::make_tuple(sec, it->px, it->vol);
+      secs[i] = std::make_tuple(sec, it->px, it->vol, orders);
   }
 
   LOG_DEBUG("Start to play back " << fn);
   std::string line;
-  auto seed = 0u;
-  int trade_hit_ratio = 50;
+  seed_ = 0;
+  trade_hit_ratio_ = 0.5;
   auto trade_hit_ratio_str = getenv("TRADE_HIT_RATIO");
-  if (trade_hit_ratio) {
-    trade_hit_ratio = atof(trade_hit_ratio_str) * 100;
+  if (trade_hit_ratio_str) {
+    trade_hit_ratio_ = atof(trade_hit_ratio_str);
   }
-  while (std::getline(ifs, line)) {
+  next_interval_ = 0;
+  while (std::getline(ifs, line) && !skip_) {
     uint32_t hmsm;
     uint32_t i;
     char type;
@@ -143,67 +249,8 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
         5)
       continue;
     if (i >= secs.size()) continue;
-    auto hms = hmsm / 1000;
-    auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
-    kTime = (tm0 + nsecond) * 1000000lu + hmsm % 1000 * 1000;
-    auto it = kTimers.begin();
-    while (it != kTimers.end() && it->first < kTime) {
-      it->second();
-      kTimers.erase(it);
-      it = kTimers.begin();
-    }
     auto& st = secs[i];
-    auto sec = std::get<0>(st);
-    if (!sec) continue;
-    px *= std::get<1>(st);
-    qty *= std::get<2>(st);
-    switch (type) {
-      case 'T': {
-        Update(sec->id, px, qty);
-        if (!qty && sec->type == kForexPair) qty = 1e9;
-        if (px > 0 && qty > 0 &&
-            rand_r(&seed) % 100 >= (100 - trade_hit_ratio)) {
-          auto size = qty;
-          auto& actives = active_orders_[sec->id];
-          if (actives.empty()) continue;
-          auto it = actives.begin();
-          while (it != actives.end() && size > 0) {
-            auto& tuple = it->second;
-            auto ok = (tuple.is_buy && px <= tuple.px) ||
-                      (!tuple.is_buy && px >= tuple.px);
-            if (!ok) {
-              it++;
-              continue;
-            }
-            auto n = std::min(size, tuple.leaves);
-            size -= n;
-            tuple.leaves -= n;
-            assert(size >= 0);
-            assert(tuple.leaves >= 0);
-            HandleFill(tuple.id, n, tuple.px,
-                       boost::uuids::to_string(kUuidGen()), 0,
-                       tuple.leaves > 0);
-            of_ << std::setprecision(15) << GetNowStr() << ',' << sec->symbol
-                << ',' << (tuple.is_buy ? 'B' : 'S') << ',' << n << ','
-                << tuple.px << ',' << tuple.algo_id << '\n';
-            if (tuple.leaves <= 0)
-              it = actives.erase(it);
-            else
-              it++;
-          }
-        }
-      } break;
-      case 'A':
-        if (*sec->exchange->name == 'U') qty *= 100;
-        Update(sec->id, px, qty, false);
-        break;
-      case 'B':
-        if (*sec->exchange->name == 'U') qty *= 100;
-        Update(sec->id, px, qty, true);
-        break;
-      default:
-        break;
-    }
+    HandleTick(hmsm, type, px, qty, st);
   }
 
   PositionManager::Instance().UpdatePnl();
@@ -225,19 +272,22 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
 
 void Backtest::Clear() {
   auto& algo_mngr = AlgoManager::Instance();
-  algo_mngr.runners_[0].instruments_.clear();
-  algo_mngr.runners_[0].md_refs_.clear();
-  algo_mngr.runners_[0].instruments_.clear();
-  algo_mngr.md_refs_.clear();
-  algo_mngr.algos_.clear();
   for (auto& pair : algo_mngr.algos_) {
     pair.second->Stop();
     delete pair.second;
   }
+  algo_mngr.runners_[0].dirties_.clear();
+  algo_mngr.runners_[0].instruments_.clear();
+  algo_mngr.runners_[0].md_refs_.clear();
+  algo_mngr.md_refs_.clear();
+  algo_mngr.algos_.clear();
+  algo_mngr.algo_of_token_.clear();
+  algo_mngr.algos_of_sec_acc_.clear();
   auto& gb = GlobalOrderBook::Instance();
   for (auto& pair : gb.orders_) delete pair.second;
   gb.orders_.clear();
   gb.exec_ids_.clear();
+  kTimers.clear();
 }
 
 std::string Backtest::Place(const Order& ord) noexcept {
@@ -257,7 +307,6 @@ std::string Backtest::Place(const Order& ord) noexcept {
           HandleNewRejected(id, "invalid price");
           return;
         }
-        auto algo_id = ord.inst ? ord.inst->algo().id() : 0;
         if (ord.type == kMarket) {
           auto q = MarketDataManager::Instance().Get(*ord.sec).quote();
           auto qty_q = ord.IsBuy() ? q.ask_size : q.bid_size;
@@ -268,6 +317,7 @@ std::string Backtest::Place(const Order& ord) noexcept {
             if (qty_q > qty) qty_q = qty;
             HandleFill(id, qty_q, px_q, boost::uuids::to_string(kUuidGen()), 0,
                        qty_q != qty);
+            auto algo_id = ord.inst ? ord.inst->algo().id() : 0;
             of_ << std::setprecision(15) << GetNowStr() << ','
                 << ord.sec->symbol << ',' << (ord.IsBuy() ? 'B' : 'S') << ','
                 << qty_q << ',' << px_q << ',' << algo_id << '\n';
@@ -282,8 +332,11 @@ std::string Backtest::Place(const Order& ord) noexcept {
         } else {
           HandleNew(id, "");
         }
-        OrderTuple tuple{id, qty, ord.price, ord.IsBuy(), algo_id};
-        active_orders_[ord.sec->id][id] = tuple;
+        OrderTuple tuple{qty, &ord};
+        auto& m = active_orders_[ord.sec->id];
+        auto it = (ord.IsBuy() ? m.buys : m.sells).emplace(ord.price, tuple);
+        m.all.emplace(id, it);
+        assert(m.all.size() == m.buys.size() + m.sells.size());
       },
       latency_);
   return {};
@@ -292,16 +345,17 @@ std::string Backtest::Place(const Order& ord) noexcept {
 std::string Backtest::Cancel(const Order& ord) noexcept {
   Async(
       [this, ord]() {
-        auto& actives = active_orders_[ord.sec->id];
-        auto it = actives.find(ord.orig_id);
+        auto& m = active_orders_[ord.sec->id];
+        auto it = m.all.find(ord.orig_id);
         auto id = ord.id;
         auto orig_id = ord.orig_id;
-        if (it == actives.end()) {
+        if (it == m.all.end()) {
           HandleCancelRejected(id, orig_id, "inactive");
         } else {
           HandleCanceled(id, orig_id, "");
         }
-        actives.erase(it);
+        (ord.IsBuy() ? m.buys : m.sells).erase(it->second);
+        m.all.erase(it);
       },
       latency_);
   return {};
@@ -357,6 +411,7 @@ void Backtest::Start(const std::string& py, int latency) {
   on_start_ = GetCallable(m, "on_start");
   on_start_of_day_ = GetCallable(m, "on_start_of_day");
   on_end_ = GetCallable(m, "on_end");
+  on_interval_ = GetCallable(m, "on_interval");
   on_end_of_day_ = GetCallable(m, "on_end_of_day");
   if (!on_start_) return;
   try {

@@ -8,7 +8,7 @@ backtest-debug:
 	mkdir -p build/backtest-debug; cd build/backtest-debug; cmake ../../src -DCMAKE_BUILD_TYPE=Debug -DBACKTEST=1; make ${args}; cd -;
 
 backtest-release:
-	mkdir -p build/backtest-release; cd build/backtest-release; cmake ../../src -DCMAKE_BUILD_TYPE=Debug -DBACKTEST=1; make ${args}; cd -;
+	mkdir -p build/backtest-release; cd build/backtest-release; cmake ../../src -DCMAKE_BUILD_TYPE=Release -DBACKTEST=1; make ${args}; cd -;
 
 lint:
 	./scripts/cpplint.py src/*/*h src/*/*cc src/adapters/*/*h src/adapters/*/*cc src/algos/*/*h src/algos/*/*cc

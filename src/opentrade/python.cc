@@ -537,7 +537,7 @@ BOOST_PYTHON_MODULE(opentrade) {
         .attr("fromtimestamp")(NowUtcInMicro() / 1e6);
   });
 
-  bp::def("get_exchangies", +[]() {
+  bp::def("get_exchanges", +[]() {
     bp::list out;
     for (auto &pair : SecurityManager::Instance().exchanges()) {
       out.append(bp::object(bp::ptr(pair.second)));
@@ -547,7 +547,9 @@ BOOST_PYTHON_MODULE(opentrade) {
 
 #ifdef BACKTEST
   bp::class_<Backtest, boost::noncopyable>("Backtest", bp::no_init)
+      .def("set_interval", &Backtest::SetInterval)
       .def("clear", &Backtest::Clear)
+      .def("skip", &Backtest::Skip)
       .def("set_timeout",
            +[](Backtest &, bp::object func, int milliseconds) {
              if (milliseconds < 0) milliseconds = 0;
@@ -565,35 +567,35 @@ BOOST_PYTHON_MODULE(opentrade) {
              AlgoManager::Instance().Stop(sec.id, acc.id);
            }))
       .def("start_algo",
-           bp::make_function(
-               +[](Backtest &, const std::string &name, bp::dict params) {
-                 auto user = AccountManager::Instance().GetUser(0);
-                 auto params_ptr = std::make_shared<Algo::ParamMap>();
-                 auto items = params.items();
-                 for (auto i = 0u; i < bp::len(items); ++i) {
-                   std::string key = bp::extract<std::string>(items[i][0]);
-                   ParamDef::Value value;
-                   if (!GetValueScalar(items[i][1], &value)) {
-                     LOG_ERROR("Invalid '" << key << "' value: "
-                                           << bp::extract<const char *>(
-                                                  bp::str(items[i][1])));
-                   } else {
-                     (*params_ptr)[key] = value;
-                   }
+           bp::make_function(+[](Backtest &, const std::string &name,
+                                 bp::dict params) {
+             auto user = AccountManager::Instance().GetUser(0);
+             auto params_ptr = std::make_shared<Algo::ParamMap>();
+             auto items = params.items();
+             for (auto i = 0u; i < bp::len(items); ++i) {
+               std::string key = bp::extract<std::string>(items[i][0]);
+               ParamDef::Value value;
+               if (!GetValueScalar(items[i][1], &value)) {
+                 LOG_ERROR("Invalid '"
+                           << key << "' value: "
+                           << bp::extract<const char *>(bp::str(items[i][1])));
+               } else {
+                 (*params_ptr)[key] = value;
+               }
+             }
+             for (auto &pair : *params_ptr) {
+               if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
+                 if (!pval->acc) {
+                   pval->acc = AccountManager::Instance().GetSubAccount(0);
+                   params[pair.first].attr("acc") =
+                       bp::object(bp::ptr(pval->acc));
                  }
-                 for (auto &pair : *params_ptr) {
-                   if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-                     if (!pval->acc) {
-                       pval->acc = AccountManager::Instance().GetSubAccount(0);
-                       params[pair.first].attr("acc") =
-                           bp::object(bp::ptr(pval->acc));
-                     }
-                   }
-                 }
-                 return AlgoManager::Instance().Spawn(params_ptr, name, *user,
-                                                      "", "");
-               },
-               bp::return_value_policy<bp::reference_existing_object>()));
+               }
+             }
+             auto algo =
+                 AlgoManager::Instance().Spawn(params_ptr, name, *user, "", "");
+             return algo ? algo->id() : 0;
+           }));
 #endif
 }
 
