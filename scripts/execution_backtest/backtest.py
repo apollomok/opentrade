@@ -11,6 +11,9 @@ fw = open('algos.txt', 'wt')
 
 def on_start(self):
   log_info('backtest started')
+  log_info('MinSize=' + str(min_size))
+  log_info('ValidSeconds=' + str(period))
+  log_info('Aggression=' + agg)
 
 
 def on_end(self):

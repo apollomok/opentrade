@@ -124,8 +124,7 @@ inline double Backtest::TryFillSell(double px, double qty, Orders* m) {
         << ',' << n << ',' << it->first << ',' << algo_id << '\n';
     if (tuple.leaves <= 0) {
       m->all.erase(tuple.order->id);
-      m->buys.erase(
-          (++it).base());  // here must be (it + 1).base() rather than it.base()
+      m->sells.erase(++it.base());
     } else {
       ++it;
     }
@@ -138,22 +137,20 @@ inline void Backtest::HandleTick(uint32_t hmsm, char type, double px,
   auto hms = hmsm / 1000;
   auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
   kTime = (tm0_ + nsecond) * 1000000lu + hmsm % 1000 * 1000;
-  auto it = kTimers.begin();
-  while (it != kTimers.end() && it->first < kTime) {
+  for (auto it = kTimers.begin(); it != kTimers.end() && it->first < kTime;) {
     it->second();
-    kTimers.erase(it);
-    it = kTimers.begin();
+    it = kTimers.erase(it);
   }
   auto sec = std::get<0>(st);
   if (!sec) return;
   px *= std::get<1>(st);
   qty *= std::get<2>(st);
+  if (!qty && sec->type == kForexPair) qty = 1e9;
   auto m = std::get<3>(st);
   switch (type) {
     case 'T': {
       Update(sec->id, px, qty);
       if (m->all.empty()) return;
-      if (!qty && sec->type == kForexPair) qty = 1e9;
       if (px > 0 && qty > 0 &&
           rand_r(&seed_) % 100 / 100. >= (1 - trade_hit_ratio_)) {
         qty = TryFillBuy(px, qty, m);
@@ -274,12 +271,13 @@ void Backtest::Clear() {
   for (auto& pair : gb.orders_) delete pair.second;
   gb.orders_.clear();
   gb.exec_ids_.clear();
+  active_orders_.clear();
   kTimers.clear();
 }
 
 std::string Backtest::Place(const Order& ord) noexcept {
   Async(
-      [this, ord]() {
+      [this, &ord]() {
         auto id = ord.id;
         if (!ord.sec->IsInTradePeriod()) {
           HandleNewRejected(id, "Not in trading period");
@@ -331,7 +329,7 @@ std::string Backtest::Place(const Order& ord) noexcept {
 
 std::string Backtest::Cancel(const Order& ord) noexcept {
   Async(
-      [this, ord]() {
+      [this, &ord]() {
         auto& m = active_orders_[ord.sec->id];
         auto it = m.all.find(ord.orig_id);
         auto id = ord.id;
@@ -340,9 +338,9 @@ std::string Backtest::Cancel(const Order& ord) noexcept {
           HandleCancelRejected(id, orig_id, "inactive");
         } else {
           HandleCanceled(id, orig_id, "");
+          (ord.IsBuy() ? m.buys : m.sells).erase(it->second);
+          m.all.erase(it);
         }
-        (ord.IsBuy() ? m.buys : m.sells).erase(it->second);
-        m.all.erase(it);
       },
       latency_);
   return {};
