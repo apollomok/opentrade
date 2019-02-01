@@ -18,6 +18,7 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
   assert(qty_ > 0);
 
   inst_ = Subscribe(*sec, src);
+  initial_volume_ = inst_->md().trade.volume;
   auto seconds = GetParam(params, "ValidSeconds", 0);
   if (seconds < 60) return "Too short ValidSeconds, must be >= 60";
   begin_time_ = GetTime();
@@ -65,7 +66,6 @@ void TWAP::OnMarketTrade(const Instrument& inst, const MarketData& md,
   LOG_DEBUG(inst.sec().symbol << " trade: " << t.open << ' ' << t.high << ' '
                               << t.low << ' ' << t.close << ' ' << t.qty << ' '
                               << t.vwap << ' ' << t.volume);
-  if (initial_volume_ <= 0) initial_volume_ = t.volume;
 }
 
 void TWAP::OnMarketQuote(const Instrument& inst, const MarketData& md,
@@ -134,9 +134,9 @@ void TWAP::Timer() {
     return;
   }
 
-  if (initial_volume_ > 0 && max_pov_ > 0) {
-    if (inst_->total_qty() > max_pov_ * (md.trade.volume - initial_volume_))
-      return;
+  auto volume = md.trade.volume - initial_volume_;
+  if (volume > 0 && max_pov_ > 0) {
+    if (inst_->total_qty() - inst_->total_cx_qty() > max_pov_ * volume) return;
   }
 
   auto ratio =

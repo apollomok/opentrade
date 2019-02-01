@@ -453,7 +453,9 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_outstanding_qty", &Instrument::total_outstanding_qty)
       .add_property("total_exposure", &Instrument::total_exposure)
       .add_property("net_qty", &Instrument::net_qty)
+      .add_property("net_cx_qty", &Instrument::net_cx_qty)
       .add_property("total_qty", &Instrument::total_qty)
+      .add_property("total_cx_qty", &Instrument::total_cx_qty)
       .add_property("id", &Instrument::id)
       .def("unlisten", &Instrument::UnListen)
       .add_property("active_orders", +[](const Instrument &inst) {

@@ -119,7 +119,9 @@ class Instrument {
   double outstanding_buy_qty() const { return outstanding_buy_qty_; }
   double outstanding_sell_qty() const { return outstanding_sell_qty_; }
   double net_qty() const { return bought_qty_ - sold_qty_; }
+  double net_cx_qty() const { return bought_cx_qty_ - sold_cx_qty_; }
   double total_qty() const { return bought_qty_ + sold_qty_; }
+  double total_cx_qty() const { return bought_cx_qty_ + sold_cx_qty_; }
   double net_outstanding_qty() const {
     return outstanding_buy_qty_ - outstanding_sell_qty_;
   }
@@ -127,7 +129,7 @@ class Instrument {
     return outstanding_buy_qty_ + outstanding_sell_qty_;
   }
   double total_exposure() const {
-    return total_qty() + total_outstanding_qty();
+    return total_qty() - total_cx_qty() + total_outstanding_qty();
   }
   size_t id() const { return id_; }
 
@@ -146,6 +148,8 @@ class Instrument {
   Orders active_orders_;
   double bought_qty_ = 0;
   double sold_qty_ = 0;
+  double bought_cx_qty_ = 0;
+  double sold_cx_qty_ = 0;
   double outstanding_buy_qty_ = 0;
   double outstanding_sell_qty_ = 0;
   size_t id_ = 0;

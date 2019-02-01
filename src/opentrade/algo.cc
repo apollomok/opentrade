@@ -188,10 +188,14 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
           if (cm->order->IsBuy()) {
             if (cm->order->type != kCX)
               inst->outstanding_buy_qty_ -= cm->last_shares;
+            else
+              inst->bought_cx_qty_ += cm->last_shares;
             inst->bought_qty_ += cm->last_shares;
           } else {
             if (cm->order->type != kCX)
               inst->outstanding_sell_qty_ -= cm->last_shares;
+            else
+              inst->sold_cx_qty_ += cm->last_shares;
             inst->sold_qty_ += cm->last_shares;
           }
           if (cm->order->type != kCX) CrossEngine::Instance().UpdateTrade(cm);

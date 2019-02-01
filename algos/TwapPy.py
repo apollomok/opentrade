@@ -128,7 +128,7 @@ def timer(self):
     return
 
   if self.volume > 0 and self.max_pov > 0:
-    if inst.total_qty > self.max_pov * self.volume:
+    if inst.total_qty - inst.total_cx_qty > self.max_pov * self.volume:
       return
 
   ratio = min(1.,

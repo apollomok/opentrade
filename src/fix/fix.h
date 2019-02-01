@@ -293,8 +293,8 @@ class Fix : public FIX::Application,
       msg->setField(FIX::SecurityType(FIX::SecurityType_FUTURE));
     } else if (type == kForexPair) {
       msg->setField(FIX::Product(FIX::Product_CURRENCY));
-      msg->setField(FIX::Currency(
-          std::string(ord.sec->symbol, std::min(3lu, strlen(ord.sec->symbol)))));
+      msg->setField(FIX::Currency(std::string(
+          ord.sec->symbol, std::min(3lu, strlen(ord.sec->symbol)))));
     }
 
     msg->setField(FIX::Symbol(ord.sec->symbol));
