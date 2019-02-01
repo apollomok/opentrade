@@ -463,7 +463,8 @@ BOOST_PYTHON_MODULE(opentrade) {
   bp::class_<Python>("Algo", bp::no_init)
       .def("subscribe", &Python::Subscribe,
            (bp::arg("self"), bp::arg("sec"), bp::arg("src") = DataSrc{},
-            bp::arg("listen") = true), bp::return_internal_reference<>())
+            bp::arg("listen") = true),
+           bp::return_internal_reference<>())
       .def("place", &Python::Place, bp::return_internal_reference<>())
       .def("cancel",
            +[](Python &algo, const Order *ord) {

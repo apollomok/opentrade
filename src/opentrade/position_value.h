@@ -11,18 +11,16 @@ struct PositionValue {
   double total_outstanding_buy = 0;
   double total_outstanding_sell = 0;
 
-  void HandleNew(bool is_buy, double qty, double price, double multiplier,
-                 bool is_fx);
+  void HandleNew(bool is_buy, double qty, double price, double multiplier);
   void HandleTrade(bool is_buy, double qty, double price, double price0,
-                   double multiplier, bool is_bust, bool is_otc, bool is_fx);
+                   double multiplier, bool is_bust, bool is_otc);
   void HandleFinish(bool is_buy, double leaves_qty, double price0,
-                    double multiplier, bool is_fx);
+                    double multiplier);
 };
 
 inline void PositionValue::HandleNew(bool is_buy, double qty, double price,
-                                     double multiplier, bool is_fx) {
+                                     double multiplier) {
   assert(qty > 0);
-  if (is_fx) price = 1;
   auto value = qty * price * multiplier;
   if (is_buy) {
     total_outstanding_buy += value;
@@ -33,12 +31,8 @@ inline void PositionValue::HandleNew(bool is_buy, double qty, double price,
 
 inline void PositionValue::HandleTrade(bool is_buy, double qty, double price,
                                        double price0, double multiplier,
-                                       bool is_bust, bool is_otc, bool is_fx) {
+                                       bool is_bust, bool is_otc) {
   assert(qty > 0);
-  if (is_fx) {
-    price = 1;
-    price0 = 1;
-  }
   if (!is_buy) qty = -qty;
   auto value = qty * price * multiplier;
   if (is_otc) {
@@ -62,10 +56,8 @@ inline void PositionValue::HandleTrade(bool is_buy, double qty, double price,
 }
 
 inline void PositionValue::HandleFinish(bool is_buy, double leaves_qty,
-                                        double price0, double multiplier,
-                                        bool is_fx) {
+                                        double price0, double multiplier) {
   assert(leaves_qty);
-  if (is_fx) price0 = 1;
   auto value = leaves_qty * price0 * multiplier;
   if (is_buy) {
     total_outstanding_buy -= value;

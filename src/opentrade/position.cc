@@ -14,31 +14,23 @@ namespace pt = boost::posix_time;
 
 namespace opentrade {
 
-inline void HandlePnl(double qty, double price, double multiplier, bool is_fx,
+inline void HandlePnl(double qty, double price, double multiplier,
                       Position* p) {
   const auto qty0 = p->qty;
   auto& realized_pnl = p->realized_pnl;
   auto& avg_px = p->avg_px;
-  auto adj = 1.;
-  if (is_fx) {
-    if (avg_px == 0) {
-      if (price != 0) adj = 1 / price;
-    } else {
-      adj = 1 / avg_px;
-    }
-  }
   if ((qty0 > 0) && (qty < 0)) {  // sell trade to cover position
     if (qty0 > -qty) {
-      realized_pnl += (price - avg_px) * adj * -qty * multiplier;
+      realized_pnl += (price - avg_px) * -qty * multiplier;
     } else {
-      realized_pnl += (price - avg_px) * adj * qty0 * multiplier;
+      realized_pnl += (price - avg_px) * qty0 * multiplier;
       avg_px = price;
     }
   } else if ((qty0 < 0) && (qty > 0)) {  // buy trade to cover position
     if (-qty0 > qty) {
-      realized_pnl += (avg_px - price) * adj * qty * multiplier;
+      realized_pnl += (avg_px - price) * qty * multiplier;
     } else {
-      realized_pnl += (avg_px - price) * adj * -qty0 * multiplier;
+      realized_pnl += (avg_px - price) * -qty0 * multiplier;
       avg_px = price;
     }
   } else {  // open position
@@ -49,11 +41,10 @@ inline void HandlePnl(double qty, double price, double multiplier, bool is_fx,
 
 inline void Position::HandleTrade(bool is_buy, double qty, double price,
                                   double price0, double multiplier,
-                                  bool is_bust, bool is_otc, bool is_fx,
-                                  bool is_cx) {
+                                  bool is_bust, bool is_otc, bool is_cx) {
   assert(qty > 0);
   PositionValue::HandleTrade(is_buy, qty, price, price0, multiplier, is_bust,
-                             is_otc, is_fx);
+                             is_otc);
   if (!is_buy) qty = -qty;
   if (is_otc) {
     // do nothing
@@ -74,32 +65,31 @@ inline void Position::HandleTrade(bool is_buy, double qty, double price,
   }
 
   if (is_bust) qty = -qty;
-  HandlePnl(qty, price, multiplier, is_fx, this);
+  HandlePnl(qty, price, multiplier, this);
   this->qty += qty;
   if (is_cx) this->cx_qty += qty;
 }
 
 inline void Position::HandleFinish(bool is_buy, double leaves_qty,
-                                   double price0, double multiplier,
-                                   bool is_fx) {
+                                   double price0, double multiplier) {
   assert(leaves_qty);
   if (is_buy) {
     total_outstanding_buy_qty -= leaves_qty;
   } else {
     total_outstanding_sell_qty -= leaves_qty;
   }
-  PositionValue::HandleFinish(is_buy, leaves_qty, price0, multiplier, is_fx);
+  PositionValue::HandleFinish(is_buy, leaves_qty, price0, multiplier);
 }
 
 inline void Position::HandleNew(bool is_buy, double qty, double price,
-                                double multiplier, bool is_fx) {
+                                double multiplier) {
   assert(qty > 0);
   if (is_buy) {
     total_outstanding_buy_qty += qty;
   } else {
     total_outstanding_sell_qty += qty;
   }
-  PositionValue::HandleNew(is_buy, qty, price, multiplier, is_fx);
+  PositionValue::HandleNew(is_buy, qty, price, multiplier);
 }
 
 void PositionManager::Initialize() {
@@ -165,8 +155,7 @@ void PositionManager::Initialize() {
     auto& p2 =
         self.broker_positions_[std::make_pair(broker_account_id, security_id)];
     p2.realized_pnl += p.realized_pnl;
-    HandlePnl(p.qty, p.avg_px, sec->multiplier * sec->rate,
-              sec->type == opentrade::kForexPair, &p2);
+    HandlePnl(p.qty, p.avg_px, sec->multiplier * sec->rate, &p2);
     p2.qty += p.qty;
     p2.cx_qty += p.cx_qty;
   }
@@ -198,7 +187,6 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
   auto multiplier = sec->rate * sec->multiplier;
   bool is_buy = ord->IsBuy();
   auto is_otc = ord->type == kOTC || ord->type == kCX;
-  auto is_fx = sec->type == kForexPair;
   auto is_cx = ord->type == kCX;
   assert(cm && ord->id > 0);
   static std::mutex kMutex;
@@ -217,21 +205,20 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       auto px = cm->last_px;
       auto px0 = ord->price;
       auto& pos = sub_positions_[std::make_pair(ord->sub_account->id, sec->id)];
-      pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx,
-                      is_cx);
+      pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx);
       broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
-          .HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx,
+          .HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc,
                        is_cx);
       user_positions_[std::make_pair(ord->user->id, sec->id)].HandleTrade(
-          is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx, is_cx);
+          is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx);
       const_cast<SubAccount*>(ord->sub_account)
           ->position_value.HandleTrade(is_buy, qty, px, px0, multiplier,
-                                       is_bust, is_otc, is_fx);
+                                       is_bust, is_otc);
       const_cast<BrokerAccount*>(ord->broker_account)
           ->position_value.HandleTrade(is_buy, qty, px, px0, multiplier,
-                                       is_bust, is_otc, is_fx);
+                                       is_bust, is_otc);
       const_cast<User*>(ord->user)->position_value.HandleTrade(
-          is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_fx);
+          is_buy, qty, px, px0, multiplier, is_bust, is_otc);
       if (offline) return;
 #ifdef BACKTEST
       return;
@@ -296,17 +283,17 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
         auto qty = ord->qty;
         auto px = ord->price;
         sub_positions_[std::make_pair(ord->sub_account->id, sec->id)].HandleNew(
-            is_buy, qty, px, multiplier, is_fx);
+            is_buy, qty, px, multiplier);
         broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
-            .HandleNew(is_buy, qty, px, multiplier, is_fx);
+            .HandleNew(is_buy, qty, px, multiplier);
         user_positions_[std::make_pair(ord->user->id, sec->id)].HandleNew(
-            is_buy, qty, px, multiplier, is_fx);
+            is_buy, qty, px, multiplier);
         const_cast<SubAccount*>(ord->sub_account)
-            ->position_value.HandleNew(is_buy, qty, px, multiplier, is_fx);
+            ->position_value.HandleNew(is_buy, qty, px, multiplier);
         const_cast<BrokerAccount*>(ord->broker_account)
-            ->position_value.HandleNew(is_buy, qty, px, multiplier, is_fx);
-        const_cast<User*>(ord->user)->position_value.HandleNew(
-            is_buy, qty, px, multiplier, is_fx);
+            ->position_value.HandleNew(is_buy, qty, px, multiplier);
+        const_cast<User*>(ord->user)->position_value.HandleNew(is_buy, qty, px,
+                                                               multiplier);
       }
       break;
     case kRiskRejected:
@@ -319,17 +306,17 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
         auto qty = cm->leaves_qty;
         auto px = ord->price;
         sub_positions_[std::make_pair(ord->sub_account->id, sec->id)]
-            .HandleFinish(is_buy, qty, px, multiplier, is_fx);
+            .HandleFinish(is_buy, qty, px, multiplier);
         broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
-            .HandleFinish(is_buy, qty, px, multiplier, is_fx);
+            .HandleFinish(is_buy, qty, px, multiplier);
         user_positions_[std::make_pair(ord->user->id, sec->id)].HandleFinish(
-            is_buy, qty, px, multiplier, is_fx);
+            is_buy, qty, px, multiplier);
         const_cast<SubAccount*>(ord->sub_account)
-            ->position_value.HandleFinish(is_buy, qty, px, multiplier, is_fx);
+            ->position_value.HandleFinish(is_buy, qty, px, multiplier);
         const_cast<BrokerAccount*>(ord->broker_account)
-            ->position_value.HandleFinish(is_buy, qty, px, multiplier, is_fx);
+            ->position_value.HandleFinish(is_buy, qty, px, multiplier);
         const_cast<User*>(ord->user)->position_value.HandleFinish(
-            is_buy, qty, px, multiplier, is_fx);
+            is_buy, qty, px, multiplier);
       }
       break;
     default:
@@ -351,16 +338,7 @@ void PositionManager::UpdatePnl() {
     if (!sec) continue;
     auto price = sec->CurrentPrice();
     if (!price) continue;
-    auto adj = 1.;
-    auto avg_px = pos.avg_px;
-    if (sec->type == kForexPair) {
-      if (avg_px == 0) {
-        if (price != 0) adj = 1 / price;
-      } else {
-        adj = 1 / avg_px;
-      }
-    }
-    pos.unrealized_pnl = pos.qty * (price - avg_px) * adj;
+    pos.unrealized_pnl = pos.qty * (price - pos.avg_px);
     pnl.second += pos.unrealized_pnl;
   }
 #ifdef BACKTEST
