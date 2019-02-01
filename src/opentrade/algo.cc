@@ -376,19 +376,18 @@ void Algo::Stop() {
   }
 }
 
-void Algo::SetTimeout(std::function<void()> func, int milliseconds) {
-  AlgoManager::Instance().SetTimeout(id_, func, milliseconds);
+void Algo::SetTimeout(std::function<void()> func, double seconds) {
+  AlgoManager::Instance().SetTimeout(id_, func, seconds);
 }
 
 void AlgoManager::SetTimeout(Algo::IdType id, std::function<void()> func,
-                             int milliseconds) {
-  if (milliseconds < 0) milliseconds = 0;
+                             double seconds) {
+  if (seconds < 0) seconds = 0;
 #ifdef BACKTEST
-  auto tm = kTime + milliseconds * 1000lu;
-  kTimers.emplace(tm, func);
+  kTimers.emplace(kTime + seconds * 1e6, func);
 #else
   auto t = new boost::asio::deadline_timer(
-      io_service_, boost::posix_time::milliseconds(milliseconds));
+      io_service_, boost::posix_time::microseconds(seconds * 1e6));
   t->async_wait(strands_[id % threads_.size()].wrap([func, t](auto) {
     func();
     delete t;

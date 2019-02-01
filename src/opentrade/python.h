@@ -37,7 +37,7 @@ class Python : public Algo {
                      const MarketData& md0) noexcept override;
   void OnConfirmation(const Confirmation& cm) noexcept override;
   const ParamDefs& GetParamDefs() noexcept override;
-  void SetTimeout(bp::object func, int milliseconds);
+  void SetTimeout(bp::object func, double seconds);
 
   Instrument* Subscribe(const Security& sec, DataSrc src, bool listen) {
     return Algo::Subscribe(sec, src, listen);

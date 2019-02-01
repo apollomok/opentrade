@@ -60,7 +60,7 @@ class Algo : public Adapter {
   typedef uint32_t IdType;
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
   typedef std::shared_ptr<ParamMap> ParamMapPtr;
-  void SetTimeout(std::function<void()> func, int milliseconds);
+  void SetTimeout(std::function<void()> func, double seconds);
   static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept = 0;
@@ -198,8 +198,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   void Stop(const std::string& token);
   void Stop(Security::IdType sec, SubAccount::IdType acc);
   void Handle(Confirmation::Ptr cm);
-  void SetTimeout(Algo::IdType id, std::function<void()> func,
-                  int milliseconds);
+  void SetTimeout(Algo::IdType id, std::function<void()> func, double seconds);
   bool IsSubscribed(DataSrc::IdType src, Security::IdType id) {
     return md_refs_[std::make_pair(src, id)] > 0;
   }

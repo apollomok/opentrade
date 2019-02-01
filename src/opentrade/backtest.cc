@@ -15,8 +15,8 @@ namespace opentrade {
 
 static boost::uuids::random_generator kUuidGen;
 
-static inline void Async(std::function<void()> func, int ms) {
-  kTimers.emplace(0, func);
+static inline void Async(std::function<void()> func, double seconds) {
+  kTimers.emplace(kTime + seconds * 1e6, func);
 }
 
 decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
@@ -137,18 +137,6 @@ inline void Backtest::HandleTick(uint32_t hmsm, char type, double px,
                                  double qty, const SecTuple& st) {
   auto hms = hmsm / 1000;
   auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
-  if (interval_ > 0) {
-    int ms = nsecond * 1000 + hmsm % 1000;
-    while (ms >= next_interval_ && on_interval_ && !skip_) {
-      try {
-        on_interval_(obj_, next_interval_);
-      } catch (const bp::error_already_set& err) {
-        PrintPyError("on_interval", true);
-        return;
-      }
-      next_interval_ += interval_;
-    }
-  }
   kTime = (tm0_ + nsecond) * 1000000lu + hmsm % 1000 * 1000;
   auto it = kTimers.begin();
   while (it != kTimers.end() && it->first < kTime) {
@@ -238,7 +226,6 @@ void Backtest::PlayTickFile(const std::string& fn_tmpl,
   if (trade_hit_ratio_str) {
     trade_hit_ratio_ = atof(trade_hit_ratio_str);
   }
-  next_interval_ = 0;
   while (std::getline(ifs, line) && !skip_) {
     uint32_t hmsm;
     uint32_t i;
@@ -376,7 +363,7 @@ SubAccount* Backtest::CreateSubAccount(const std::string& name) {
   return s;
 }
 
-void Backtest::Start(const std::string& py, int latency) {
+void Backtest::Start(const std::string& py, double latency) {
   obj_ = bp::object(bp::ptr(this));
   latency_ = latency;
 
@@ -411,7 +398,6 @@ void Backtest::Start(const std::string& py, int latency) {
   on_start_ = GetCallable(m, "on_start");
   on_start_of_day_ = GetCallable(m, "on_start_of_day");
   on_end_ = GetCallable(m, "on_end");
-  on_interval_ = GetCallable(m, "on_interval");
   on_end_of_day_ = GetCallable(m, "on_end_of_day");
   if (!on_start_) return;
   try {

@@ -100,7 +100,7 @@ void TWAP::Timer() {
     Stop();
     return;
   }
-  SetTimeout([this]() { Timer(); }, 1000);
+  SetTimeout([this]() { Timer(); }, 1);
   if (!inst_->sec().IsInTradePeriod()) return;
 
   auto& md = inst_->md();

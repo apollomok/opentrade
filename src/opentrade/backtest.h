@@ -26,11 +26,10 @@ class Backtest : public ExchangeConnectivityAdapter,
   std::string Cancel(const opentrade::Order& ord) noexcept override;
   void PlayTickFile(const std::string& fn_tmpl,
                     const boost::gregorian::date& date);
-  void Start(const std::string& py, int latency);
+  void Start(const std::string& py, double latency);
   SubAccount* CreateSubAccount(const std::string& name);
   void End();
   void Clear();
-  void SetInterval(int milliseconds) { interval_ = milliseconds; }
   void Skip() { skip_ = true; }
 
  private:
@@ -57,11 +56,8 @@ class Backtest : public ExchangeConnectivityAdapter,
   bp::object on_start_of_day_;
   bp::object on_end_of_day_;
   bp::object on_end_;
-  bp::object on_interval_;
-  int latency_ = 0;   // in milliseconds
-  int interval_ = 0;  // in milliseconds
+  double latency_ = 0;  // in seconds
   time_t tm0_ = 0;
-  int next_interval_ = 0;
   uint32_t seed_ = 0;
   double trade_hit_ratio_ = 0;
   std::ofstream of_;

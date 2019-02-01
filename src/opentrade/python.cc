@@ -547,14 +547,12 @@ BOOST_PYTHON_MODULE(opentrade) {
 
 #ifdef BACKTEST
   bp::class_<Backtest, boost::noncopyable>("Backtest", bp::no_init)
-      .def("set_interval", &Backtest::SetInterval)
       .def("clear", &Backtest::Clear)
       .def("skip", &Backtest::Skip)
       .def("set_timeout",
-           +[](Backtest &, bp::object func, int milliseconds) {
-             if (milliseconds < 0) milliseconds = 0;
-             auto tm = kTime + milliseconds * 1000lu;
-             kTimers.emplace(tm, [func]() {
+           +[](Backtest &, bp::object func, double seconds) {
+             if (seconds < 0) seconds = 0;
+             kTimers.emplace(kTime + seconds * 1e6, [func]() {
                try {
                  func();
                } catch (const bp::error_already_set &err) {
@@ -840,7 +838,7 @@ Python *Python::LoadTest(const std::string &module_name,
   return p;
 }
 
-void Python::SetTimeout(bp::object func, int milliseconds) {
+void Python::SetTimeout(bp::object func, double seconds) {
   Algo::SetTimeout(
       [this, func]() {
         LOCK();
@@ -850,7 +848,7 @@ void Python::SetTimeout(bp::object func, int milliseconds) {
           PrintPyError("set_timeout");
         }
       },
-      milliseconds);
+      seconds);
 }
 
 std::string Python::Test() noexcept {

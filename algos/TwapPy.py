@@ -101,7 +101,7 @@ def timer(self):
   if now > self.end_time:
     self.stop()
     return
-  self.set_timeout(lambda: timer(self), 1000)
+  self.set_timeout(lambda: timer(self), 1)
   if not inst.sec.is_in_trade_period: return
 
   md = inst.md

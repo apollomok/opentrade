@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   std::string tick_file;
   auto start_date = 0u;
   auto end_date = 0u;
-  auto latency = 0;
+  auto latency = 0.;
 #else
   auto io_threads = 0;
   auto port = 0;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
             "start date, in 'YYYYmmdd' format")(
             "end_date,e", bpo::value<uint32_t>(&end_date),
             "end date, in 'YYYYmmdd' format")(
-            "latency,l", bpo::value<int>(&latency), "latency in milliseconds")
+            "latency,l", bpo::value<double>(&latency), "latency in seconds")
 #else
         ("db_create_tables",
          bpo::value<bool>(&db_create_tables)->default_value(false),

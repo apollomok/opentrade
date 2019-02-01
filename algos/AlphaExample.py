@@ -13,10 +13,10 @@ def on_start(self, params):
   self.vwap15 = [[0, 0], [], 15]
   self.vwap30 = [[0, 0], [], 30]
   self.set_timeout(lambda: self.stop(),
-                   (st.sec.exchange.trade_end - st.sec.exchange.seconds) * 1000)
+                   st.sec.exchange.trade_end - st.sec.exchange.seconds)
   self.set_timeout(
       lambda: close_pos(self),
-      (st.sec.exchange.trade_end - st.sec.exchange.seconds - 60) * 1000)
+      st.sec.exchange.trade_end - st.sec.exchange.seconds - 60)
   self.end = False
 
 
