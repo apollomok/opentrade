@@ -3,7 +3,7 @@ for agg in Low Medium High
 do
   for period in 0150 0300 0450 0600 0900 1200 1500 1800 2100 2400 2700 3000
   do
-MARKET=FX ValidSeconds=$period Aggression=$agg MinSize=100000 ./opentrade
+MARKET=FX ValidSeconds=$period Aggression=$agg MinSize=100000 ./opentrade -s 20181001 -e 20181130
 suffix=$agg-${period}.txt
 cp algos.txt algos-$suffix; cp trades.txt trades-$suffix
 ./report.py > rpt-$suffix

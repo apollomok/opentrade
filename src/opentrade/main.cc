@@ -50,10 +50,14 @@ int main(int argc, char *argv[]) {
     bpo::options_description config("Configuration");
     config.add_options()("help,h", "produce help message")
 #ifdef BACKTEST
-        ("backtest_file,b", bpo::value<std::string>(&backtest_file),
+        ("backtest_file,b",
+         bpo::value<std::string>(&backtest_file)
+             ->default_value("./backtest.py"),
          "python file which provides callback functions")(
-            "tick_file,t", bpo::value<std::string>(&tick_file),
-            "in strftime format, e.g. /to/path/%Y%m%d.txt")(
+            "tick_file,t",
+            bpo::value<std::string>(&tick_file)
+                ->default_value("./ticks/%Y%m%d"),
+            "in strftime format, e.g. /to/path/%Y%m%d")(
             "start_date,s", bpo::value<uint32_t>(&start_date),
             "start date, in 'YYYYmmdd' format")(
             "end_date,e", bpo::value<uint32_t>(&end_date),
