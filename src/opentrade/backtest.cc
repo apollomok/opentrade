@@ -15,7 +15,7 @@ namespace opentrade {
 
 static boost::uuids::random_generator kUuidGen;
 
-static inline void Async(std::function<void()> func, double seconds) {
+static inline void Async(std::function<void()> func, double seconds = 0) {
   kTimers.emplace(kTime + seconds * 1e6, func);
 }
 
@@ -144,6 +144,7 @@ inline void Backtest::HandleTick(uint32_t hmsm, char type, double px,
   auto sec = std::get<0>(st);
   if (!sec) return;
   px *= std::get<1>(st);
+  if (!px) return;
   qty *= std::get<2>(st);
   if (!qty && sec->type == kForexPair) qty = 1e9;
   auto m = std::get<3>(st);
@@ -322,6 +323,18 @@ std::string Backtest::Place(const Order& ord) noexcept {
         auto it = (ord.IsBuy() ? m.buys : m.sells).emplace(ord.price, tuple);
         m.all.emplace(id, it);
         assert(m.all.size() == m.buys.size() + m.sells.size());
+        Async([this, &ord, &m]() {
+          auto& md = MarketDataManager::Instance().GetLite(ord.sec->id);
+          auto px = ord.IsBuy() ? md.quote().ask_price : md.quote().bid_price;
+          if (!px) return;
+          auto qty = ord.IsBuy() ? md.quote().ask_size : md.quote().bid_size;
+          if (!qty && ord.sec->type == kForexPair) qty = 1e9;
+          if (ord.IsBuy()) {
+            TryFillBuy(px, qty, &m);
+          } else {
+            TryFillSell(px, qty, &m);
+          }
+        });
       },
       latency_);
   return {};
