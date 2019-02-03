@@ -136,11 +136,17 @@ inline void Backtest::HandleTick(uint32_t hmsm, char type, double px,
                                  double qty, const SecTuple& st) {
   auto hms = hmsm / 1000;
   auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
-  kTime = (tm0_ + nsecond) * 1000000lu + hmsm % 1000 * 1000;
-  for (auto it = kTimers.begin(); it != kTimers.end() && it->first < kTime;) {
+  auto tm = (tm0_ + nsecond) * 1000000lu + hmsm % 1000 * 1000;
+  if (tm < kTime) tm = kTime;
+  auto it = kTimers.begin();
+  while (it != kTimers.end() && it->first <= tm) {
+    if (it->first > kTime) kTime = it->first;
     it->second();
-    it = kTimers.erase(it);
+    kTimers.erase(it);
+    // do not use it = kTimers.erase(it) in case smaller timer inserted
+    it = kTimers.begin();
   }
+  if (tm > kTime) kTime = tm;
   auto sec = std::get<0>(st);
   if (!sec) return;
   px *= std::get<1>(st);

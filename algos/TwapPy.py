@@ -131,8 +131,8 @@ def timer(self):
     if inst.total_qty - inst.total_cx_qty > self.max_pov * self.volume:
       return
 
-  ratio = min(1.,
-              (now - self.begin_time + 1.) / (self.end_time - self.begin_time))
+  ratio = min(1, (now - self.begin_time + 1) /
+              (0.8 * (self.end_time - self.begin_time) + 1))
   expect = st.qty * ratio
   leaves = expect - inst.total_exposure
   if leaves <= 0: return

@@ -17,7 +17,7 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
   assert(side_);
   assert(qty_ > 0);
 
-  inst_ = Subscribe(*sec, src);
+  inst_ = Subscribe(*sec, src, false);
   initial_volume_ = inst_->md().trade.volume;
   auto seconds = GetParam(params, "ValidSeconds", 0);
   if (seconds < 60) return "Too short ValidSeconds, must be >= 60";
@@ -139,8 +139,8 @@ void TWAP::Timer() {
     if (inst_->total_qty() - inst_->total_cx_qty() > max_pov_ * volume) return;
   }
 
-  auto ratio =
-      std::min(1., (now - begin_time_ + 1.) / (end_time_ - begin_time_));
+  auto ratio = std::min(
+      1., (now - begin_time_ + 1) / (0.8 * (end_time_ - begin_time_) + 1));
   auto expect = qty_ * ratio;
   auto leaves = expect - inst_->total_exposure();
   if (leaves <= 0) return;

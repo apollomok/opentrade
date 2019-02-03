@@ -132,6 +132,9 @@ int main(int argc, char *argv[]) {
   if (end_date < start_date) {
     LOG_FATAL("end_date < start_date");
   }
+  if (start_date < 19000000) {
+    LOG_FATAL("Invalid start_date " << start_date);
+  }
   if (tick_file.empty()) {
     LOG_FATAL("empty tick_file");
   }
