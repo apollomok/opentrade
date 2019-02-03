@@ -19,9 +19,10 @@ def main():
   opts.add_option(
       '-e', '--exclude', help='excluded acc following fnmatch format')
   opts, args = opts.parse_args()
-  print('| %-12s' % 'param' + '|    ' + '    |    '.join(
+  print('|    %-12s' % 'params' + '    |    ' + '    |    '.join(
       ['%-12s' % x
-       for x in ('avg cost', 'avg fr', 'total pnl', 'total tvr')]) + ' |')
+       for x in ('avg cost', 'avg fr', 'total pnl', 'total tvr')]) + '    |')
+  print('|' + '|'.join(['-' * 20 for i in range(5)]) + '|')
   for fn in args:
     with open(fn) as fh:
       paramstr = os.path.basename(fn).replace(opts.prefix + '-', '').replace(
@@ -44,8 +45,8 @@ def main():
       fr = sum([x[1] for x in res]) / len(res)
       pnl = sum([x[2] for x in res]) / 1e6
       tvr = sum([x[3] for x in res])
-      print('| %-12s' % paramstr + '|    ' + '    |    '.join(
-          ['%-12.4f' % x for x in (cost, fr, pnl, tvr)]) + ' |')
+      print('|    %-12s' % paramstr + '    |    ' + '    |    '.join(
+          ['%-12.4f' % x for x in (cost, fr, pnl, tvr)]) + '    |')
 
 
 if __name__ == '__main__':
