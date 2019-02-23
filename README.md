@@ -9,7 +9,6 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 ---
 
 # Features:
-* Built on C++17
 * Strictly follows [Google C++ Style Guild](https://google.github.io/styleguide/cppguide.html)
 * Multi-level account functionality
 * Super simple API interfaces for market data adapter (C++), exchange connectivity (C++) and execution/alpha algo (C++ and Python)
