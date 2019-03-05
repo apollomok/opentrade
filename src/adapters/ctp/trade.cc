@@ -260,6 +260,7 @@ void Trade::OnRtnOrder(CThostFtdcOrderField* ord) {
       state = "CANCELED";
       break;
     case THOST_FTDC_OST_NoTradeNotQueueing:
+    case THOST_FTDC_OST_Unknown:
       state = "PENDING_NEW";
       break;
     case THOST_FTDC_OST_NoTradeQueueing:
