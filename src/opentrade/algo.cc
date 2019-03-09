@@ -108,11 +108,13 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
   algo->token_ = token;
   algos_.emplace(algo->id_, algo);
   if (!token.empty()) algo_of_token_.emplace(token, algo);
-  for (auto& pair : *params) {
-    if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-      if (pval->acc && pval->sec) {
-        algos_of_sec_acc_.insert(
-            std::make_pair(std::make_pair(pval->sec->id, pval->acc->id), algo));
+  if (params) {
+    for (auto& pair : *params) {
+      if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
+        if (pval->acc && pval->sec) {
+          algos_of_sec_acc_.insert(
+              std::make_pair(std::make_pair(pval->sec->id, pval->acc->id), algo));
+        }
       }
     }
   }
