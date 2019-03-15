@@ -23,11 +23,15 @@ struct CrossSecurity {
   std::mutex m;
   typedef std::lock_guard<std::mutex> Lock;
   void Execute(CrossOrder* ord);
+  void Erase(const CrossOrder& ord);
+  void Erase(Algo::IdType aid);
 };
 
 class CrossEngine : public Singleton<CrossEngine> {
  public:
   void Place(CrossOrder* ord);
+  void Erase(const CrossOrder& ord) { Get(ord.sec->id)->Erase(ord); }
+  void Erase(Security::IdType sid, Algo::IdType aid) { Get(sid)->Erase(aid); }
   void UpdateTrade(Confirmation::Ptr cm);
 
  private:

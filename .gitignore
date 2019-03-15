@@ -16,3 +16,4 @@ __pycache__
 ticks
 *.txt
 *.con
+opentrade-dbg

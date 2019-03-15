@@ -112,8 +112,8 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
     for (auto& pair : *params) {
       if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
         if (pval->acc && pval->sec) {
-          algos_of_sec_acc_.insert(
-              std::make_pair(std::make_pair(pval->sec->id, pval->acc->id), algo));
+          algos_of_sec_acc_.insert(std::make_pair(
+              std::make_pair(pval->sec->id, pval->acc->id), algo));
         }
       }
     }
@@ -429,8 +429,7 @@ void Algo::Cross(double qty, double price, OrderSide side,
   c.price = price;
   c.sub_account = acc;
   c.type = kCX;
-  auto ord = Place(c, inst);
-  if (ord) CrossEngine::Instance().Place(static_cast<CrossOrder*>(ord));
+  Place(c, inst);
 }
 
 bool Algo::Cancel(const Order& ord) {

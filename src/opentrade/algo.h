@@ -50,6 +50,7 @@ struct ParamDef {
   double min_value = 0;
   double max_value = 0;
   int precision = 0;
+  bool editable = false;
 };
 
 typedef std::vector<ParamDef> ParamDefs;
@@ -70,6 +71,7 @@ class Algo : public Adapter {
                              const MarketData& md0) noexcept = 0;
   virtual void OnMarketQuote(const Instrument& inst, const MarketData& md,
                              const MarketData& md0) noexcept = 0;
+  // for cross order, only kUnconfirmedNew and kFilled
   virtual void OnConfirmation(const Confirmation& cm) noexcept = 0;
   virtual const ParamDefs& GetParamDefs() noexcept = 0;
 
@@ -145,12 +147,12 @@ class Instrument {
   const Security& sec_;
   const MarketData* md_ = nullptr;
   const DataSrc src_;
-  Orders active_orders_;
+  Orders active_orders_;  // cross order not inserted here
   double bought_qty_ = 0;
   double sold_qty_ = 0;
   double bought_cx_qty_ = 0;
   double sold_cx_qty_ = 0;
-  double outstanding_buy_qty_ = 0;
+  double outstanding_buy_qty_ = 0;  // cross order not impact this
   double outstanding_sell_qty_ = 0;
   size_t id_ = 0;
   bool listen_ = true;
