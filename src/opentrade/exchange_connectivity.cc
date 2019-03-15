@@ -2,6 +2,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include "cross_engine.h"
 #include "logger.h"
 #include "risk.h"
 
@@ -152,6 +153,7 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     return true;
   } else if (ord->type == kCX) {
     ord->id = GlobalOrderBook::Instance().NewOrderId();
+    CrossEngine::Instance().Place(static_cast<CrossOrder*>(ord));
     HandleConfirmation(ord, kUnconfirmedNew);
     return true;
   }
@@ -220,7 +222,11 @@ static inline bool Cancel(Order* cancel_order) {
 }
 
 bool ExchangeConnectivityManager::Cancel(const Order& orig_ord) {
-  if (orig_ord.type == kOTC || orig_ord.type == kCX) return false;
+  if (orig_ord.type == kCX) {
+    CrossEngine::Instance().Erase(static_cast<const CrossOrder&>(orig_ord));
+    return true;
+  }
+  if (orig_ord.type == kOTC) return false;
   assert(orig_ord.sub_account);
   assert(orig_ord.sec);
   assert(orig_ord.user);

@@ -429,8 +429,7 @@ void Algo::Cross(double qty, double price, OrderSide side,
   c.price = price;
   c.sub_account = acc;
   c.type = kCX;
-  auto ord = Place(c, inst);
-  if (ord) CrossEngine::Instance().Place(static_cast<CrossOrder*>(ord));
+  Place(c, inst);
 }
 
 bool Algo::Cancel(const Order& ord) {

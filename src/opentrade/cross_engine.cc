@@ -93,16 +93,11 @@ void CrossEngine::UpdateTrade(Confirmation::Ptr cm) {
   }
 }
 
-inline void CrossSecurity::Erase(CrossOrder* ord) {
+void CrossSecurity::Erase(const CrossOrder& ord) {
   Lock lock(m);
-  auto& ords = (ord->IsBuy() ? buys : sells);
-  auto it = std::find(ords.begin(), ords.end(), ord);
+  auto& ords = (ord.IsBuy() ? buys : sells);
+  auto it = std::find(ords.begin(), ords.end(), &ord);
   if (it != ords.end()) ords.erase(it);
-}
-
-void CrossEngine::Erase(CrossOrder* ord) {
-  if (!ord) return;
-  Get(ord->sec->id)->Erase(ord);
 }
 
 void CrossSecurity::Erase(Algo::IdType aid) {
