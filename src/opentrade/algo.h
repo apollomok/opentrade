@@ -50,6 +50,7 @@ struct ParamDef {
   double min_value = 0;
   double max_value = 0;
   int precision = 0;
+  bool editable = false;
 };
 
 typedef std::vector<ParamDef> ParamDefs;
