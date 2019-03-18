@@ -124,7 +124,7 @@ inline double Backtest::TryFillSell(double px, double qty, Orders* m) {
         << ',' << n << ',' << it->first << ',' << algo_id << '\n';
     if (tuple.leaves <= 0) {
       m->all.erase(tuple.order->id);
-      m->sells.erase(++it.base());
+      it = std::reverse_iterator(m->sells.erase(std::next(it).base()));
     } else {
       ++it;
     }
