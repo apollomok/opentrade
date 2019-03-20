@@ -83,8 +83,8 @@ decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
 }
 
 inline double Backtest::TryFillBuy(double px, double qty, Orders* m) {
-  for (auto it = m->buys.begin();
-       it != m->buys.end() && qty > 0 && px <= it->first;) {
+  for (auto it = m->buys.rbegin();
+       it != m->buys.rend() && qty > 0 && px <= it->first;) {
     auto& tuple = it->second;
     auto n = std::min(qty, tuple.leaves);
     qty -= n;
@@ -99,7 +99,7 @@ inline double Backtest::TryFillBuy(double px, double qty, Orders* m) {
         << ',' << n << ',' << it->first << ',' << algo_id << '\n';
     if (tuple.leaves <= 0) {
       m->all.erase(tuple.order->id);
-      it = m->buys.erase(it);
+      it = std::reverse_iterator(m->buys.erase(std::next(it).base()));
     } else {
       ++it;
     }
@@ -108,8 +108,8 @@ inline double Backtest::TryFillBuy(double px, double qty, Orders* m) {
 }
 
 inline double Backtest::TryFillSell(double px, double qty, Orders* m) {
-  for (auto it = m->sells.rbegin();
-       it != m->sells.rend() && qty > 0 && px >= it->first;) {
+  for (auto it = m->sells.begin();
+       it != m->sells.end() && qty > 0 && px >= it->first;) {
     auto& tuple = it->second;
     auto n = std::min(qty, tuple.leaves);
     qty -= n;
@@ -124,13 +124,14 @@ inline double Backtest::TryFillSell(double px, double qty, Orders* m) {
         << ',' << n << ',' << it->first << ',' << algo_id << '\n';
     if (tuple.leaves <= 0) {
       m->all.erase(tuple.order->id);
-      it = std::reverse_iterator(m->sells.erase(std::next(it).base()));
+      it = m->sells.erase(it);
     } else {
       ++it;
     }
   }
   return qty;
 }
+
 
 inline void Backtest::HandleTick(uint32_t hmsm, char type, double px,
                                  double qty, const SecTuple& st) {
