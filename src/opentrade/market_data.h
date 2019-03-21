@@ -102,10 +102,10 @@ class MarketDataAdapter : public virtual NetworkAdapter {
   DataSrc::IdType src() const { return src_; }
   void Update(Security::IdType id, const MarketData::Quote& q,
               uint32_t level = 0);
-  void Update(Security::IdType id, double price, Qty size, bool is_bid,
+  void Update(Security::IdType id, double price, MarketData::Qty size, bool is_bid,
               uint32_t level = 0);
-  void Update(Security::IdType id, double last_price, Qty last_qty);
-  void Update(Security::IdType id, double last_price, Volume volume,
+  void Update(Security::IdType id, double last_price, MarketData::Qty last_qty);
+  void Update(Security::IdType id, double last_price, MarketData::Volume volume,
               double open, double high, double low, double vwap);
   void UpdateMidAsLastPrice(Security::IdType id);
   void UpdateAskPrice(Security::IdType id, double v);
