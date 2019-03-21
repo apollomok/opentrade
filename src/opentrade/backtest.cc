@@ -86,7 +86,7 @@ inline double Backtest::TryFillBuy(double px, double qty, Orders* m) {
   for (auto it = m->buys.rbegin();
        it != m->buys.rend() && qty > 0 && px <= it->first;) {
     auto& tuple = it->second;
-    auto n = std::min(qty, tuple.leaves);
+    auto n = std::fmin(qty, tuple.leaves);
     qty -= n;
     tuple.leaves -= n;
     assert(qty >= 0);
@@ -111,7 +111,7 @@ inline double Backtest::TryFillSell(double px, double qty, Orders* m) {
   for (auto it = m->sells.begin();
        it != m->sells.end() && qty > 0 && px >= it->first;) {
     auto& tuple = it->second;
-    auto n = std::min(qty, tuple.leaves);
+    auto n = std::fmin(qty, tuple.leaves);
     qty -= n;
     tuple.leaves -= n;
     assert(qty >= 0);
@@ -426,12 +426,12 @@ void Backtest::Start(const std::string& py, double latency) {
 }
 
 void Backtest::End() {
-  if (!on_end_) return;
-  try {
-    on_end_(obj_);
-  } catch (const bp::error_already_set& err) {
-    PrintPyError("on_end", true);
-  }
+  if (on_end_)
+    try {
+      on_end_(obj_);
+    } catch (const bp::error_already_set& err) {
+      PrintPyError("on_end", true);
+    }
   of_.close();
 }
 
