@@ -10,16 +10,24 @@
 
 namespace opentrade {
 
+#ifdef BACKTEST
+typedef double qty_t;
+typedef double volume_t;
+#else
+typedef int qty_t;
+typedef int64_t volume_t;
+#endif
+
 struct MarketData {
   time_t tm = 0;
   struct Trade {
-    int qty = 0;
+    qty_t qty = 0;
     double open = 0;
     double high = 0;
     double low = 0;
     double close = 0;
     double vwap = 0;
-    int64_t volume = 0;
+    volume_t volume = 0;
 
     bool operator!=(const Trade& b) const {
       return volume != b.volume || close != b.close || high != b.high ||
@@ -30,8 +38,8 @@ struct MarketData {
   struct Quote {
     double ask_price = 0;
     double bid_price = 0;
-    int ask_size = 0;
-    int bid_size = 0;
+    qty_t ask_size = 0;
+    qty_t bid_size = 0;
 
     bool operator!=(const Quote& b) const {
       return ask_price != b.ask_price || ask_size != b.ask_size ||
@@ -94,10 +102,10 @@ class MarketDataAdapter : public virtual NetworkAdapter {
   DataSrc::IdType src() const { return src_; }
   void Update(Security::IdType id, const MarketData::Quote& q,
               uint32_t level = 0);
-  void Update(Security::IdType id, double price, int size, bool is_bid,
+  void Update(Security::IdType id, double price, qty_t size, bool is_bid,
               uint32_t level = 0);
-  void Update(Security::IdType id, double last_price, int last_qty);
-  void Update(Security::IdType id, double last_price, int64_t volume,
+  void Update(Security::IdType id, double last_price, qty_t last_qty);
+  void Update(Security::IdType id, double last_price, volume_t volume,
               double open, double high, double low, double vwap);
   void UpdateMidAsLastPrice(Security::IdType id);
   void UpdateAskPrice(Security::IdType id, double v);
