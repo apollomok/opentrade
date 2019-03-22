@@ -132,7 +132,6 @@ inline double Backtest::TryFillSell(double px, double qty, Orders* m) {
   return qty;
 }
 
-
 inline void Backtest::HandleTick(uint32_t hmsm, char type, double px,
                                  double qty, const SecTuple& st) {
   auto hms = hmsm / 1000;
@@ -426,12 +425,13 @@ void Backtest::Start(const std::string& py, double latency) {
 }
 
 void Backtest::End() {
-  if (on_end_)
+  if (on_end_) {
     try {
       on_end_(obj_);
     } catch (const bp::error_already_set& err) {
       PrintPyError("on_end", true);
     }
+  }
   of_.close();
 }
 

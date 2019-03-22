@@ -81,8 +81,9 @@ void MarketDataAdapter::Update(Security::IdType id, const MarketData::Quote& q,
   x.Update(src_, id);
 }
 
-void MarketDataAdapter::Update(Security::IdType id, double price, MarketData::Qty size,
-                               bool is_bid, uint32_t level) {
+void MarketDataAdapter::Update(Security::IdType id, double price,
+                               MarketData::Qty size, bool is_bid,
+                               uint32_t level) {
   if (level >= 5) return;
   auto& q = (*md_)[id].depth[level];
   if (is_bid) {
@@ -129,10 +130,10 @@ void MarketDataAdapter::Update(Security::IdType id, double last_price,
 }
 
 void MarketDataAdapter::Update(Security::IdType id, double last_price,
-                               MarketData::Volume volume, double open, double high,
-                               double low, double vwap) {
+                               MarketData::Volume volume, double open,
+                               double high, double low, double vwap) {
   auto& md = (*md_)[id];
-  MarketData::Volume d = volume - md.trade.volume;
+  auto d = volume - md.trade.volume;
   if (d <= 0) return;
   if (md.trade.volume == 0) {
     md.trade.volume = volume;
