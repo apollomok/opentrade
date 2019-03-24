@@ -72,6 +72,7 @@ enum ExecTransType : char {
 };
 
 static inline bool IsBuy(OrderSide side) { return side == kBuy; }
+static inline bool IsShort(OrderSide side) { return side == kShort; }
 
 struct Contract {
   double qty = 0;
@@ -90,6 +91,7 @@ struct Contract {
   TimeInForce tif = kDay;
 
   bool IsBuy() const { return opentrade::IsBuy(side); }
+  bool IsShort() const { return opentrade::IsShort(side); }
 };
 
 class Instrument;

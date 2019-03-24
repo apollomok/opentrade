@@ -22,6 +22,7 @@ struct Position : public PositionValue {
   double unrealized_pnl = 0;
   double realized_pnl = 0;
 
+  // intraday
   double total_bought_qty = 0;
   double total_sold_qty = 0;
   double total_outstanding_buy_qty = 0;

@@ -158,6 +158,12 @@ void PositionManager::Initialize() {
     HandlePnl(p.qty, p.avg_px, sec->multiplier * sec->rate, &p2);
     p2.qty += p.qty;
     p2.cx_qty += p.cx_qty;
+    auto& p3 =
+        self.user_positions_[std::make_pair(broker_account_id, security_id)];
+    p3.realized_pnl += p.realized_pnl;
+    HandlePnl(p.qty, p.avg_px, sec->multiplier * sec->rate, &p3);
+    p3.qty += p.qty;
+    p3.cx_qty += p.cx_qty;
   }
 
   for (auto& pair : AccountManager::Instance().sub_accounts_) {
@@ -324,26 +330,53 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
   }
 }
 
-void PositionManager::UpdatePnl() {
-  std::map<SubAccount::IdType, std::pair<double, double>> pnls;
+template <typename T1, typename T2>
+void UpdateBalance(T1* positions, T2* accs) {
+  std::map<int64_t, std::pair<double, double>> balances;
   auto& sm = SecurityManager::Instance();
-  for (auto& pair : sub_positions_) {
+  for (auto& pair : *positions) {
     auto acc = pair.first.first;
     auto sec_id = pair.first.second;
     auto& pos = pair.second;
-    auto& pnl = pnls[acc];
-    pnl.first += pos.realized_pnl;
     if (!pos.qty && !pos.unrealized_pnl) continue;
     auto sec = sm.Get(sec_id);
     if (!sec) continue;
     auto price = sec->CurrentPrice();
     if (!price) continue;
-    pos.unrealized_pnl = pos.qty * (price - pos.avg_px);
+    auto m = sec->rate * sec->multiplier;
+    pos.unrealized_pnl = pos.qty * (price - pos.avg_px) * m;
+    auto qty = pos.qty + pos.total_outstanding_buy - pos.total_outstanding_sell;
+    if (qty > 0)
+      balances[acc].first += qty * price * m;
+    else
+      balances[acc].second -= qty * price * m;
+  }
+  for (auto& pair : *accs) {
+    auto x = balances[pair.first];
+    pair.second->position_value.long_value += x.first;
+    pair.second->position_value.short_value += x.second;
+  }
+}
+
+void PositionManager::UpdatePnl() {
+  auto& am = AccountManager::Instance();
+  UpdateBalance(&sub_positions_, &am.sub_accounts_);
+  UpdateBalance(&broker_positions_, &am.broker_accounts_);
+  UpdateBalance(&user_positions_, &am.users_);
+
+  std::map<SubAccount::IdType, std::pair<double, double>> pnls;
+  for (auto& pair : sub_positions_) {
+    auto acc = pair.first.first;
+    auto& pos = pair.second;
+    auto& pnl = pnls[acc];
+    pnl.first += pos.realized_pnl;
     pnl.second += pos.unrealized_pnl;
   }
+
 #ifdef BACKTEST
   return;
 #endif
+
   auto tm = GetTime();
   for (auto& pair : pnls) {
     auto& pnl = pnls_[pair.first];
@@ -360,7 +393,7 @@ void PositionManager::UpdatePnl() {
               << std::endl;
   }
 
-  kSharedTaskPool.AddTask([this]() { this->UpdatePnl(); }, pt::seconds(5));
+  kSharedTaskPool.AddTask([this]() { this->UpdatePnl(); }, pt::seconds(1));
 }
 
 }  // namespace opentrade

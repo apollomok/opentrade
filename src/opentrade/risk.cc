@@ -14,7 +14,9 @@ std::string Limits::GetString() {
       << "value=" << value << '\n'
       << "turnover=" << turnover << '\n'
       << "total_value=" << total_value << '\n'
-      << "total_turnover=" << total_turnover;
+      << "total_turnover=" << total_turnover << '\n'
+      << "total_long_value=" << total_long_value << '\n'
+      << "total_short_value=" << total_short_value;
   return out.str();
 }
 
@@ -42,6 +44,10 @@ std::string Limits::FromString(const std::string& str) {
       l.total_value = value;
     else if (!strcasecmp(name, "total_turnover"))
       l.total_turnover = value;
+    else if (!strcasecmp(name, "total_long_value"))
+      l.total_long_value = value;
+    else if (!strcasecmp(name, "total_short_value"))
+      l.total_short_value = value;
   }
   *this = l;
   return {};
@@ -86,7 +92,8 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
     return false;
   }
 
-  auto v = ord.qty * ord.price * ord.sec->multiplier * ord.sec->rate;
+  auto m = ord.sec->multiplier * ord.sec->rate;
+  auto v = ord.qty * ord.price * m;
   if (l.order_value > 0) {
     if (v > l.order_value) {
       snprintf(buf, sizeof(buf),
@@ -159,6 +166,46 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
       snprintf(buf, sizeof(buf),
                "%s limit breach: total intraday turnover %f > %f", name, v2,
                l.total_turnover);
+      kRiskError = buf;
+      return false;
+    }
+  }
+
+  if (l.total_long_value > 0 && ord.IsBuy()) {
+    auto v2 = acc.position_value.long_value;
+    auto net = pos.qty + pos.total_outstanding_buy - pos.total_outstanding_sell;
+    auto d = ord.qty;
+    if (net < 0) {
+      auto tmp = net + ord.qty;
+      if (tmp > 0)
+        d = tmp;
+      else
+        d = 0;
+    }
+    if (d > 0) v2 += d * ord.price * m;
+    if (d > 0 && v2 > l.total_long_value) {
+      snprintf(buf, sizeof(buf), "%s limit breach: total long value %f > %f",
+               name, v2, l.total_long_value);
+      kRiskError = buf;
+      return false;
+    }
+  }
+
+  if (l.total_short_value > 0 && !ord.IsBuy()) {
+    auto v2 = acc.position_value.short_value;
+    auto net = pos.qty + pos.total_outstanding_buy - pos.total_outstanding_sell;
+    auto d = ord.qty;
+    if (net > 0) {
+      auto tmp = net - ord.qty;
+      if (tmp < 0)
+        d = -tmp;
+      else
+        d = 0;
+    }
+    if (d > 0) v2 += d * ord.price * m;
+    if (d > 0 && v2 > l.total_short_value) {
+      snprintf(buf, sizeof(buf), "%s limit breach: total short value %f > %f",
+               name, v2, l.total_short_value);
       kRiskError = buf;
       return false;
     }
