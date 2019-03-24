@@ -158,7 +158,7 @@ class Instrument {
   bool listen_ = true;
   friend class AlgoManager;
   friend class Algo;
-  static inline std::atomic<size_t> kIdCounter = 0;
+  static inline std::atomic<size_t> id_counter_ = 0;
 };
 
 class AlgoRunner {

@@ -2,6 +2,7 @@
 #define OPENTRADE_MARKET_DATA_H_
 
 #include <tbb/concurrent_unordered_map.h>
+#include <any>
 #include <map>
 #include <string>
 
@@ -55,6 +56,30 @@ struct MarketData {
 
   Trade trade;
   Depth depth;
+
+  void SetDerived(const std::string& name, std::any value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!derived) derived = new AnyMap;
+    derived->emplace(name, value);
+  }
+
+  template <typename T>
+  const T* GetDerived(const std::string& name) const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!derived) return {};
+    auto it = derived->find(name);
+    if (it == derived->end()) return {};
+    try {
+      return std::any_cast<const T*>(it->second);
+    } catch (const std::bad_any_cast& e) {
+      return {};
+    }
+  }
+
+ private:
+  typedef std::map<std::string, std::any> AnyMap;
+  AnyMap* derived = nullptr;
+  static inline std::mutex mutex_;
 };
 
 struct DataSrc {

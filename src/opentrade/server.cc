@@ -272,6 +272,9 @@ void Server::Start(int port, int nthreads) {
     for (auto i = 0; i < nthreads; ++i) {
       threads.emplace_back([]() { kIoService->run(); });
     }
+    if (fs::exists(fs::path("start.py"))) {
+      system(("nohup ./start.py " + std::to_string(port) + " &").c_str());
+    }
     for (auto& t : threads) t.join();
   } catch (std::runtime_error& e) {
     LOG_ERROR("failed to start web server: " << e.what());

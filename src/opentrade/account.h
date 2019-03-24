@@ -72,6 +72,8 @@ struct User : public AccountBase {
   SubAccountMapPtr sub_accounts_ = std::make_shared<SubAccountMap>();
 };
 
+inline const User kEmptyUser;
+
 class AccountManager : public Singleton<AccountManager> {
  public:
   static void Initialize();

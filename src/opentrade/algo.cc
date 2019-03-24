@@ -177,6 +177,19 @@ void AlgoManager::Run(int nthreads) {
     runners_[i].tid_ = threads_[i].get_id();
   }
 #endif
+
+  for (auto& pair : adapters()) {
+    if (pair.first.at(0) != '_') continue;
+    auto user_name = pair.second->config("user");
+    auto user = AccountManager::Instance().GetUser(user_name);
+    auto algo = Spawn(std::make_shared<Algo::ParamMap>(), pair.first,
+                      user ? *user : kEmptyUser, "{}", "");
+    if (algo) {
+      LOG_INFO("Started " << pair.first << " , id=" << algo->id());
+    } else {
+      LOG_ERROR("Failed to start" << pair.first);
+    }
+  }
 }
 
 void AlgoManager::Handle(Confirmation::Ptr cm) {
@@ -361,7 +374,7 @@ Instrument* Algo::Subscribe(const Security& sec, DataSrc src, bool listen) {
   assert(adapter);
   auto inst = new Instrument(this, sec, DataSrc(adapter->src()));
   inst->md_ = &MarketDataManager::Instance().Get(sec, adapter->src());
-  inst->id_ = ++Instrument::kIdCounter;
+  inst->id_ = ++Instrument::id_counter_;
   inst->listen_ = listen;
   instruments_.insert(inst);
   if (listen) AlgoManager::Instance().Register(inst);

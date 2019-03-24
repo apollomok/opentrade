@@ -1106,10 +1106,11 @@ void Connection::OnLogin(const std::string& action, const json& j) {
       Send(json{"broker_account", pair.first, pair.second->name});
     }
     for (auto& pair : AlgoManager::Instance().adapters()) {
+      if (pair.first.at(0) == '_') continue;
       auto& params = pair.second->GetParamDefs();
       json j = {
           "algo_def",
-          pair.second->name(),
+          pair.first,
       };
       for (auto& p : params) {
         json j2 = {

@@ -152,6 +152,7 @@ int main(int argc, char *argv[]) {
   for (auto &section : prop_tree) {
     if (!section.second.size()) continue;
     auto section_name = section.first;
+    if (section_name.empty()) continue;
     opentrade::Adapter::StrMap params;
     for (auto &item : section.second) {
       auto name = item.first;
@@ -206,7 +207,7 @@ int main(int argc, char *argv[]) {
          boost::make_iterator_range(fs::directory_iterator(kAlgoPath), {})) {
       auto path = entry.path();
       auto fn = path.filename().string();
-      if (fn[0] == '_' && fn[0] == '.') continue;
+      if (fn[0] == '.') continue;
       opentrade::Algo *algo = nullptr;
       auto algoname = fn.substr(0, fn.length() - 3);
       if (path.extension() == ".py") {
