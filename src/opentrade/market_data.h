@@ -4,6 +4,7 @@
 #include <tbb/concurrent_unordered_map.h>
 #include <any>
 #include <map>
+#include <mutex>
 #include <string>
 
 #include "adapter.h"

@@ -28,10 +28,15 @@ class Trade : public CThostFtdcTraderSpi,
   void OnRtnOrder(CThostFtdcOrderField* ord) override;
   void OnRtnTrade(CThostFtdcTradeField* trd) override;
   void OnHeartBeatWarning(int time_lapse) override;
+  void OnRspAuthenticate(CThostFtdcRspAuthenticateField* rsp_auth_field,
+                         CThostFtdcRspInfoField* rsp_info, int request_id,
+                         bool is_last) override;
+  void Login();
 
  private:
   CThostFtdcTraderApi* api_ = nullptr;
   std::string address_, broker_id_, user_id_, password_;
+  std::string product_info_, auth_code_;
   struct Order {
     int front_id = -1;
     int session_id = -1;
@@ -40,6 +45,7 @@ class Trade : public CThostFtdcTraderSpi,
   tbb::concurrent_unordered_map<unsigned, Order> orders_;
   std::ofstream of_;
   opentrade::TaskPool tp_;
+  std::atomic<int> request_counter_ = 0;
 };
 
 Trade::~Trade() { api_->Release(); }
@@ -64,6 +70,9 @@ void Trade::Start() noexcept {
   if (password_.empty()) {
     LOG_FATAL(name() << ": password not given");
   }
+
+  product_info_ = config("product_info");
+  auth_code_ = config("auth_code");
 
   auto path = opentrade::kStorePath / (name() + "-session");
   std::ifstream ifs(path.c_str());
@@ -126,13 +135,38 @@ void Trade::OnRspError(CThostFtdcRspInfoField* rsp_info, int request_id,
 #define STRCPY(a, b) strncpy(a, b, sizeof(a))
 
 void Trade::OnFrontConnected() {
-  CThostFtdcReqUserLoginField login;
+  if (!product_info_.empty() && !auth_code_.empty()) {
+    CThostFtdcReqAuthenticateField reqAuth{};
+    STRCPY(reqAuth.BrokerID, broker_id_.c_str());
+    STRCPY(reqAuth.UserID, user_id_.c_str());
+    STRCPY(reqAuth.UserProductInfo, product_info_.c_str());
+    STRCPY(reqAuth.AuthCode, auth_code_.c_str());
+    api_->ReqAuthenticate(&reqAuth, ++request_counter_);
+    return;
+  }
+  Login();
+}
+
+void Trade::Login() {
+  CThostFtdcReqUserLoginField login{};
   STRCPY(login.BrokerID, broker_id_.c_str());
   STRCPY(login.UserID, user_id_.c_str());
   STRCPY(login.Password, password_.c_str());
   // 发出登陆请求
   LOG_INFO(name() << ": Connected, send login");
-  api_->ReqUserLogin(&login, 0);
+  api_->ReqUserLogin(&login, ++request_counter_);
+}
+
+void Trade::OnRspAuthenticate(CThostFtdcRspAuthenticateField* rsp_auth_field,
+                              CThostFtdcRspInfoField* rsp_info, int request_id,
+                              bool is_last) {
+  if (rsp_info && rsp_info->ErrorID != 0) {
+    LOG_ERROR(name() << ": Failed to authenticate, errorCode="
+                     << rsp_info->ErrorID << ", errorMsg=" << rsp_info->ErrorMsg
+                     << " requestId=" << request_id << ", chain=" << is_last);
+    return;
+  }
+  Login();
 }
 
 // 当客户端与交易托管系统通信连接断开时，该方法被调用
@@ -356,7 +390,7 @@ std::string Trade::Cancel(const opentrade::Order& ord) noexcept {
 
   c_ord.ActionFlag = THOST_FTDC_AF_Delete;
   c_ord.RequestID = ord.id;
-  auto ret = api_->ReqOrderAction(&c_ord, c_ord.RequestID);
+  auto ret = api_->ReqOrderAction(&c_ord, ++request_counter_);
   if (ret) {
     LOG_ERROR(name() << ": ReqOrderAction failed: " << ret);
     return "ReqOrderAction failed: " + std::to_string(ret);
@@ -430,7 +464,7 @@ std::string Trade::Place(const opentrade::Order& ord) noexcept {
   // 自动挂起标志
   c_ord.IsAutoSuspend = 0;
   c_ord.RequestID = ord.id;
-  auto ret = api_->ReqOrderInsert(&c_ord, c_ord.RequestID);
+  auto ret = api_->ReqOrderInsert(&c_ord, ++request_counter_);
   if (ret) {
     LOG_ERROR(name() << ": ReqOrderInsert failed: " << ret);
     return "ReqOrderInsert failed: " + std::to_string(ret);
