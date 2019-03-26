@@ -47,6 +47,7 @@ class Data : public CThostFtdcMdSpi, public opentrade::MarketDataAdapter {
   std::unordered_set<const Security *> subs_;
   tbb::concurrent_unordered_map<std::string, const Security *> instruments_;
   opentrade::TaskPool tp_;
+  std::atomic<int> request_counter_ = 0;
 };
 
 Data::~Data() { api_->Release(); }
@@ -102,8 +103,8 @@ void Data::Reconnect() noexcept {
 void Data::Subscribe2(const Security &sec) {
   char *req[1] = {const_cast<char *>(sec.local_symbol)};
   instruments_[sec.local_symbol] = &sec;
-  api_->SubscribeMarketData(req, 1);
-  // api_->SubscribeForQuoteRsp(req, 1);
+  api_->SubscribeMarketData(req, ++request_counter_);
+  // api_->SubscribeForQuoteRsp(req, ++request_counter_);
 }
 
 void Data::OnHeartBeatWarning(int time_lapse) {
@@ -200,13 +201,13 @@ void Data::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField *data) {
 void Data::OnRtnForQuoteRsp(CThostFtdcForQuoteRspField *data) {}
 
 void Data::OnFrontConnected() {
-  CThostFtdcReqUserLoginField login;
+  CThostFtdcReqUserLoginField login{};
   strncpy(login.BrokerID, broker_id_.c_str(), sizeof(login.BrokerID));
   strncpy(login.UserID, user_id_.c_str(), sizeof(login.UserID));
   strncpy(login.Password, password_.c_str(), sizeof(login.Password));
   // 发出登陆请求
   LOG_INFO(name() << ": Connected, send login");
-  api_->ReqUserLogin(&login, 0);
+  api_->ReqUserLogin(&login, ++request_counter_);
 }
 
 // 当客户端与交易托管系统通信连接断开时，该方法被调用
