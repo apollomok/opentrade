@@ -33,7 +33,6 @@ class Backtest : public Singleton<Backtest> {
   bp::object on_end_of_day_;
   bp::object on_end_;
   double latency_ = 0;  // in seconds
-  time_t tm0_ = 0;
   double trade_hit_ratio_ = 0;
   std::ofstream of_;
   bool skip_;

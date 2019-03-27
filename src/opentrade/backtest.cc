@@ -83,11 +83,11 @@ typedef std::vector<SecTuple> SecTuples;
 
 struct Tick {
   SecTuple* st;
-  uint32_t hmsm;
+  uint32_t ms;
   char type;
   double px;
   double qty;
-  bool operator<(const Tick& b) const { return hmsm < b.hmsm; }
+  bool operator<(const Tick& b) const { return ms < b.ms; }
 };
 typedef std::vector<Tick> Ticks;
 
@@ -117,13 +117,14 @@ bool LoadTickFile(const std::string& fn, Simulator* sim,
   return true;
 }
 
-Tick ReadTickFile(std::ifstream* ifs, uint32_t to_tm, SecTuples* sts,
+Tick ReadTickFile(std::ifstream& ifs, uint32_t to_tm, SecTuples* sts,
                   Ticks* ticks) {
   std::string line;
-  while (std::getline(*ifs, line)) {
+  while (std::getline(ifs, line)) {
     Tick t;
     uint32_t i;
-    if (sscanf(line.c_str(), "%u %u %c %lf %lf", &t.hmsm, &i, &t.type, &t.px,
+    uint32_t hmsm;
+    if (sscanf(line.c_str(), "%u %u %c %lf %lf", &hmsm, &i, &t.type, &t.px,
                &t.qty) != 5)
       continue;
     if (i >= sts->size()) continue;
@@ -133,7 +134,10 @@ Tick ReadTickFile(std::ifstream* ifs, uint32_t to_tm, SecTuples* sts,
     t.px *= st.adj_px;
     if (!t.px) continue;
     t.qty *= st.adj_vol;
-    if (t.hmsm > to_tm) return t;
+    auto hms = hmsm / 1000;
+    t.ms = (hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100) * 1000 +
+           hmsm % 1000;
+    if (t.ms > to_tm) return t;
     ticks->push_back(t);
   }
   return {};
@@ -143,10 +147,10 @@ void Backtest::Play(const boost::gregorian::date& date) {
   skip_ = false;
   boost::posix_time::ptime pt(date);
   auto tm = boost::posix_time::to_tm(pt);
-  tm0_ = mktime(&tm);
-  kTime = tm0_ * 1000000lu;
-
-  localtime_r(&tm0_, &tm);
+  auto tm0 = mktime(&tm);
+  auto tm0_us = tm0 * 1000000lu;
+  kTime = tm0_us;
+  localtime_r(&tm0, &tm);
   for (auto& pair : SecurityManager::Instance().exchanges()) {
     pair.second->utc_time_offset = tm.tm_gmtoff;
   }
@@ -177,25 +181,24 @@ void Backtest::Play(const boost::gregorian::date& date) {
     trade_hit_ratio_ = atof(trade_hit_ratio_str);
   }
   std::vector<Tick> last_ticks(simulators_.size(), Tick{});
-  static const uint32_t kSteps = 240;
+  static const uint32_t kNSteps = 240;
+  static const uint32_t kStep = (kSecondsOneDay * 1000) / kNSteps;
   Ticks ticks;
-  for (auto i = 1u; i <= kSteps && !skip_; ++i) {
+  for (auto to_tm = kStep; to_tm <= kSecondsOneDay * 1000 && !skip_;
+       to_tm += kStep) {
     ticks.clear();
-    auto to_tm = i * kSecondsOneDay * 1000 / kSteps;
-    for (auto j = 0u; j < simulators_.size(); ++j) {
-      auto& t = last_ticks[j];
+    for (auto i = 0u; i < simulators_.size(); ++i) {
+      auto& t = last_ticks[i];
       if (t.st) {
-        if (t.hmsm > to_tm) continue;
+        if (t.ms > to_tm) continue;
         ticks.push_back(t);
       }
-      t = ReadTickFile(&ifs[i], to_tm, &sts[i], &ticks);
+      t = ReadTickFile(ifs[i], to_tm, &sts[i], &ticks);
     }
     if (simulators_.size() > 1) std::sort(ticks.begin(), ticks.end());
     for (auto& t : ticks) {
       if (skip_) break;
-      auto hms = t.hmsm / 1000;
-      auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
-      auto tm = (tm0_ + nsecond) * 1000000lu + t.hmsm % 1000 * 1000;
+      auto tm = tm0_us + t.ms * 1000lu;
       if (tm < kTime) tm = kTime;
       auto it = kTimers.begin();
       while (it != kTimers.end() && it->first <= tm) {
