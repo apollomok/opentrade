@@ -4,7 +4,7 @@
 #include <tbb/concurrent_unordered_map.h>
 #include <any>
 #include <map>
-#include <mutex>
+#include <shared_mutex>
 #include <string>
 
 #include "adapter.h"
@@ -58,29 +58,30 @@ struct MarketData {
   Trade trade;
   Depth depth;
 
-  void SetDerived(const std::string& name, std::any value) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (!derived) derived = new AnyMap;
-    derived->emplace(name, value);
+  void SetDerived(std::any value, size_t id) {
+    assert(id < 16);
+    std::unique_lock<std::shared_mutex> lock(mutex_);
+    if (!derived) derived = new AnyVec;
+    if (derived->size() <= id) derived->resize(id);
+    (*derived)[id] = value;
   }
 
   template <typename T>
-  const T* GetDerived(const std::string& name) const {
-    std::lock_guard<std::mutex> lock(mutex_);
+  const T* GetDerived(size_t id) const {
+    std::shared_lock<std::shared_mutex> lock(mutex_);
     if (!derived) return {};
-    auto it = derived->find(name);
-    if (it == derived->end()) return {};
+    if (id >= derived->size()) return {};
     try {
-      return std::any_cast<const T*>(it->second);
+      return std::any_cast<const T*>(derived->at(id));
     } catch (const std::bad_any_cast& e) {
       return {};
     }
   }
 
  private:
-  typedef std::map<std::string, std::any> AnyMap;
-  AnyMap* derived = nullptr;
-  static inline std::mutex mutex_;
+  typedef std::vector<std::any> AnyVec;
+  AnyVec* derived = nullptr;
+  static inline std::shared_mutex mutex_;
 };
 
 struct DataSrc {
