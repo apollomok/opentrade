@@ -3,6 +3,7 @@
 #include "backtest.h"
 
 #include "logger.h"
+#include "simulator.h"
 
 namespace fs = boost::filesystem;
 
@@ -70,9 +71,25 @@ decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
 
   return out;
 }
+struct SecTuple {
+  const Security* sec;
+  Simulator* sim;
+  Simulator::Orders* actives;
+};
+struct Tick {
+  SecTuple* st;
+  uint32_t hmsm;
+  char type;
+  double px;
+  double qty;
+  bool operator<(const Tick& b) const { return hmsm < b.hmsm; }
+};
+typedef std::vector<std::shared_ptr<SecTuple>> SecTuples;
+typedef std::vector<Tick> Ticks;
 
-bool Backtest::LoadTickFile(const std::string& fn, Simulator* sim,
-                            const boost::gregorian::date& date) {
+bool LoadTickFile(const std::string& fn, Simulator* sim,
+                  const boost::gregorian::date& date, SecTuples& sts,
+                  Ticks& ticks) {
   std::ifstream ifs(fn);
   if (!ifs.good()) return false;
 
@@ -88,8 +105,8 @@ bool Backtest::LoadTickFile(const std::string& fn, Simulator* sim,
     auto it = std::upper_bound(sec->adjs.begin(), sec->adjs.end(),
                                Security::Adj(date_num));
     auto st = std::shared_ptr<SecTuple>(
-        new SecTuple{sec, sim, &sim->active_orders_[sec->id]});
-    sts_.push_back(st);
+        new SecTuple{sec, sim, &sim->active_orders()[sec->id]});
+    sts.push_back(st);
     if (it == adjs.end())
       secs[i] = std::make_tuple(st.get(), 1., 1.);
     else
@@ -108,7 +125,7 @@ bool Backtest::LoadTickFile(const std::string& fn, Simulator* sim,
     t.px *= std::get<1>(st);
     if (!t.px) continue;
     t.qty *= std::get<2>(st);
-    ticks_.push_back(t);
+    ticks.push_back(t);
   }
   return true;
 }
@@ -125,15 +142,15 @@ void Backtest::Play(const boost::gregorian::date& date) {
     pair.second->utc_time_offset = tm.tm_gmtoff;
   }
 
-  sts_.clear();
-  ticks_.clear();
   char fn[256];
+  SecTuples sts;
+  Ticks ticks;
   for (auto& pair : simulators_) {
     strftime(fn, sizeof(fn), pair.first.c_str(), &tm);
-    LoadTickFile(fn, pair.second, date);
+    LoadTickFile(fn, pair.second, date, sts, ticks);
   }
-  if (ticks_.empty()) return;
-  if (simulators_.size() > 1) std::sort(ticks_.begin(), ticks_.end());
+  if (ticks.empty()) return;
+  if (simulators_.size() > 1) std::sort(ticks.begin(), ticks.end());
 
   if (on_start_of_day_) {
     try {
@@ -150,7 +167,7 @@ void Backtest::Play(const boost::gregorian::date& date) {
   if (trade_hit_ratio_str) {
     trade_hit_ratio_ = atof(trade_hit_ratio_str);
   }
-  for (auto& t : ticks_) {
+  for (auto& t : ticks) {
     if (skip_) break;
     auto hms = t.hmsm / 1000;
     auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
@@ -202,7 +219,7 @@ void Backtest::Clear() {
   for (auto& pair : gb.orders_) delete pair.second;
   gb.orders_.clear();
   gb.exec_ids_.clear();
-  for (auto& pair : simulators_) pair.second->active_orders_.clear();
+  for (auto& pair : simulators_) pair.second->active_orders().clear();
   kTimers.clear();
 }
 

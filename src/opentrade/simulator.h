@@ -22,8 +22,6 @@ class Simulator : public ExchangeConnectivityAdapter, public MarketDataAdapter {
   std::string Place(const opentrade::Order& ord) noexcept override;
   std::string Cancel(const opentrade::Order& ord) noexcept override;
   void ResetData();
-
- private:
   struct OrderTuple {
     double leaves = 0;
     const Order* order = nullptr;
@@ -38,12 +36,12 @@ class Simulator : public ExchangeConnectivityAdapter, public MarketDataAdapter {
                   double trade_hit_ratio, Orders* actives_of_sec);
   double TryFillBuy(double px, double qty, Orders* actives_of_sec);
   double TryFillSell(double px, double qty, Orders* actives_of_sec);
+  auto& active_orders() { return active_orders_; }
 
  private:
   std::unordered_map<Security::IdType, Orders> active_orders_;
   std::ostream& of_;
   uint32_t seed_ = 0;
-  friend class Backtest;
 };
 
 }  // namespace opentrade

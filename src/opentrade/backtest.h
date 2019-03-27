@@ -8,16 +8,15 @@
 
 #include "python.h"
 #include "security.h"
-#include "simulator.h"
 
 namespace opentrade {
+
+class Simulator;
 
 class Backtest : public Singleton<Backtest> {
  public:
   Backtest() : of_("trades.txt") {}
   void Play(const boost::gregorian::date& date);
-  bool LoadTickFile(const std::string& fn, Simulator* sim,
-                    const boost::gregorian::date& date);
   void Start(const std::string& py, double latency,
              const std::string& default_tick_file);
   SubAccount* CreateSubAccount(const std::string& name,
@@ -39,21 +38,6 @@ class Backtest : public Singleton<Backtest> {
   double trade_hit_ratio_ = 0;
   std::ofstream of_;
   bool skip_;
-  struct SecTuple {
-    const Security* sec;
-    Simulator* sim;
-    Simulator::Orders* actives;
-  };
-  std::vector<std::shared_ptr<SecTuple>> sts_;
-  struct Tick {
-    SecTuple* st;
-    uint32_t hmsm;
-    char type;
-    double px;
-    double qty;
-    bool operator<(const Tick& b) const { return hmsm < b.hmsm; }
-  };
-  std::vector<Tick> ticks_;
   std::vector<std::pair<std::string, Simulator*>> simulators_;
 };
 
