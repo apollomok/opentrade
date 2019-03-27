@@ -273,7 +273,9 @@ void Server::Start(int port, int nthreads) {
       threads.emplace_back([]() { kIoService->run(); });
     }
     if (fs::exists(fs::path("start.py"))) {
-      system(("nohup ./start.py " + std::to_string(port) + " &").c_str());
+      if (system(("nohup ./start.py " + std::to_string(port) + " &").c_str())) {
+        // bypass compile warn
+      }
     }
     for (auto& t : threads) t.join();
   } catch (std::runtime_error& e) {
