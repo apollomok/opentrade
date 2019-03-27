@@ -32,6 +32,7 @@ class Trade : public CThostFtdcTraderSpi,
                          CThostFtdcRspInfoField* rsp_info, int request_id,
                          bool is_last) override;
   void Login();
+  void Auth();
 
  private:
   CThostFtdcTraderApi* api_ = nullptr;
@@ -135,16 +136,19 @@ void Trade::OnRspError(CThostFtdcRspInfoField* rsp_info, int request_id,
 #define STRCPY(a, b) strncpy(a, b, sizeof(a))
 
 void Trade::OnFrontConnected() {
-  if (!product_info_.empty() && !auth_code_.empty()) {
-    CThostFtdcReqAuthenticateField reqAuth{};
-    STRCPY(reqAuth.BrokerID, broker_id_.c_str());
-    STRCPY(reqAuth.UserID, user_id_.c_str());
-    STRCPY(reqAuth.UserProductInfo, product_info_.c_str());
-    STRCPY(reqAuth.AuthCode, auth_code_.c_str());
-    api_->ReqAuthenticate(&reqAuth, ++request_counter_);
-    return;
-  }
-  Login();
+  if (!product_info_.empty() && !auth_code_.empty())
+    Auth();
+  else
+    Login();
+}
+
+void Trade::Auth() {
+  CThostFtdcReqAuthenticateField reqAuth{};
+  STRCPY(reqAuth.BrokerID, broker_id_.c_str());
+  STRCPY(reqAuth.UserID, user_id_.c_str());
+  STRCPY(reqAuth.UserProductInfo, product_info_.c_str());
+  STRCPY(reqAuth.AuthCode, auth_code_.c_str());
+  api_->ReqAuthenticate(&reqAuth, ++request_counter_);
 }
 
 void Trade::Login() {
@@ -164,6 +168,8 @@ void Trade::OnRspAuthenticate(CThostFtdcRspAuthenticateField* rsp_auth_field,
     LOG_ERROR(name() << ": Failed to authenticate, errorCode="
                      << rsp_info->ErrorID << ", errorMsg=" << rsp_info->ErrorMsg
                      << " requestId=" << request_id << ", chain=" << is_last);
+
+    tp_.AddTask([this]() { Auth(); }, boost::posix_time::seconds(60));
     return;
   }
   Login();
