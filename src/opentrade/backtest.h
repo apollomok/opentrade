@@ -4,7 +4,6 @@
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <fstream>
-#include <memory>
 
 #include "python.h"
 #include "security.h"

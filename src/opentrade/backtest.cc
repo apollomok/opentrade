@@ -71,11 +71,16 @@ decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
 
   return out;
 }
+
 struct SecTuple {
   const Security* sec;
   Simulator* sim;
   Simulator::Orders* actives;
+  double adj_px;
+  double adj_vol;
 };
+typedef std::vector<SecTuple> SecTuples;
+
 struct Tick {
   SecTuple* st;
   uint32_t hmsm;
@@ -84,19 +89,18 @@ struct Tick {
   double qty;
   bool operator<(const Tick& b) const { return hmsm < b.hmsm; }
 };
-typedef std::vector<std::shared_ptr<SecTuple>> SecTuples;
 typedef std::vector<Tick> Ticks;
 
 bool LoadTickFile(const std::string& fn, Simulator* sim,
-                  const boost::gregorian::date& date, SecTuples& sts,
-                  Ticks& ticks) {
-  std::ifstream ifs(fn);
+                  const boost::gregorian::date& date, SecTuples* sts,
+                  std::ifstream& ifs) {
+  ifs.open(fn);
   if (!ifs.good()) return false;
 
   LOG_INFO("Loading " << fn);
   auto secs0 = GetSecurities(ifs, fn);
-  std::vector<std::tuple<SecTuple*, double, double>> secs;
-  secs.resize(secs0.size());
+  sts->clear();
+  sts->resize(secs0.size());
   auto date_num = date.year() * 10000 + date.month() * 100 + date.day();
   for (auto i = 0u; i < secs0.size(); ++i) {
     auto sec = secs0[i];
@@ -104,30 +108,35 @@ bool LoadTickFile(const std::string& fn, Simulator* sim,
     auto& adjs = sec->adjs;
     auto it = std::upper_bound(sec->adjs.begin(), sec->adjs.end(),
                                Security::Adj(date_num));
-    auto st = std::shared_ptr<SecTuple>(
-        new SecTuple{sec, sim, &sim->active_orders()[sec->id]});
-    sts.push_back(st);
     if (it == adjs.end())
-      secs[i] = std::make_tuple(st.get(), 1., 1.);
+      (*sts)[i] = SecTuple{sec, sim, &sim->active_orders()[sec->id], 1., 1.};
     else
-      secs[i] = std::make_tuple(st.get(), it->px, it->vol);
+      (*sts)[i] =
+          SecTuple{sec, sim, &sim->active_orders()[sec->id], it->px, it->vol};
   }
+  return true;
+}
+
+Tick ReadTickFile(std::ifstream* ifs, uint32_t to_tm, SecTuples* sts,
+                  Ticks* ticks) {
   std::string line;
-  while (std::getline(ifs, line)) {
+  while (std::getline(*ifs, line)) {
     Tick t;
     uint32_t i;
     if (sscanf(line.c_str(), "%u %u %c %lf %lf", &t.hmsm, &i, &t.type, &t.px,
                &t.qty) != 5)
       continue;
-    if (i >= secs.size()) continue;
-    auto& st = secs[i];
-    t.st = std::get<0>(st);
-    t.px *= std::get<1>(st);
+    if (i >= sts->size()) continue;
+    auto& st = (*sts)[i];
+    if (!st.sec) continue;
+    t.st = &st;
+    t.px *= st.adj_px;
     if (!t.px) continue;
-    t.qty *= std::get<2>(st);
-    ticks.push_back(t);
+    t.qty *= st.adj_vol;
+    if (t.hmsm > to_tm) return t;
+    ticks->push_back(t);
   }
-  return true;
+  return {};
 }
 
 void Backtest::Play(const boost::gregorian::date& date) {
@@ -143,14 +152,14 @@ void Backtest::Play(const boost::gregorian::date& date) {
   }
 
   char fn[256];
-  SecTuples sts;
-  Ticks ticks;
-  for (auto& pair : simulators_) {
-    strftime(fn, sizeof(fn), pair.first.c_str(), &tm);
-    LoadTickFile(fn, pair.second, date, sts, ticks);
+  std::vector<SecTuples> sts(simulators_.size());
+  std::vector<std::ifstream> ifs(simulators_.size());
+  auto n = 0;
+  for (auto i = 0u; i < simulators_.size(); ++i) {
+    strftime(fn, sizeof(fn), simulators_[i].first.c_str(), &tm);
+    if (LoadTickFile(fn, simulators_[i].second, date, &sts[i], ifs[i])) ++n;
   }
-  if (ticks.empty()) return;
-  if (simulators_.size() > 1) std::sort(ticks.begin(), ticks.end());
+  if (!n) return;
 
   if (on_start_of_day_) {
     try {
@@ -167,24 +176,40 @@ void Backtest::Play(const boost::gregorian::date& date) {
   if (trade_hit_ratio_str) {
     trade_hit_ratio_ = atof(trade_hit_ratio_str);
   }
-  for (auto& t : ticks) {
-    if (skip_) break;
-    auto hms = t.hmsm / 1000;
-    auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
-    auto tm = (tm0_ + nsecond) * 1000000lu + t.hmsm % 1000 * 1000;
-    if (tm < kTime) tm = kTime;
-    auto it = kTimers.begin();
-    while (it != kTimers.end() && it->first <= tm) {
-      if (it->first > kTime) kTime = it->first;
-      it->second();
-      kTimers.erase(it);
-      // do not use it = kTimers.erase(it) in case smaller timer inserted
-      it = kTimers.begin();
+  std::vector<Tick> last_ticks(simulators_.size(), Tick{});
+  static const uint32_t kSteps = 240;
+  Ticks ticks;
+  for (auto i = 1u; i <= kSteps && !skip_; ++i) {
+    ticks.clear();
+    auto to_tm = i * kSecondsOneDay * 1000 / kSteps;
+    for (auto j = 0u; j < simulators_.size(); ++j) {
+      auto& t = last_ticks[j];
+      if (t.st) {
+        if (t.hmsm > to_tm) continue;
+        ticks.push_back(t);
+      }
+      t = ReadTickFile(&ifs[i], to_tm, &sts[i], &ticks);
     }
-    if (tm > kTime) kTime = tm;
+    if (simulators_.size() > 1) std::sort(ticks.begin(), ticks.end());
+    for (auto& t : ticks) {
+      if (skip_) break;
+      auto hms = t.hmsm / 1000;
+      auto nsecond = hms / 10000 * 3600 + hms % 10000 / 100 * 60 + hms % 100;
+      auto tm = (tm0_ + nsecond) * 1000000lu + t.hmsm % 1000 * 1000;
+      if (tm < kTime) tm = kTime;
+      auto it = kTimers.begin();
+      while (it != kTimers.end() && it->first <= tm) {
+        if (it->first > kTime) kTime = it->first;
+        it->second();
+        kTimers.erase(it);
+        // do not use it = kTimers.erase(it) in case smaller timer inserted
+        it = kTimers.begin();
+      }
+      if (tm > kTime) kTime = tm;
 
-    t.st->sim->HandleTick(*t.st->sec, t.type, t.px, t.qty, trade_hit_ratio_,
-                          t.st->actives);
+      t.st->sim->HandleTick(*t.st->sec, t.type, t.px, t.qty, trade_hit_ratio_,
+                            t.st->actives);
+    }
   }
 
   PositionManager::Instance().UpdatePnl();
