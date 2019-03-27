@@ -494,6 +494,13 @@ BOOST_PYTHON_MODULE(opentrade) {
               },
               bp::return_value_policy<bp::reference_existing_object>()));
 
+#ifdef BACKTEST
+  bp::def("add_simulator", bp::make_function(+[](const std::string &fn_tmpl,
+                                                 const std::string &name) {
+            Backtest::Instance().AddSimulator(fn_tmpl, name);
+          }));
+#endif
+
   bp::def("get_account",
           bp::make_function(
               +[](const std::string &name) {

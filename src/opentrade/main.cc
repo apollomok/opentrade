@@ -135,9 +135,6 @@ int main(int argc, char *argv[]) {
   if (start_date < 19000000) {
     LOG_FATAL("Invalid start_date " << start_date);
   }
-  if (tick_file.empty()) {
-    LOG_FATAL("empty tick_file");
-  }
 #else
   if (!fs::exists(kStorePath)) {
     fs::create_directory(kStorePath);
@@ -244,13 +241,13 @@ int main(int argc, char *argv[]) {
 
 #ifdef BACKTEST
   auto &bt = opentrade::Backtest::Instance();
-  bt.Start(backtest_file, latency);
+  bt.Start(backtest_file, latency, tick_file);
   boost::gregorian::date dt(start_date / 10000, start_date % 10000 / 100,
                             start_date % 100);
   boost::gregorian::date end(end_date / 10000, end_date % 10000 / 100,
                              end_date % 100);
   while (dt <= end) {
-    bt.PlayTickFile(tick_file, dt);
+    bt.Play(dt);
     dt += boost::gregorian::date_duration(1);
   }
   bt.End();
