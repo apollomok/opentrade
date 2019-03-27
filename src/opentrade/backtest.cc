@@ -258,9 +258,11 @@ void Backtest::AddSimulator(const std::string& fn_tmpl,
   Adapter::StrMap params;
   std::stringstream tmp;
   for (auto& pair : SecurityManager::Instance().exchanges()) {
+    if (!strcmp(pair.second->name, "default")) continue;
     if (!tmp.str().empty()) tmp << ',';
     tmp << pair.second->name;
   }
+  params["src"] = name;
   params["markets"] = tmp.str();
   sim->set_config(params);
   simulators_.emplace_back(fn_tmpl, sim);
@@ -286,9 +288,11 @@ SubAccount* Backtest::CreateSubAccount(const std::string& name,
   s->id = acc_mngr.sub_accounts_.size();
   acc_mngr.sub_accounts_.emplace(s->id, s);
   acc_mngr.sub_account_of_name_.emplace(s->name, s);
-  auto sub_accs = std::make_shared<User::SubAccountMap>();
+  auto user = const_cast<User*>(acc_mngr.GetUser(0));
+  auto sub_accs =
+      std::make_shared<User::SubAccountMap>(*user->sub_accounts().get());
   sub_accs->emplace(s->id, s);
-  const_cast<User*>(acc_mngr.GetUser(0))->set_sub_accounts(sub_accs);
+  user->set_sub_accounts(sub_accs);
   return s;
 }
 
