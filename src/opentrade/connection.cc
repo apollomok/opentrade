@@ -202,8 +202,9 @@ void Connection::PublishMarketStatus() {
   }
 }
 
-static inline void GetMarketData(const MarketData& md, const MarketData& md0,
-                                 Security::IdType id, json* j) {
+static inline void GetMarketData(
+    const MarketData& md, const MarketData& md0,
+    const std::pair<Security::IdType, DataSrc::IdType>& sec_src, json* j) {
   if (md.tm == md0.tm) return;
   json j3;
   j3["t"] = md.tm;
@@ -239,7 +240,11 @@ static inline void GetMarketData(const MarketData& md, const MarketData& md0,
     }
   }
   if (!j3.size()) return;
-  j->push_back(json{id, j3});
+  if (sec_src.second)
+    j->push_back(
+        json{json{sec_src.first, DataSrc::GetStr(sec_src.second)}, j3});
+  else
+    j->push_back(json{sec_src.first, j3});
 }
 
 void Connection::PublishMarketdata() {
@@ -251,9 +256,10 @@ void Connection::PublishMarketdata() {
     self->PublishMarketStatus();
     json j = {"md"};
     for (auto& pair : self->subs_) {
-      auto id = pair.first;
-      auto& md = MarketDataManager::Instance().GetLite(id);
-      GetMarketData(md, pair.second.first, id, &j);
+      auto sec_src = pair.first;
+      auto& md =
+          MarketDataManager::Instance().GetLite(sec_src.first, sec_src.second);
+      GetMarketData(md, pair.second.first, sec_src, &j);
       pair.second.first = md;
     }
     if (j.size() > 1) {
@@ -339,6 +345,23 @@ void Connection::OnMessageAsync(const std::string& msg) {
   if (closed_) return;
   auto self = shared_from_this();
   strand_.post([self, msg]() { self->OnMessageSync(msg); });
+}
+
+auto GetSecSrc(const json& j) {
+  auto id = 0u;
+  auto src = 0u;
+  if (j.size() == 2) {
+    id = Get<int64_t>(j[0]);
+    if (j[1].is_string()) {
+      auto tmp = Get<std::string>(j[1]);
+      if (strcasecmp(tmp.c_str(), "default")) src = DataSrc::GetId(tmp.c_str());
+    } else {
+      src = Get<int64_t>(j[1]);
+    }
+  } else {
+    id = Get<int64_t>(j);
+  }
+  return std::make_pair(id, src);
 }
 
 void Connection::OnMessageSync(const std::string& msg,
@@ -490,12 +513,12 @@ void Connection::OnMessageSync(const std::string& msg,
     } else if (action == "sub") {
       json jout = {"md"};
       for (auto i = 1u; i < j.size(); ++i) {
-        auto id = Get<int64_t>(j[i]);
-        auto& s = subs_[id];
-        auto sec = SecurityManager::Instance().Get(id);
+        auto sec_src = GetSecSrc(j[i]);
+        auto& s = subs_[sec_src];
+        auto sec = SecurityManager::Instance().Get(sec_src.first);
         if (sec) {
-          auto& md = MarketDataManager::Instance().Get(*sec);
-          GetMarketData(md, s.first, id, &jout);
+          auto& md = MarketDataManager::Instance().Get(*sec, sec_src.second);
+          GetMarketData(md, s.first, sec_src, &jout);
           s.first = md;
           s.second += 1;
         }
@@ -505,8 +528,7 @@ void Connection::OnMessageSync(const std::string& msg,
       }
     } else if (action == "unsub") {
       for (auto i = 1u; i < j.size(); ++i) {
-        auto id = Get<int64_t>(j[i]);
-        auto it = subs_.find(id);
+        auto it = subs_.find(GetSecSrc(j[i]));
         if (it == subs_.end()) return;
         it->second.second -= 1;
         if (it->second.second <= 0) subs_.erase(it);
@@ -1104,6 +1126,9 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     }
     for (auto& pair : AccountManager::Instance().broker_accounts_) {
       Send(json{"broker_account", pair.first, pair.second->name});
+    }
+    for (auto& src : MarketDataManager::Instance().srcs()) {
+      Send(json{"src", src});
     }
     for (auto& pair : AlgoManager::Instance().adapters()) {
       if (pair.first.at(0) == '_') continue;

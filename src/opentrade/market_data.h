@@ -4,6 +4,7 @@
 #include <tbb/concurrent_unordered_map.h>
 #include <any>
 #include <map>
+#include <set>
 #include <shared_mutex>
 #include <string>
 
@@ -158,6 +159,7 @@ class MarketDataManager : public AdapterManager<MarketDataAdapter>,
   // Lite version without subscription
   const MarketData& GetLite(Security::IdType id, DataSrc::IdType src = 0);
   MarketDataAdapter* GetDefault() const { return default_; }
+  auto& srcs() const { return srcs_; }
 
  private:
   MarketDataAdapter* GetRoute(const Security& sec, DataSrc::IdType src);
@@ -168,6 +170,7 @@ class MarketDataManager : public AdapterManager<MarketDataAdapter>,
   std::map<std::pair<DataSrc::IdType, Exchange::IdType>,
            std::vector<MarketDataAdapter*>>
       routes_;
+  std::set<std::string> srcs_;
 };
 
 }  // namespace opentrade

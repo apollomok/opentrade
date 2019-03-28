@@ -190,7 +190,7 @@ void SimServer::HandleTick(const Security* sec, char type, double px,
     while (it != actives.end() && size > 0) {
       auto& tuple = it->second;
       bool ok;
-      swith(type) {
+      switch (type) {
         case 'T':
           ok = (tuple.is_buy && px <= tuple.px) ||
                (!tuple.is_buy && px >= tuple.px);

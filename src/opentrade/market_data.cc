@@ -46,7 +46,8 @@ void MarketDataManager::Add(MarketDataAdapter* adapter) {
   if (!default_) default_ = adapter;
   auto src = adapter->config("src");
   if (!src.empty()) {
-    LOG_INFO(adapter->name() << " src=" << src)
+    LOG_INFO(adapter->name() << " src=" << src);
+    srcs_.insert(src);
   }
   if (src.size() > 4) {
     LOG_FATAL("Invalid market data src: " << src << ", maximum length is 4");

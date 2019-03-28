@@ -72,7 +72,9 @@ class Connection : public std::enable_shared_from_this<Connection> {
  private:
   Transport::Ptr transport_;
   const User* user_ = nullptr;
-  std::unordered_map<Security::IdType, std::pair<MarketData, uint32_t>> subs_;
+  boost::unordered_map<std::pair<Security::IdType, DataSrc::IdType>,
+                       std::pair<MarketData, uint32_t>>
+      subs_;
 #if BOOST_VERSION < 106600
   boost::asio::strand strand_;
 #else
