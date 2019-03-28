@@ -75,7 +75,7 @@ inline double Simulator::TryFillSell(double px, double qty,
 void Simulator::HandleTick(const Security& sec, char type, double px,
                            double qty, double trade_hit_ratio,
                            Orders* actives_of_sec) {
-  if (!qty && sec.type == kForexPair) qty = 1e9;
+  if (!qty && sec.type == kForexPair && type != 'T') qty = 1e9;
   switch (type) {
     case 'T': {
       Update(sec.id, px, qty);

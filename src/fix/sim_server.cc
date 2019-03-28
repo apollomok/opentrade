@@ -40,6 +40,7 @@ class SimServer : public opentrade::MarketDataAdapter, public FIX::Application {
   void toApp(FIX::Message& msg, const FIX::SessionID& session_id) override {}
   void toAdmin(FIX::Message& msg, const FIX::SessionID& id) override {}
   void fromAdmin(const FIX::Message&, const FIX::SessionID&) override {}
+  void HandleTick(const Security* sec, char type, double px, double qty);
 
  private:
   std::unique_ptr<FIX::SessionSettings> fix_settings_;
@@ -154,65 +155,82 @@ void SimServer::Start() noexcept {
         auto sec = secs[i];
         if (!sec) continue;
         switch (type) {
-          case 'T': {
+          case 'T':
             Update(sec->id, px, qty);
-            if (!qty && sec->type == opentrade::kForexPair) qty = 1e9;
-            if (px > 0 && qty > 0) {
-              tp_.AddTask([sec, px, qty, this]() {
-                auto size = qty;
-                auto& actives = active_orders_[sec->id];
-                if (actives.empty()) return;
-                auto it = actives.begin();
-                while (it != actives.end() && size > 0) {
-                  auto& tuple = it->second;
-                  auto ok = (tuple.is_buy && px <= tuple.px) ||
-                            (!tuple.is_buy && px >= tuple.px);
-                  if (!ok) {
-                    it++;
-                    continue;
-                  }
-                  auto n = std::min(size, tuple.leaves);
-                  size -= n;
-                  tuple.leaves -= n;
-                  assert(size >= 0);
-                  assert(tuple.leaves >= 0);
-                  auto& resp = tuple.resp;
-                  resp.setField(FIX::ExecTransType('0'));
-                  resp.setField(FIX::ExecType(
-                      tuple.leaves <= 0 ? FIX::ExecType_FILL
-                                        : FIX::ExecType_PARTIAL_FILL));
-                  resp.setField(FIX::OrdStatus(
-                      tuple.leaves <= 0 ? FIX::ExecType_FILL
-                                        : FIX::ExecType_PARTIAL_FILL));
-                  resp.setField(FIX::LastShares(n));
-                  resp.setField(FIX::LastPx(tuple.px));
-                  auto eid = boost::uuids::to_string(kUuidGen());
-                  resp.setField(FIX::ExecID(eid));
-                  session_->send(resp);
-                  if (tuple.leaves <= 0)
-                    it = actives.erase(it);
-                  else
-                    it++;
-                }
-              });
-            }
-          } break;
+            break;
           case 'A':
             if (*sec->exchange->name == 'U') qty *= 100;
             Update(sec->id, px, qty, false);
+            if (!qty && sec->type == opentrade::kForexPair) qty = 1e9;
             break;
           case 'B':
             if (*sec->exchange->name == 'U') qty *= 100;
             Update(sec->id, px, qty, true);
+            if (!qty && sec->type == opentrade::kForexPair) qty = 1e9;
             break;
           default:
-            break;
+            continue;
         }
+        HandleTick(sec, type, px, qty);
       }
       for (auto& pair : *md_) pair.second = opentrade::MarketData{};
     }
   });
   thread.detach();
+}
+
+void SimServer::HandleTick(const Security* sec, char type, double px,
+                           double qty) {
+  if (px <= 0 || qty <= 0) return;
+  tp_.AddTask([=]() {
+    auto size = qty;
+    auto& actives = active_orders_[sec->id];
+    if (actives.empty()) return;
+    auto it = actives.begin();
+    while (it != actives.end() && size > 0) {
+      auto& tuple = it->second;
+      bool ok;
+      swith(type) {
+        case 'T':
+          ok = (tuple.is_buy && px <= tuple.px) ||
+               (!tuple.is_buy && px >= tuple.px);
+          break;
+        case 'A':
+          ok = tuple.is_buy && px <= tuple.px;
+          break;
+        case 'B':
+          ok = !tuple.is_buy && px >= tuple.px;
+          break;
+        default:
+          ok = false;
+          break;
+      }
+      if (!ok) {
+        it++;
+        continue;
+      }
+      auto n = std::min(size, tuple.leaves);
+      size -= n;
+      tuple.leaves -= n;
+      assert(size >= 0);
+      assert(tuple.leaves >= 0);
+      auto& resp = tuple.resp;
+      resp.setField(FIX::ExecTransType('0'));
+      resp.setField(FIX::ExecType(
+          tuple.leaves <= 0 ? FIX::ExecType_FILL : FIX::ExecType_PARTIAL_FILL));
+      resp.setField(FIX::OrdStatus(
+          tuple.leaves <= 0 ? FIX::ExecType_FILL : FIX::ExecType_PARTIAL_FILL));
+      resp.setField(FIX::LastShares(n));
+      resp.setField(FIX::LastPx(tuple.px));
+      auto eid = boost::uuids::to_string(kUuidGen());
+      resp.setField(FIX::ExecID(eid));
+      session_->send(resp);
+      if (tuple.leaves <= 0)
+        it = actives.erase(it);
+      else
+        it++;
+    }
+  });
 }
 
 void SimServer::Subscribe(const Security& sec) noexcept {
