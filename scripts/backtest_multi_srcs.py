@@ -21,8 +21,8 @@ def on_start_of_day(self, date):
   st = SecurityTuple()
   for src in ['A', 'B']:
     st.sec = sec
-    st.src = DataSrc('B')
-    st.acc = get_account('B')
+    st.src = DataSrc(src)
+    st.acc = get_account(src)
     self.start_algo('AlphaExample', {'Security': st})
     sts.append(st)
 
