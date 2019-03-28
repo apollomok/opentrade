@@ -103,8 +103,8 @@ void Data::Reconnect() noexcept {
 void Data::Subscribe2(const Security &sec) {
   char *req[1] = {const_cast<char *>(sec.local_symbol)};
   instruments_[sec.local_symbol] = &sec;
-  api_->SubscribeMarketData(req, ++request_counter_);
-  // api_->SubscribeForQuoteRsp(req, ++request_counter_);
+  api_->SubscribeMarketData(req, 1);
+  // api_->SubscribeForQuoteRsp(req, 1);
 }
 
 void Data::OnHeartBeatWarning(int time_lapse) {
