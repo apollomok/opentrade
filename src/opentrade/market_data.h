@@ -58,21 +58,21 @@ struct MarketData {
   Trade trade;
   Depth depth;
 
-  void SetDerived(std::any value, size_t id) {
+  void SetIndicator(std::any value, size_t id) {
     assert(id < 16);
     std::unique_lock<std::shared_mutex> lock(mutex_);
-    if (!derived) derived = new AnyVec;
-    if (derived->size() <= id) derived->resize(id);
-    (*derived)[id] = value;
+    if (!indicators_) indicators_ = new AnyVec;
+    if (indicators_->size() <= id) indicators_->resize(id);
+    (*indicators_)[id] = value;
   }
 
   template <typename T>
-  const T* GetDerived(size_t id) const {
+  const T* GetIndicator(size_t id) const {
     std::shared_lock<std::shared_mutex> lock(mutex_);
-    if (!derived) return {};
-    if (id >= derived->size()) return {};
+    if (!indicators_) return {};
+    if (id >= indicators_->size()) return {};
     try {
-      return std::any_cast<const T*>(derived->at(id));
+      return std::any_cast<const T*>(indicators_->at(id));
     } catch (const std::bad_any_cast& e) {
       return {};
     }
@@ -80,7 +80,7 @@ struct MarketData {
 
  private:
   typedef std::vector<std::any> AnyVec;
-  AnyVec* derived = nullptr;
+  AnyVec* indicators_ = nullptr;
   static inline std::shared_mutex mutex_;
 };
 
