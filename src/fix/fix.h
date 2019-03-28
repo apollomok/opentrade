@@ -259,6 +259,8 @@ class Fix : public FIX::Application,
     HandleCancelRejected(clordid, orig_id, text, transact_time_);
   }
 
+  virtual void SetExtraTags(const Order& ord, FIX::Message* msg) {}
+
   void SetTags(const Order& ord, FIX::Message* msg) {
     if (!ord.orig_id) {  // not cancel
       if (ord.type != kMarket && ord.type != kStop) {
@@ -347,6 +349,7 @@ class Fix42 : public opentrade::Fix {
                                  FIX::Message* msg) {
     SetTags(ord, msg);
     SetBrokerTags(ord, msg);
+    SetExtraTags(ord, msg);
     if (Send(msg))
       return {};
     else
