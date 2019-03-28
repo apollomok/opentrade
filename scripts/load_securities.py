@@ -46,15 +46,15 @@ def main():
   bbgids = set([r[0] for r in cursor.fetchall()])
 
   with open(opts.file) as fh:
+    fields = [
+        'symbol', 'local_symbol', '', 'currency', 'bbgid', 'sedol', 'isin',
+        'cusip', 'close_price', 'adv20', 'market_cap', 'sector',
+        'industry_group', 'industry', 'sub_industry', '', 'lot_size',
+        'multiplier', ''
+    ]
     fh.readline()
     for line in fh:
       toks = line.strip().split(',')
-      fields = [
-          'symbol', 'local_symbol', '', 'currency', 'bbgid', 'sedol', 'isin',
-          'cusip', 'close_price', 'adv20', 'market_cap', 'sector',
-          'industry_group', 'industry', 'sub_industry', '', 'lot_size',
-          'multiplier', ''
-      ]
       values = []
       valid_fields = []
       bbgid = None
