@@ -352,14 +352,19 @@ auto GetSecSrc(const json& j) {
   auto src = 0u;
   if (j.size() == 2) {
     id = Get<int64_t>(j[0]);
-    if (j[1].is_string()) {
-      auto tmp = Get<std::string>(j[1]);
-      if (strcasecmp(tmp.c_str(), "default")) src = DataSrc::GetId(tmp.c_str());
-    } else {
-      src = Get<int64_t>(j[1]);
-    }
+    auto tmp = Get<std::string>(j[1]);
+    if (strcasecmp(tmp.c_str(), "default")) src = DataSrc::GetId(tmp.c_str());
   } else {
-    id = Get<int64_t>(j);
+    if (j.is_string()) {
+      auto tmp = Split(Get<std::string>(j), " ");
+      if (tmp.size() > 0) id = atoll(tmp[0].c_str());
+      if (tmp.size() == 2) {
+        if (strcasecmp(tmp[1].c_str(), "default"))
+          src = DataSrc::GetId(tmp[1].c_str());
+      }
+    } else {
+      id = Get<int64_t>(j);
+    }
   }
   return std::make_pair(id, src);
 }
