@@ -838,7 +838,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
        {"total_outstanding_sell_qty", p->total_outstanding_sell_qty},
        {"total_outstanding_sell_qty", p->total_outstanding_sell_qty}},
   };
-  Send(j);
+  Send(out);
 }
 
 auto LoadTargets(const json& j) {
