@@ -322,6 +322,17 @@ class Fix : public FIX::Application,
 
   bool Send(FIX::Message* msg) { return session_->send(*msg); }
 
+  virtual std::string SetAndSend(const opentrade::Order& ord,
+                                 FIX::Message* msg) {
+    SetTags(ord, msg);
+    SetBrokerTags(ord, msg);
+    SetExtraTags(ord, msg);
+    if (Send(msg))
+      return {};
+    else
+      return "Failed in FIX::Session::send()";
+  }
+
  protected:
   std::unique_ptr<FIX::SessionSettings> fix_settings_;
   std::unique_ptr<FIX::MessageStoreFactory> fix_store_factory_;
@@ -343,17 +354,6 @@ class Fix42 : public opentrade::Fix {
   void onMessage(const FIX42::OrderCancelReject& msg,
                  const FIX::SessionID& id) {
     OnCancelRejected(msg, id);
-  }
-
-  virtual std::string SetAndSend(const opentrade::Order& ord,
-                                 FIX::Message* msg) {
-    SetTags(ord, msg);
-    SetBrokerTags(ord, msg);
-    SetExtraTags(ord, msg);
-    if (Send(msg))
-      return {};
-    else
-      return "Failed in FIX::Session::send()";
   }
 
   std::string Place(const opentrade::Order& ord) noexcept override {
