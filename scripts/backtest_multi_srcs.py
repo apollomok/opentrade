@@ -28,8 +28,6 @@ def on_start_of_day(self, date):
 
 
 def on_end_of_day(self, date):
-  # clear memory. If you have interday orders, please not call clear
-  self.clear()
   for st in sts:
     for sec, p in st.acc.positions:
       print(sec, p)

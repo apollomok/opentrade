@@ -120,6 +120,7 @@ static inline void UpdateTrade(MarketData* md, DataSrc::IdType src,
   auto& t = md->trade;
   if (last_price > 0) UpdatePx(last_price, &t);
   if (last_qty > 0) UpdateVolume(last_qty, &t);
+  md->CheckTradeHook(id);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src, id)) return;
   x.Update(src, id);

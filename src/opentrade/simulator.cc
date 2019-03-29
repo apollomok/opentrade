@@ -193,6 +193,7 @@ void Simulator::ResetData() {
     pair.second.Clear();
     pair.second = MarketData{};
   }
+  active_orders_.clear();
 }
 
 }  // namespace opentrade

@@ -563,7 +563,11 @@ BOOST_PYTHON_MODULE(opentrade) {
 
 #ifdef BACKTEST
   bp::class_<Backtest, boost::noncopyable>("Backtest", bp::no_init)
-      .def("clear", &Backtest::Clear)
+      .def("clear",
+           +[](Backtest &) {
+             // clear is called allways, not clearing cause a lot of problems
+             LOG2_WARN("backtest clear is deprecated");
+           })
       .def("skip", &Backtest::Skip)
       .def("set_timeout",
            +[](Backtest &, bp::object func, double seconds) {

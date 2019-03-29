@@ -166,6 +166,8 @@ void Backtest::Play(const boost::gregorian::date& date) {
   }
   if (!n) return;
 
+  LOG_DEBUG("Start to play back " << fn);
+  AlgoManager::Instance().StartPermanents();
   if (on_start_of_day_) {
     try {
       on_start_of_day_(obj_, kOpentrade.attr("get_datetime")().attr("date")());
@@ -175,7 +177,6 @@ void Backtest::Play(const boost::gregorian::date& date) {
     }
   }
 
-  LOG_DEBUG("Start to play back " << fn);
   trade_hit_ratio_ = 0.5;
   auto trade_hit_ratio_str = getenv("TRADE_HIT_RATIO");
   if (trade_hit_ratio_str) {
@@ -226,9 +227,7 @@ void Backtest::Play(const boost::gregorian::date& date) {
     }
   }
 
-  for (auto& pair : simulators_) {
-    pair.second->ResetData();
-  }
+  Clear();
 }
 
 void Backtest::Clear() {
@@ -251,6 +250,9 @@ void Backtest::Clear() {
   for (auto& pair : simulators_) pair.second->active_orders().clear();
   kTimers.clear();
   IndicatorHandlerManager::Instance().ihs_.clear();
+  for (auto& pair : simulators_) {
+    pair.second->ResetData();
+  }
 }
 
 void Backtest::AddSimulator(const std::string& fn_tmpl,

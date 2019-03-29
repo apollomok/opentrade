@@ -29,7 +29,6 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
 
   void OnTrade(Security::IdType id, MarketData* md, time_t tm, double px,
                double qty) noexcept override {
-    std::cout << tm << ' ' << px << ' ' << qty << std::endl;
   }
 
   void OnStart() noexcept override {}

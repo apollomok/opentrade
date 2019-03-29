@@ -130,6 +130,13 @@ int main(int argc, char *argv[]) {
   opentrade::SecurityManager::Initialize();
 
 #ifdef BACKTEST
+  if (backtest_file.empty()) {
+    LOG_FATAL("backtest file is not given");
+    return -1;
+  }
+  if (!fs::exists(backtest_file)) {
+    LOG_FATAL("backtest file '" << backtest_file << "' does not exist");
+  }
   if (end_date < start_date) {
     LOG_FATAL("end_date < start_date");
   }
