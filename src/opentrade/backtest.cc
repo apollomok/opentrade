@@ -180,7 +180,7 @@ void Backtest::Play(const boost::gregorian::date& date) {
   if (trade_hit_ratio_str) {
     trade_hit_ratio_ = atof(trade_hit_ratio_str);
   }
-  std::vector<Tick> last_ticks(simulators_.size(), Tick{});
+  std::vector<Tick> last_ticks(simulators_.size());
   static const uint32_t kNSteps = 240;
   static const uint32_t kStep = (kSecondsOneDay * 1000) / kNSteps;
   Ticks ticks;
