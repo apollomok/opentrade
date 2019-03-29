@@ -15,8 +15,9 @@ namespace opentrade {
 
 struct MarketData;
 struct TradeTickHook {
+  // OnTrade is not ensured to be called in the same thread of its algo
   virtual void OnTrade(Security::IdType id, MarketData* md, time_t tm,
-                       double px, double qty) = 0;
+                       double px, double qty) noexcept = 0;
 };
 
 class Instrument;
@@ -77,6 +78,9 @@ struct MarketData {
   Depth depth;
 
   struct IndicatorManager {
+    ~IndicatorManager() {
+      for (auto& ind : inds) delete ind;
+    }
     std::vector<Indicator*> inds;
     std::vector<TradeTickHook*> trade_tick_hooks;
   };
@@ -85,7 +89,7 @@ struct MarketData {
     assert(id < 16);
     std::unique_lock<std::shared_mutex> lock(mutex_);
     if (!mngr_) mngr_ = new IndicatorManager;
-    if (mngr_->inds.size() <= id) mngr_->inds.resize(id);
+    if (mngr_->inds.size() <= id) mngr_->inds.resize(id + 1);
     mngr_->inds[id] = value;
   }
 
@@ -97,13 +101,13 @@ struct MarketData {
     return dynamic_cast<T*>(mngr_->inds.at(id));
   }
 
-  void Register(TradeTickHook* hook) {
+  void HookTradeTick(TradeTickHook* hook) {
     std::unique_lock<std::shared_mutex> lock(mutex_);
     if (!mngr_) mngr_ = new IndicatorManager;
     mngr_->trade_tick_hooks.push_back(hook);
   }
 
-  void Unregister(TradeTickHook* hook) {
+  void UnhookTradeTick(TradeTickHook* hook) {
     std::unique_lock<std::shared_mutex> lock(mutex_);
     if (!mngr_) return;
     mngr_->trade_tick_hooks.erase(
@@ -121,6 +125,15 @@ struct MarketData {
       hook->OnTrade(id, this, tm, trade.close, trade.qty);
     }
   }
+
+#ifdef BACKTEST
+  void Clear() {
+    if (mngr_) {
+      delete mngr_;
+      mngr_ = nullptr;
+    }
+  }
+#endif
 
  private:
   IndicatorManager* mngr_ = nullptr;

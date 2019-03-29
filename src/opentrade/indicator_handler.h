@@ -5,15 +5,12 @@
 #include "logger.h"
 
 namespace opentrade {
-class IndicatorHandler : public Algo {
- public:
-  IndicatorHandler();
+
+struct IndicatorHandler : public Algo {
   virtual Indicator::IdType id() const = 0;
   virtual bool Subscribe(Indicator::IdType id, Instrument* inst,
-                         bool listen = false) = 0;
-
- private:
-  Algo* Clone() override { return this; }
+                         bool listen = false) noexcept = 0;
+  virtual void OnStart() noexcept = 0;
 };
 
 class IndicatorHandlerManager : public Singleton<IndicatorHandlerManager> {
@@ -35,6 +32,7 @@ class IndicatorHandlerManager : public Singleton<IndicatorHandlerManager> {
  private:
   // Initialized and started at AlgoManager::Run.
   std::map<size_t, IndicatorHandler*> ihs_;
+  friend class Backtest;
 };
 
 }  // namespace opentrade

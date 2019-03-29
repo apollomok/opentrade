@@ -190,7 +190,8 @@ void Simulator::ResetData() {
   for (auto& pair : *md_) {
     const_cast<Security*>(SecurityManager::Instance().Get(pair.first))
         ->close_price = pair.second.trade.close;
-    pair.second = opentrade::MarketData{};
+    pair.second.Clear();
+    pair.second = MarketData{};
   }
 }
 

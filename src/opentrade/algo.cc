@@ -90,8 +90,8 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
     algo = static_cast<Algo*>(adapter->Clone());
   } else {
     algo = Python::LoadTest(name, token);
-    if (!algo) return nullptr;
   }
+  if (!algo) return nullptr;
   for (;;) {
     algo->id_ = ++algo_id_counter_;
     // assign python algo on 0th thread, the others shares the other threads
@@ -119,6 +119,7 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
       }
     }
   }
+  if (dynamic_cast<IndicatorHandler*>(algo)) return algo;
   Persist(*algo, "new", params ? params_raw : "{\"test\":true}");
   strands_[algo->id_ % threads_.size()].post([params, algo]() {
     kError = params ? algo->OnStart(*params.get()) : algo->Test();
@@ -177,13 +178,11 @@ void AlgoManager::Run(int nthreads) {
     strands_.emplace_back(io_service_);
     runners_[i].tid_ = threads_[i].get_id();
   }
+  StartPermanents();
 #endif
+}
 
-  for (auto& pair : adapters()) {
-    auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
-    if (ih) IndicatorHandlerManager::Instance().Register(ih);
-  }
-
+void AlgoManager::StartPermanents() {
   for (auto& pair : adapters()) {
     if (pair.first.at(0) != '_' &&
         !dynamic_cast<IndicatorHandler*>(pair.second))
@@ -193,10 +192,22 @@ void AlgoManager::Run(int nthreads) {
     auto algo = Spawn(std::make_shared<Algo::ParamMap>(), pair.first,
                       user ? *user : kEmptyUser, "{}", "");
     if (algo) {
-      LOG_INFO("Started " << pair.first << " , id=" << algo->id());
+      LOG_INFO("Started " << pair.first << ", algo id=" << algo->id());
     } else {
       LOG_ERROR("Failed to start" << pair.first);
     }
+  }
+
+  for (auto& pair : algos_) {
+    auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
+    if (!ih) return;
+    IndicatorHandlerManager::Instance().Register(ih);
+  }
+
+  for (auto& pair : algos_) {
+    auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
+    if (!ih) return;
+    ih->OnStart();
   }
 }
 

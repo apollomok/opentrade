@@ -2,6 +2,7 @@
 
 #include "backtest.h"
 
+#include "indicator_handler.h"
 #include "logger.h"
 #include "simulator.h"
 
@@ -63,7 +64,7 @@ decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
     auto sec = sec_map[line];
     out.push_back(sec);
     if (!sec) {
-      LOG_ERROR("Unknown " << a << " on line " << line << " of " << fn);
+      LOG_ERROR("Unknown security on line " << line << " of " << fn);
       continue;
     }
   }
@@ -249,6 +250,7 @@ void Backtest::Clear() {
   gb.exec_ids_.clear();
   for (auto& pair : simulators_) pair.second->active_orders().clear();
   kTimers.clear();
+  IndicatorHandlerManager::Instance().ihs_.clear();
 }
 
 void Backtest::AddSimulator(const std::string& fn_tmpl,

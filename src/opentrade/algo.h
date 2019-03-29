@@ -64,7 +64,7 @@ class Algo : public Adapter {
   void SetTimeout(std::function<void()> func, double seconds);
   static bool Cancel(const Order& ord);
 
-  virtual std::string OnStart(const ParamMap& params) noexcept = 0;
+  virtual std::string OnStart(const ParamMap& params) noexcept { return {}; }
   virtual void OnModify(const ParamMap& params) noexcept {}
   virtual void OnStop() noexcept {}
   virtual void OnMarketTrade(const Instrument& inst, const MarketData& md,
@@ -146,11 +146,11 @@ class Instrument {
 
   void UnListen() { listen_ = false; }
   bool listen() const { return listen_; }
-  void Register(TradeTickHook* hook) {
-    const_cast<MarketData*>(md_)->Register(hook);
+  void HookTradeTick(TradeTickHook* hook) {
+    const_cast<MarketData*>(md_)->HookTradeTick(hook);
   }
-  void Unregister(TradeTickHook* hook) {
-    const_cast<MarketData*>(md_)->Unregister(hook);
+  void UnhookTradeTick(TradeTickHook* hook) {
+    const_cast<MarketData*>(md_)->UnhookTradeTick(hook);
   }
   bool Subscribe(Indicator::IdType id, bool listen = false);
   template <typename T = Indicator>
@@ -210,6 +210,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   }
   void Modify(Algo* algo, Algo::ParamMapPtr params);
   void Run(int nthreads);
+  void StartPermanents();
   void Update(DataSrc::IdType src, Security::IdType id);
   void Stop();
   void Stop(Algo::IdType id);

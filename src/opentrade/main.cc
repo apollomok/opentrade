@@ -9,6 +9,7 @@
 #include "account.h"
 #include "algo.h"
 #include "backtest.h"
+#include "bar_handler.h"
 #include "database.h"
 #include "exchange_connectivity.h"
 #include "logger.h"
@@ -229,6 +230,8 @@ int main(int argc, char *argv[]) {
       }
     }
   }
+
+  AlgoManager::Instance().Add(new opentrade::BarHandler);
 
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();
