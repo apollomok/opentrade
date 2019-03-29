@@ -2,7 +2,7 @@
 #define OPENTRADE_MARKET_DATA_H_
 
 #include <tbb/concurrent_unordered_map.h>
-#include <any>
+#include <boost/python.hpp>
 #include <map>
 #include <set>
 #include <shared_mutex>
@@ -12,6 +12,23 @@
 #include "security.h"
 
 namespace opentrade {
+
+struct MarketData;
+struct TradeTickHook {
+  virtual void OnTrade(Security::IdType id, MarketData* md, time_t tm,
+                       double px, double qty) = 0;
+};
+
+class Instrument;
+class Indicator {
+ public:
+  typedef size_t IdType;
+  virtual ~Indicator() {}
+  virtual boost::python::object GetPyObject() const { return {}; }
+
+ private:
+  std::vector<Instrument*> subs_;
+};
 
 struct MarketData {
 #ifdef BACKTEST
@@ -59,29 +76,54 @@ struct MarketData {
   Trade trade;
   Depth depth;
 
-  void SetIndicator(std::any value, size_t id) {
+  struct IndicatorManager {
+    std::vector<Indicator*> inds;
+    std::vector<TradeTickHook*> trade_tick_hooks;
+  };
+
+  void Set(Indicator* value, Indicator::IdType id) {
     assert(id < 16);
     std::unique_lock<std::shared_mutex> lock(mutex_);
-    if (!indicators_) indicators_ = new AnyVec;
-    if (indicators_->size() <= id) indicators_->resize(id);
-    (*indicators_)[id] = value;
+    if (!mngr_) mngr_ = new IndicatorManager;
+    if (mngr_->inds.size() <= id) mngr_->inds.resize(id);
+    mngr_->inds[id] = value;
   }
 
   template <typename T>
-  const T* GetIndicator(size_t id) const {
+  const T* Get(Indicator::IdType id) const {
     std::shared_lock<std::shared_mutex> lock(mutex_);
-    if (!indicators_) return {};
-    if (id >= indicators_->size()) return {};
-    try {
-      return std::any_cast<const T*>(indicators_->at(id));
-    } catch (const std::bad_any_cast& e) {
-      return {};
+    if (!mngr_) return {};
+    if (id >= mngr_->inds.size()) return {};
+    return dynamic_cast<T*>(mngr_->inds.at(id));
+  }
+
+  void Register(TradeTickHook* hook) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);
+    if (!mngr_) mngr_ = new IndicatorManager;
+    mngr_->trade_tick_hooks.push_back(hook);
+  }
+
+  void Unregister(TradeTickHook* hook) {
+    std::unique_lock<std::shared_mutex> lock(mutex_);
+    if (!mngr_) return;
+    mngr_->trade_tick_hooks.erase(
+        std::remove(mngr_->trade_tick_hooks.begin(),
+                    mngr_->trade_tick_hooks.end(), hook),
+        mngr_->trade_tick_hooks.end());
+  }
+
+  void CheckTradeHook(Security::IdType id) {
+    std::shared_lock<std::shared_mutex> lock(mutex_);
+    if (!mngr_) return;
+    if (mngr_->trade_tick_hooks.empty()) return;
+    // to-do: make it async without using TaskPool
+    for (auto& hook : mngr_->trade_tick_hooks) {
+      hook->OnTrade(id, this, tm, trade.close, trade.qty);
     }
   }
 
  private:
-  typedef std::vector<std::any> AnyVec;
-  AnyVec* indicators_ = nullptr;
+  IndicatorManager* mngr_ = nullptr;
   static inline std::shared_mutex mutex_;
 };
 

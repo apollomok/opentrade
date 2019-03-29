@@ -458,6 +458,15 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_cx_qty", &Instrument::total_cx_qty)
       .add_property("id", &Instrument::id)
       .def("unlisten", &Instrument::UnListen)
+      .def(
+          "subscribe", &Instrument::Subscribe,
+          (bp::arg("self"), bp::arg("indicator_id"), bp::arg("listen") = false))
+      .def("get",
+           +[](Instrument &inst, Indicator::IdType indicator_id) {
+             auto ind = inst.Get(indicator_id);
+             if (ind) return ind->GetPyObject();
+             return bp::object{};
+           })
       .add_property("active_orders", +[](const Instrument &inst) {
         return OrdersWrapper(&inst.active_orders());
       });
@@ -704,6 +713,7 @@ PyModule LoadPyModule(const std::string &module_name) {
   out.on_market_trade = GetCallable(m, "on_market_trade");
   out.on_market_quote = GetCallable(m, "on_market_quote");
   out.on_confirmation = GetCallable(m, "on_confirmation");
+  out.on_indicator = GetCallable(m, "on_indicator");
   return out;
 }
 
@@ -952,6 +962,19 @@ void Python::OnConfirmation(const Confirmation &cm) noexcept {
     py_.on_confirmation(obj_, bp::ptr(&cm));
   } catch (const bp::error_already_set &err) {
     PrintPyError("on_confirmation");
+  }
+}
+
+void Python::OnIndicator(Indicator::IdType id,
+                         const Instrument &inst) noexcept {
+  if (!py_.on_indicator) return;
+  auto ind = inst.Get(id);
+  if (!ind) return;
+  LOCK();
+  try {
+    py_.on_indicator(obj_, ind->GetPyObject(), bp::ptr(&inst));
+  } catch (const bp::error_already_set &err) {
+    PrintPyError("on_indicator");
   }
 }
 

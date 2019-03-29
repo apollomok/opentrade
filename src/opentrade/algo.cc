@@ -8,6 +8,7 @@
 #include "connection.h"
 #include "cross_engine.h"
 #include "exchange_connectivity.h"
+#include "indicator_handler.h"
 #include "logger.h"
 #include "python.h"
 #include "server.h"
@@ -179,7 +180,14 @@ void AlgoManager::Run(int nthreads) {
 #endif
 
   for (auto& pair : adapters()) {
-    if (pair.first.at(0) != '_') continue;
+    auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
+    if (ih) IndicatorHandlerManager::Instance().Register(ih);
+  }
+
+  for (auto& pair : adapters()) {
+    if (pair.first.at(0) != '_' &&
+        !dynamic_cast<IndicatorHandler*>(pair.second))
+      continue;
     auto user_name = pair.second->config("user");
     auto user = AccountManager::Instance().GetUser(user_name);
     auto algo = Spawn(std::make_shared<Algo::ParamMap>(), pair.first,
@@ -447,6 +455,12 @@ void Algo::Cross(double qty, double price, OrderSide side,
 
 bool Algo::Cancel(const Order& ord) {
   return ExchangeConnectivityManager::Instance().Cancel(ord);
+}
+
+bool Instrument::Subscribe(Indicator::IdType id, bool listen) {
+  auto ih = IndicatorHandlerManager::Instance().Get(id);
+  if (ih) return ih->Subscribe(id, this, listen);
+  return false;
 }
 
 }  // namespace opentrade

@@ -16,6 +16,7 @@ struct PyModule {
   bp::object on_stop;
   bp::object on_market_trade;
   bp::object on_market_quote;
+  bp::object on_indicator;
   bp::object on_confirmation;
   bp::object test;
   bp::object get_param_defs;
@@ -37,6 +38,8 @@ class Python : public Algo {
                      const MarketData& md0) noexcept override;
   void OnConfirmation(const Confirmation& cm) noexcept override;
   const ParamDefs& GetParamDefs() noexcept override;
+  void OnIndicator(Indicator::IdType id,
+                   const Instrument& inst) noexcept override;
   void SetTimeout(bp::object func, double seconds);
 
   Instrument* Subscribe(const Security& sec, DataSrc src, bool listen) {

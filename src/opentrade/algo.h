@@ -65,15 +65,20 @@ class Algo : public Adapter {
   static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept = 0;
-  virtual void OnModify(const ParamMap& params) noexcept = 0;
-  virtual void OnStop() noexcept = 0;
+  virtual void OnModify(const ParamMap& params) noexcept {}
+  virtual void OnStop() noexcept {}
   virtual void OnMarketTrade(const Instrument& inst, const MarketData& md,
-                             const MarketData& md0) noexcept = 0;
+                             const MarketData& md0) noexcept {}
   virtual void OnMarketQuote(const Instrument& inst, const MarketData& md,
-                             const MarketData& md0) noexcept = 0;
+                             const MarketData& md0) noexcept {}
   // for cross order, only kUnconfirmedNew and kFilled
-  virtual void OnConfirmation(const Confirmation& cm) noexcept = 0;
-  virtual const ParamDefs& GetParamDefs() noexcept = 0;
+  virtual void OnConfirmation(const Confirmation& cm) noexcept {}
+  virtual const ParamDefs& GetParamDefs() noexcept {
+    static const ParamDefs kEmptyParamDefs;
+    return kEmptyParamDefs;
+  }
+  virtual void OnIndicator(Indicator::IdType id,
+                           const Instrument& inst) noexcept {}
 
   virtual std::string Test() noexcept {
     assert(false);
@@ -141,6 +146,17 @@ class Instrument {
 
   void UnListen() { listen_ = false; }
   bool listen() const { return listen_; }
+  void Register(TradeTickHook* hook) {
+    const_cast<MarketData*>(md_)->Register(hook);
+  }
+  void Unregister(TradeTickHook* hook) {
+    const_cast<MarketData*>(md_)->Unregister(hook);
+  }
+  bool Subscribe(Indicator::IdType id, bool listen = false);
+  template <typename T = Indicator>
+  const T* Get(Indicator::IdType id) const {
+    return md_->Get<T>(id);
+  }
 
  private:
   Algo* algo_ = nullptr;

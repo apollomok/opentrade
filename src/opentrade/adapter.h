@@ -14,7 +14,7 @@ static const char* kApiVersion =
 #ifdef BACKTEST
     "backtest_"
 #endif
-    "1";
+    "1.1";
 
 class Adapter {
  public:
@@ -26,7 +26,7 @@ class Adapter {
   std::string GetVersion() const { return kApiVersion; }
   typedef Adapter* (*CFunc)();
   typedef std::function<Adapter*()> Func;
-  Adapter* Clone() {
+  virtual Adapter* Clone() {
     auto inst = create_func_();
     inst->set_name(name());
     inst->set_config(config());

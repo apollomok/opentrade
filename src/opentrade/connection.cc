@@ -10,6 +10,7 @@
 #include "algo.h"
 #include "database.h"
 #include "exchange_connectivity.h"
+#include "indicator_handler.h"
 #include "logger.h"
 #include "market_data.h"
 #include "position.h"
@@ -1137,6 +1138,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     }
     for (auto& pair : AlgoManager::Instance().adapters()) {
       if (pair.first.at(0) == '_') continue;
+      if (dynamic_cast<IndicatorHandler*>(pair.second)) continue;
       auto& params = pair.second->GetParamDefs();
       json j = {
           "algo_def",
