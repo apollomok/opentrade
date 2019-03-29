@@ -16,6 +16,7 @@ struct IndicatorHandler : public Algo {
 class IndicatorHandlerManager : public Singleton<IndicatorHandlerManager> {
  public:
   IndicatorHandler* Get(Indicator::IdType id) { return FindInMap(ihs_, id); }
+  const auto& name2id() const { return name2id_; }
   bool Register(IndicatorHandler* h) {
     auto id = h->id();
     auto it = ihs_.find(id);
@@ -26,12 +27,14 @@ class IndicatorHandlerManager : public Singleton<IndicatorHandlerManager> {
       return false;
     }
     ihs_[id] = h;
+    name2id_[h->name()] = id;
     return true;
   }
 
  private:
   // Initialized and started at AlgoManager::Run.
   std::map<size_t, IndicatorHandler*> ihs_;
+  std::map<std::string, Indicator::IdType> name2id_;
   friend class Backtest;
 };
 

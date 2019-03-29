@@ -153,6 +153,7 @@ class Instrument {
     const_cast<MarketData*>(md_)->UnhookTradeTick(hook);
   }
   bool Subscribe(Indicator::IdType id, bool listen = false);
+  bool SubscribeByName(const std::string& name, bool listen = false);
   template <typename T = Indicator>
   const T* Get(Indicator::IdType id) const {
     return md_->Get<T>(id);

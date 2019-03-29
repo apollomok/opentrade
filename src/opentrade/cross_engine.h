@@ -46,6 +46,7 @@ class CrossEngine : public Singleton<CrossEngine> {
   std::unordered_map<Security::IdType, CrossSecurity*> securities_;
   std::mutex m_;
   typedef std::lock_guard<std::mutex> Lock;
+  friend class Backtest;
 };
 
 }  // namespace opentrade

@@ -474,4 +474,11 @@ bool Instrument::Subscribe(Indicator::IdType id, bool listen) {
   return false;
 }
 
+bool Instrument::SubscribeByName(const std::string& name, bool listen) {
+  auto& m = IndicatorHandlerManager::Instance().name2id();
+  auto it = m.find(name);
+  if (it == m.end()) return false;
+  return Subscribe(it->second, listen);
+}
+
 }  // namespace opentrade

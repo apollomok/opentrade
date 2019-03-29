@@ -458,9 +458,9 @@ BOOST_PYTHON_MODULE(opentrade) {
       .add_property("total_cx_qty", &Instrument::total_cx_qty)
       .add_property("id", &Instrument::id)
       .def("unlisten", &Instrument::UnListen)
-      .def(
-          "subscribe", &Instrument::Subscribe,
-          (bp::arg("self"), bp::arg("indicator_id"), bp::arg("listen") = false))
+      .def("subscribe", &Instrument::SubscribeByName,
+           (bp::arg("self"), bp::arg("indicator_name"),
+            bp::arg("listen") = false))
       .def("get",
            +[](Instrument &inst, Indicator::IdType indicator_id) {
              auto ind = inst.Get(indicator_id);

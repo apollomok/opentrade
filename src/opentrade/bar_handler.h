@@ -12,7 +12,7 @@ struct Bar : public Indicator {};
 class BarHandler : public IndicatorHandler, public TradeTickHook {
  public:
   BarHandler() {
-    set_name("__Bar__");
+    set_name("bar");
     create_func_ = []() { return new BarHandler; };
   }
   Indicator::IdType id() const override { return kBar; }
@@ -28,8 +28,7 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
   }
 
   void OnTrade(Security::IdType id, MarketData* md, time_t tm, double px,
-               double qty) noexcept override {
-  }
+               double qty) noexcept override {}
 
   void OnStart() noexcept override {}
 

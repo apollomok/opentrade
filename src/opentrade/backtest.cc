@@ -2,6 +2,7 @@
 
 #include "backtest.h"
 
+#include "cross_engine.h"
 #include "indicator_handler.h"
 #include "logger.h"
 #include "simulator.h"
@@ -253,6 +254,9 @@ void Backtest::Clear() {
   for (auto& pair : simulators_) {
     pair.second->ResetData();
   }
+  auto& secs = CrossEngine::Instance().securities_;
+  for (auto& pair : secs) delete pair.second;
+  secs.clear();
 }
 
 void Backtest::AddSimulator(const std::string& fn_tmpl,
