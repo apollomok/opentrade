@@ -479,7 +479,7 @@ bool Algo::Cancel(const Order& ord) {
 
 bool Instrument::Subscribe(Indicator::IdType id, bool listen) {
   auto ih = IndicatorHandlerManager::Instance().Get(id);
-  if (ih) return ih->Subscribe(id, this, listen);
+  if (ih) return ih->Subscribe(this, listen);
   return false;
 }
 

@@ -7,6 +7,7 @@ namespace opentrade {
 
 static const Indicator::IdType kBar = 0;
 
+template <int interval = 1>
 struct BarIndicator : public Indicator {
   MarketData::Trade current;
   MarketData::Trade last;
@@ -14,6 +15,7 @@ struct BarIndicator : public Indicator {
     bp::dict out;
     out["last"] = bp::ptr(&last);
     out["current"] = bp::ptr(&current);
+    out["interval"] = interval;
     return out;
   }
 
@@ -31,55 +33,56 @@ struct BarIndicator : public Indicator {
   }
 };
 
+template <int interval = 1, Indicator::IdType ind_id = kBar>
 class BarHandler : public IndicatorHandler, public TradeTickHook {
  public:
-  BarHandler() {
-    set_name("bar");
+  typedef BarIndicator<interval> Ind;
+  explicit BarHandler(const char* name = "bar") {
+    set_name(name);
     create_func_ = []() { return new BarHandler; };
     tm0_ = GetStartOfDayTime() * kMicroInSec;
     StartNext();
   }
-  Indicator::IdType id() const override { return kBar; }
+  Indicator::IdType id() const override { return ind_id; }
 
-  bool Subscribe(Indicator::IdType id, Instrument* inst,
-                 bool listen) noexcept override {
-    auto bar = const_cast<BarIndicator*>(inst->Get<BarIndicator>(id));
+  bool Subscribe(Instrument* inst, bool listen) noexcept override {
+    auto bar = const_cast<Ind*>(inst->Get<Ind>(ind_id));
     if (bar) {
       if (listen) bar->AddListener(inst);
       return true;
     }
     inst->HookTradeTick(this);
-    bar = new BarIndicator{};
+    bar = new Ind{};
     bars_.push_back(bar);
-    const_cast<MarketData&>(inst->md()).Set(bar, id);
+    const_cast<MarketData&>(inst->md()).Set(bar, ind_id);
     if (listen) bar->AddListener(inst);
     return true;
   }
 
   void OnTrade(Security::IdType id, const MarketData* md, time_t tm, double px,
                double qty) noexcept override {
-    auto bar = const_cast<BarIndicator*>(md->Get<BarIndicator>(kBar));
+    auto bar = const_cast<Ind*>(md->Get<Ind>(ind_id));
     if (!bar) return;
     bar->Update(px, qty);
   }
 
   void StartNext() {
-    SetTimeout([this]() { OnTimer(); },
-               (kMicroInMin - (NowInMicro() - tm0_) % kMicroInMin) /
-                   static_cast<double>(kMicroInSec));
+    auto n = kMicroInMin * interval;
+    SetTimeout([this]() { OnTimer(); }, (n - (NowInMicro() - tm0_) % n) /
+                                            static_cast<double>(kMicroInSec));
   }
 
   void OnTimer() {
     for (auto bar : bars_) {
       bar->Roll();
-      bar->Publish(kBar);
+      bar->Publish(ind_id);
     }
     StartNext();
   }
 
  private:
   uint64_t tm0_ = 0;
-  std::vector<BarIndicator*> bars_;
+  std::vector<Ind*> bars_;
 };
 
 }  // namespace opentrade

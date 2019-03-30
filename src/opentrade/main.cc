@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  AlgoManager::Instance().Add(new opentrade::BarHandler);
+  AlgoManager::Instance().Add(new opentrade::BarHandler<>);
 
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();
