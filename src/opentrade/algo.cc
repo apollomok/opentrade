@@ -410,27 +410,32 @@ void Algo::Stop() {
   }
 }
 
-inline void AlgoManager::SetTimeout(Algo::IdType id, std::function<void()> func,
+inline void AlgoManager::SetTimeout(const Algo& algo,
+                                    std::function<void()> func,
                                     double seconds) {
   if (seconds < 0) seconds = 0;
 #ifdef BACKTEST
-  kTimers.emplace(kTime + seconds * 1e6, func);
+  kTimers.emplace(kTime + seconds * kMicroInSec, [&algo]() {
+    if (algo.is_active_()) func();
+  });
 #else
   if (seconds <= 0) {
-    strands_[id % threads_.size()].post(func);
+    strands_[algo.id() % threads_.size()].post(func);
     return;
   }
   auto t = new boost::asio::deadline_timer(
-      io_service_, boost::posix_time::microseconds((int64_t)(seconds * 1e6)));
-  t->async_wait(strands_[id % threads_.size()].wrap([func, t](auto) {
-    func();
-    delete t;
-  }));
+      io_service_,
+      boost::posix_time::microseconds((int64_t)(seconds * kMicroInSec)));
+  t->async_wait(
+      strands_[algo.id() % threads_.size()].wrap([&algo, func, t](auto) {
+        if (algo.is_active()) func();
+        delete t;
+      }));
 #endif
 }
 
 void Algo::SetTimeout(std::function<void()> func, double seconds) {
-  AlgoManager::Instance().SetTimeout(id_, func, seconds);
+  AlgoManager::Instance().SetTimeout(*this, func, seconds);
 }
 
 void AlgoManager::Cancel(Instrument* inst) {

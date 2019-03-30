@@ -16,7 +16,7 @@ namespace opentrade {
 static boost::uuids::random_generator kUuidGen;
 
 static inline void Async(std::function<void()> func, double seconds = 0) {
-  kTimers.emplace(kTime + seconds * 1e6, func);
+  kTimers.emplace(kTime + seconds * kMicroInSec, func);
 }
 
 inline double Simulator::TryFillBuy(double px, double qty,

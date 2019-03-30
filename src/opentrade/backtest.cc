@@ -150,7 +150,7 @@ void Backtest::Play(const boost::gregorian::date& date) {
   boost::posix_time::ptime pt(date);
   auto tm = boost::posix_time::to_tm(pt);
   auto tm0 = mktime(&tm);
-  auto tm0_us = tm0 * 1000000lu;
+  auto tm0_us = tm0 * kMicroInSec;
   kTime = tm0_us;
   localtime_r(&tm0, &tm);
   for (auto& pair : SecurityManager::Instance().exchanges()) {

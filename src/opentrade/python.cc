@@ -563,11 +563,13 @@ BOOST_PYTHON_MODULE(opentrade) {
                            },
                            0));
 
-  bp::def("get_time", +[]() { return NowUtcInMicro() / 1e6; });
+  bp::def("get_time",
+          +[]() { return NowUtcInMicro() / static_cast<double>(kMicroInSec); });
   bp::def("get_datetime", +[]() {
     return bp::import("datetime")
         .attr("datetime")
-        .attr("fromtimestamp")(NowUtcInMicro() / 1e6);
+        .attr("fromtimestamp")(NowUtcInMicro() /
+                               static_cast<double>(kMicroInSec));
   });
 
   bp::def("get_exchanges", +[]() {
@@ -589,7 +591,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("set_timeout",
            +[](Backtest &, bp::object func, double seconds) {
              if (seconds < 0) seconds = 0;
-             kTimers.emplace(kTime + seconds * 1e6, [func]() {
+             kTimers.emplace(kTime + seconds * kMicroInSec, [func]() {
                try {
                  func();
                } catch (const bp::error_already_set &err) {

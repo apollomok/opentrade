@@ -94,7 +94,6 @@ const ParamDefs& TWAP::GetParamDefs() noexcept {
 }
 
 void TWAP::Timer() {
-  if (!is_active()) return;
   auto now = GetTime();
   if (now > end_time_) {
     Stop();
