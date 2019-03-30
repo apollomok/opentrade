@@ -95,8 +95,8 @@ struct MarketData {
 
   template <typename T>
   const T* Get(Indicator::IdType id) const {
-    std::shared_lock<std::shared_mutex> lock(mutex_);
     if (!mngr_) return {};
+    std::shared_lock<std::shared_mutex> lock(mutex_);
     if (id >= mngr_->inds.size()) return {};
     return dynamic_cast<T*>(mngr_->inds.at(id));
   }
@@ -117,9 +117,9 @@ struct MarketData {
   }
 
   void CheckTradeHook(Security::IdType id) {
-    std::shared_lock<std::shared_mutex> lock(mutex_);
     if (!mngr_) return;
     if (mngr_->trade_tick_hooks.empty()) return;
+    std::shared_lock<std::shared_mutex> lock(mutex_);
     // to-do: make it async without using TaskPool
     for (auto& hook : mngr_->trade_tick_hooks) {
       hook->OnTrade(id, this, tm, trade.close, trade.qty);
