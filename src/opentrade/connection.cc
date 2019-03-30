@@ -372,6 +372,13 @@ auto GetSecSrc(const json& j) {
 
 void Connection::OnMessageSync(const std::string& msg,
                                const std::string& token) {
+  sent_ = false;
+  HandleMessageSync(msg, token);
+  if (!sent_ && transport_->stateless) Send(json{"ok"});
+}
+
+void Connection::HandleMessageSync(const std::string& msg,
+                                   const std::string& token) {
   try {
     static std::string h("h");
     if (msg == h) {
@@ -396,6 +403,7 @@ void Connection::OnMessageSync(const std::string& msg,
     if (action == "login" || action == "validate_user") {
       OnLogin(action, j);
     } else if (action == "bod") {
+      json out;
       for (auto& pair : PositionManager::Instance().bods_) {
         auto acc = pair.first.first;
         if (!user_->is_admin && !user_->GetSubAccount(acc)) continue;
@@ -411,8 +419,12 @@ void Connection::OnMessageSync(const std::string& msg,
             pos.broker_account_id,
             pos.tm,
         };
-        Send(j);
+        if (transport_->stateless)
+          out.push_back(j);
+        else
+          Send(j);
       }
+      if (transport_->stateless) Send(out);
     } else if (action == "reconnect") {
       auto name = Get<std::string>(j[1]);
       auto m = MarketDataManager::Instance().GetAdapter(name);
@@ -575,6 +587,8 @@ void Connection::OnMessageSync(const std::string& msg,
         j.push_back("Can not write");
       }
       Send(j);
+    } else {
+      Send(json{"error", "msg", "action", "unknown"});
     }
   } catch (nlohmann::detail::parse_error& e) {
     LOG_DEBUG(GetAddress() << ": invalid json string: " << msg);

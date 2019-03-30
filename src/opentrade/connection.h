@@ -57,9 +57,11 @@ class Connection : public std::enable_shared_from_this<Connection> {
                    bool stopped);
 
  protected:
+  void HandleMessageSync(const std::string&, const std::string& token);
   void PublishMarketdata();
   void PublishMarketStatus();
   void Send(const std::string& msg) {
+    sent_ = true;
     if (!closed_) transport_->Send(msg);
   }
   void Send(const json& msg) { Send(msg.dump()); }
@@ -90,6 +92,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   tbb::concurrent_unordered_set<std::string> test_algo_tokens_;
   bool sub_pnl_ = false;
   bool closed_ = false;
+  bool sent_ = false;
   friend class Server;
   friend class AlgoManager;
   friend class GlobalOrderBook;
