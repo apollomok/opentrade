@@ -25,6 +25,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 * **Internal cross**
 * **Execution Optimization Framework**
 * Order Aggregation
+* Customized indicator extension
 
 ---
 
