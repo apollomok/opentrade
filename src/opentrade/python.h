@@ -6,9 +6,9 @@
 #include "algo.h"
 #include "connection.h"
 
-namespace bp = boost::python;
-
 namespace opentrade {
+
+namespace bp = boost::python;
 
 struct PyModule {
   bp::object on_start;

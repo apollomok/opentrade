@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 
 #include "backtest.h"
+#include "bar_handler.h"
 #include "logger.h"
 #include "server.h"
 
@@ -362,6 +363,22 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readwrite("side", &Contract::side)
       .def_readwrite("tif", &Contract::tif)
       .def_readwrite("type", &Contract::type);
+
+  bp::class_<MarketData::Trade>("Bar", bp::no_init)
+      .def_readonly("open", &MarketData::Trade::open)
+      .def_readonly("high", &MarketData::Trade::high)
+      .def_readonly("low", &MarketData::Trade::low)
+      .def_readonly("close", &MarketData::Trade::close)
+      .def_readonly("qty", &MarketData::Trade::qty)
+      .def_readonly("volume", &MarketData::Trade::volume)
+      .def_readonly("vwap", &MarketData::Trade::vwap)
+      .def("__str__", +[](const MarketData::Trade &t) {
+        std::stringstream ss;
+        ss << "open=" << t.open << ", high=" << t.high << ", low=" << t.low
+           << ", close=" << t.close << ", qty=" << t.qty
+           << ", volume=" << t.volume << ", vwap=" << t.vwap;
+        return ss.str();
+      });
 
   bp::class_<MarketData>("MarketData", bp::no_init)
       .def_readonly("tm", &MarketData::tm)

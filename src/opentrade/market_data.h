@@ -16,7 +16,7 @@ namespace opentrade {
 struct MarketData;
 struct TradeTickHook {
   // OnTrade is not ensured to be called in the same thread of its algo
-  virtual void OnTrade(Security::IdType id, MarketData* md, time_t tm,
+  virtual void OnTrade(Security::IdType id, const MarketData* md, time_t tm,
                        double px, double qty) noexcept = 0;
 };
 
@@ -26,9 +26,17 @@ class Indicator {
   typedef size_t IdType;
   virtual ~Indicator() {}
   virtual boost::python::object GetPyObject() const { return {}; }
+  void AddListener(Instrument* inst) {
+    Lock lock(m_);
+    subs_.push_back(inst);
+  }
+  void Publish(IdType id);
+  auto& m() { return m_; }
 
- private:
+ protected:
   std::vector<Instrument*> subs_;
+  mutable std::mutex m_;
+  typedef std::lock_guard<std::mutex> Lock;
 };
 
 struct MarketData {
@@ -52,6 +60,24 @@ struct MarketData {
     bool operator!=(const Trade& b) const {
       return volume != b.volume || close != b.close || high != b.high ||
              low != b.low;
+    }
+
+    void UpdatePx(double last_px) {
+      if (!open) open = last_px;
+      if (last_px > high) high = last_px;
+      if (last_px < low || !low) low = last_px;
+      close = last_px;
+    }
+
+    void UpdateVolume(Qty last_qty) {
+      qty = last_qty;
+      vwap = (volume * vwap + close * qty) / (volume + qty);
+      volume += qty;
+    }
+
+    void Update(double px, Qty qty) {
+      UpdatePx(px);
+      UpdateVolume(qty);
     }
   };
 

@@ -100,26 +100,13 @@ void MarketDataAdapter::Update(Security::IdType id, double price,
   x.Update(src_, id);
 }
 
-static inline void UpdatePx(double px, MarketData::Trade* t) {
-  if (!t->open) t->open = px;
-  if (px > t->high) t->high = px;
-  if (px < t->low || !t->low) t->low = px;
-  t->close = px;
-}
-
-static inline void UpdateVolume(MarketData::Qty qty, MarketData::Trade* t) {
-  t->vwap = (t->volume * t->vwap + t->close * qty) / (t->volume + qty);
-  t->volume += qty;
-  t->qty = qty;
-}
-
 static inline void UpdateTrade(MarketData* md, DataSrc::IdType src,
                                Security::IdType id, double last_price,
                                MarketData::Qty last_qty) {
   md->tm = GetTime();
   auto& t = md->trade;
-  if (last_price > 0) UpdatePx(last_price, &t);
-  if (last_qty > 0) UpdateVolume(last_qty, &t);
+  if (last_price > 0) t.UpdatePx(last_price);
+  if (last_qty > 0) t.UpdateVolume(last_qty);
   md->CheckTradeHook(id);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src, id)) return;
@@ -189,7 +176,7 @@ void MarketDataAdapter::UpdateLastPrice(Security::IdType id, double v) {
   if (v <= 0) return;
   auto& md = (*md_)[id];
   md.tm = GetTime();
-  UpdatePx(v, &md.trade);
+  md.trade.UpdatePx(v);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
@@ -199,7 +186,7 @@ void MarketDataAdapter::UpdateLastSize(Security::IdType id, double v) {
   if (v <= 0) return;
   auto& md = (*md_)[id];
   md.tm = GetTime();
-  UpdateVolume(v, &md.trade);
+  md.trade.UpdateVolume(v);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
@@ -211,11 +198,25 @@ void MarketDataAdapter::UpdateMidAsLastPrice(Security::IdType id) {
   auto& t = md.trade;
   if (q.ask_price > q.bid_price && q.bid_price > 0) {
     auto px = (q.ask_price + q.bid_price) / 2;
-    UpdatePx(px, &t);
+    t.UpdatePx(px);
     md.tm = GetTime();
     auto& x = AlgoManager::Instance();
     if (!x.IsSubscribed(src_, id)) return;
     x.Update(src_, id);
+  }
+}
+
+void Indicator::Publish(IdType id) {
+  Lock lock(m_);
+  for (auto it = subs_.begin(); it != subs_.end();) {
+    auto inst = *it;
+    auto& algo = inst->algo();
+    if (!algo.is_active()) {
+      it = subs_.erase(it);
+      continue;
+    }
+    algo.SetTimeout([&algo, id, inst]() { algo.OnIndicator(id, *inst); }, 0);
+    ++it;
   }
 }
 

@@ -6,11 +6,13 @@
 
 namespace opentrade {
 
+namespace bp = boost::python;
+
 struct IndicatorHandler : public Algo {
   virtual Indicator::IdType id() const = 0;
   virtual bool Subscribe(Indicator::IdType id, Instrument* inst,
                          bool listen = false) noexcept = 0;
-  virtual void OnStart() noexcept = 0;
+  virtual void OnStart() noexcept {}
 };
 
 class IndicatorHandlerManager : public Singleton<IndicatorHandlerManager> {

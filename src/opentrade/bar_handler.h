@@ -7,32 +7,80 @@ namespace opentrade {
 
 static const Indicator::IdType kBar = 0;
 
-struct Bar : public Indicator {};
+struct BarIndicator : public Indicator {
+  MarketData::Trade current;
+  MarketData::Trade last;
+  bp::object GetPyObject() const override {
+    bp::dict out;
+    out["last"] = bp::ptr(&last);
+    out["current"] = bp::ptr(&current);
+    return out;
+  }
+
+  void Update(double px, double qty) {
+    Lock lock(m_);
+    current.Update(px, qty);
+  }
+
+  void Roll() {
+    last = current;
+    {
+      Lock lock(m_);
+      bzero(&current, sizeof(current));
+    }
+  }
+};
 
 class BarHandler : public IndicatorHandler, public TradeTickHook {
  public:
   BarHandler() {
     set_name("bar");
     create_func_ = []() { return new BarHandler; };
+    tm0_ = GetStartOfDayTime() * kMicroInSec;
+    StartNext();
   }
   Indicator::IdType id() const override { return kBar; }
 
   bool Subscribe(Indicator::IdType id, Instrument* inst,
                  bool listen) noexcept override {
     // to-do listen
-    auto ind = inst->Get<Bar>(id);
-    if (ind) return true;
+    auto bar = const_cast<BarIndicator*>(inst->Get<BarIndicator>(id));
+    if (bar) {
+      bar->AddListener(inst);
+      return true;
+    }
     inst->HookTradeTick(this);
-    const_cast<MarketData&>(inst->md()).Set(new Bar{}, id);
+    bar = new BarIndicator{};
+    bars_.push_back(bar);
+    const_cast<MarketData&>(inst->md()).Set(bar, id);
+    bar->AddListener(inst);
     return true;
   }
 
-  void OnTrade(Security::IdType id, MarketData* md, time_t tm, double px,
-               double qty) noexcept override {}
+  void OnTrade(Security::IdType id, const MarketData* md, time_t tm, double px,
+               double qty) noexcept override {
+    auto bar = const_cast<BarIndicator*>(md->Get<BarIndicator>(kBar));
+    if (!bar) return;
+    bar->Update(px, qty);
+  }
 
-  void OnStart() noexcept override {}
+  void StartNext() {
+    SetTimeout([this]() { OnTimer(); },
+               (kMicroInMin - (NowInMicro() - tm0_) % kMicroInMin) /
+                   static_cast<double>(kMicroInSec));
+  }
+
+  void OnTimer() {
+    for (auto bar : bars_) {
+      bar->Roll();
+      bar->Publish(kBar);
+    }
+    StartNext();
+  }
 
  private:
+  uint64_t tm0_ = 0;
+  std::vector<BarIndicator*> bars_;
 };
 
 }  // namespace opentrade
