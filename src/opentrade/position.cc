@@ -127,7 +127,7 @@ void PositionManager::Initialize() {
       qty, cx_qty, avg_px, realized_pnl, tm
     from position
     where tm < :tm
-    order by sub_account_id, security_id, id desc
+    order by sub_account_id, security_id, tm desc
   )";
   soci::rowset<soci::row> st = (sql->prepare << query, soci::use(tm));
   for (auto it = st.begin(); it != st.end(); ++it) {
@@ -260,11 +260,17 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           cx_qty = pos.cx_qty;
           avg_px = pos.avg_px;
           realized_pnl = pos.realized_pnl;
+          char side[2];
+          side[0] = static_cast<char>(ord->side);
+          side[1] = 0;
+          char type[2];
+          type[0] = static_cast<char>(ord->type);
+          type[1] = 0;
           json j = {{"tm", cm->transaction_time},
                     {"qty", cm->last_shares},
                     {"px", cm->last_px},
-                    {"side", static_cast<char>(ord->side)},
-                    {"type", static_cast<char>(ord->type)},
+                    {"side", side},
+                    {"type", type},
                     {"id", ord->id}};
           if (cm->exec_trans_type == kTransCancel) j["bust"] = true;
           if (ord->type == kOTC)

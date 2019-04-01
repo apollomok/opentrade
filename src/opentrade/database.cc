@@ -163,7 +163,7 @@ static const char create_tables_sql[] = R"(
     info json,
     primary key(id)
   );
-  create index if not exists position__index on position(sub_account_id, security_id, id desc);
+  create index if not exists position__index_acc_sec_tm on position(sub_account_id, security_id, tm desc);
 )";
 
 void Database::Initialize(const std::string& url, uint8_t pool_size,
@@ -203,6 +203,12 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   }
   try {
     *sql << "alter table position add column cx_qty float8;";
+  } catch (...) {
+  }
+  try {
+    *sql << "drop index position__index;";
+    *sql << "create index if not exists position__index_acc_sec_tm on "
+            "position(sub_account_id, security_id, tm desc);";
   } catch (...) {
   }
 }

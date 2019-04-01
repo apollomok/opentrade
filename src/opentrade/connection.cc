@@ -903,6 +903,19 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
       return;
     }
     AlgoManager::Instance().Stop(Get<int64_t>(j[2]));
+  } else if (action == "cancel_all") {
+    auto sec = Get<int64_t>(j[2]);
+    auto acc_name = Get<std::string>(j[3]);
+    auto acc = AccountManager::Instance().GetSubAccount(acc_name);
+    if (!acc) {
+      Send(json{"error", "algo", "unknown account " + acc_name});
+      return;
+    }
+    if (!user_->GetSubAccount(acc->id)) {
+      Send(json{"error", "algo", "no permission of account " + acc_name});
+      return;
+    }
+    AlgoManager::Instance().Stop(sec, acc->id);
   } else if (action == "modify") {
     auto params = ParseParams(j[3]);
     if (j[2].is_string()) {
