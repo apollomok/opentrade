@@ -41,8 +41,10 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
     set_name(name);
     create_func_ = []() { return new BarHandler; };
     tm0_ = GetStartOfDayTime() * kMicroInSec;
-    StartNext();
   }
+
+  void OnStart() noexcept override { StartNext(); }
+
   Indicator::IdType id() const override { return ind_id; }
 
   bool Subscribe(Instrument* inst, bool listen) noexcept override {
