@@ -15,19 +15,19 @@ def main():
   opts = opts.parse_args()[0]
 
   if not opts.exchange:
-    print("Error: --exchange not give")
+    print('Error: --exchange not give')
     return
 
   if not opts.file:
-    print("Error: --file not give")
+    print('Error: --file not give')
     return
 
   if not opts.sec_type:
-    print("Error: --sec_type not give")
+    print('Error: --sec_type not give')
     return
 
   if opts.sec_type not in types:
-    print("Error: invalid sec_type")
+    print('Error: invalid sec_type')
     return
 
   conn = pg8000.connect(

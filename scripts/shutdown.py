@@ -27,7 +27,7 @@ def openWs():
 
 
 def login():
-  login = ['login', "admin", 'test']
+  login = ['login', 'admin', 'test']
   ws = openWs()
   ws.send(json.dumps(login))
   return ws

@@ -79,7 +79,7 @@ kTransStatus = '3'
 
 
 def parse(fn, callback):
-  with open(fn, "r+b") as f:
+  with open(fn, 'r+b') as f:
     # memory-map the file, size 0 means whole file
     mm = mmap.mmap(f.fileno(), 0)
     offset = 0

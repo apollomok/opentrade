@@ -7,7 +7,7 @@ url = 'http://127.0.0.1:9111/api'
 
 
 def test():
-  login = ['login', "test", 'test']
+  login = ['login', 'test', 'test']
   res = requests.post(url, data=json.dumps(login))
   res = json.loads(res.text)
   print(res)
