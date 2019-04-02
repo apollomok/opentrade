@@ -93,7 +93,7 @@ class Algo : public Adapter {
   const User& user() const { return *user_; }
 
  protected:
-  Instrument* Subscribe(const Security& sec, DataSrc src = DataSrc{},
+  Instrument* Subscribe(const Security& sec, DataSrc src = {},
                         bool listen = true);
   void Stop();
   Order* Place(const Contract& contract, Instrument* inst);

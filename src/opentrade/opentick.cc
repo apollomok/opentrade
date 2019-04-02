@@ -34,9 +34,7 @@ opentick::ResultSet OpenTick::Request(Security::IdType sec, int interval,
                                       opentick::Callback callback) {
   if (!conn_->IsConnected()) {
     conn_->ConnectAsync();
-    if (callback) {
-      callback(opentick::ResultSet{}, "OpenTick not connected");
-    }
+    if (callback) callback({}, "OpenTick not connected");
     return {};
   }
   try {
@@ -46,9 +44,7 @@ opentick::ResultSet OpenTick::Request(Security::IdType sec, int interval,
         opentick::Args{sec, interval, start_time, end_time}, callback);
     if (!callback) return fut->Get();
   } catch (std::exception& e) {
-    if (callback) {
-      callback(opentick::ResultSet{}, e.what());
-    }
+    if (callback) callback({}, e.what());
   }
   return {};
 }
