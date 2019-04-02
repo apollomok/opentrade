@@ -13,8 +13,10 @@ using json = nlohmann::json;
 class OpenTick : public Singleton<OpenTick> {
  public:
   void Initialize(const std::string& url);
-  json RequestJson(Security::IdType sec, int interval, time_t start_time,
-                   time_t end_time, const std::string& tbl);
+  opentick::ResultSet Request(Security::IdType sec, int interval,
+                              time_t start_time, time_t end_time,
+                              const std::string& tbl,
+                              opentick::Callback callback);
 
  private:
   opentick::Connection::Ptr conn_;

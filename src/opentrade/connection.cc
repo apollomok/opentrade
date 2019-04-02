@@ -595,7 +595,34 @@ void Connection::HandleMessageSync(const std::string& msg,
       auto end = Get<int64_t>(j[4]);
       std::string tbl = "bar";
       if (j.size() > 5) tbl = Get<std::string>(j[5]);
-      Send(OpenTick::Instance().RequestJson(sec, interval, start, end, tbl));
+      sent_ = true;
+      auto self = shared_from_this();
+      OpenTick::Instance().Request(
+          sec, interval, start, end, tbl,
+          [self](opentick::ResultSet res, const std::string& err) {
+            if (err.size()) {
+              self->Send(json{"error", "OpenTick", err});
+              return;
+            }
+            json out;
+            if (res) {
+              try {
+                for (auto& p : *res) {
+                  if (p.size() != 6) continue;
+                  out.push_back(
+                      json{std::chrono::system_clock::to_time_t(
+                               std::get<opentick::Tm>(p[0])),
+                           std::get<double>(p[1]), std::get<double>(p[2]),
+                           std::get<double>(p[3]), std::get<double>(p[4]),
+                           std::get<double>(p[5])});
+                }
+              } catch (std::exception& e) {
+                self->Send(json{"error", "OpenTick", e.what()});
+                return;
+              }
+            }
+            self->Send(out);
+          });
     } else {
       Send(json{"error", "msg", "action", "unknown"});
     }

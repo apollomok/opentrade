@@ -28,33 +28,29 @@ void OpenTick::Initialize(const std::string& url) {
   conn_->Connect();
 }
 
-json OpenTick::RequestJson(Security::IdType sec, int interval,
-                           time_t start_time, time_t end_time,
-                           const std::string& tbl) {
+opentick::ResultSet OpenTick::Request(Security::IdType sec, int interval,
+                                      time_t start_time, time_t end_time,
+                                      const std::string& tbl,
+                                      opentick::Callback callback) {
   if (!conn_->IsConnected()) {
     conn_->ConnectAsync();
-    return json{"error", "OpenTick not connected"};
+    if (callback) {
+      callback(opentick::ResultSet{}, "OpenTick not connected");
+    }
+    return {};
   }
-  json out;
   try {
-    auto res = conn_->Execute(
+    auto fut = conn_->ExecuteAsync(
         "select time, open, high, low, close, volume from " + tbl +
             " where sec=? and interval=? and time>=? and time<?",
-        opentick::Args{sec, interval, start_time, end_time});
-    if (res) {
-      for (auto& p : *res) {
-        if (p.size() != 6) continue;
-        out.push_back(json{
-            std::chrono::system_clock::to_time_t(std::get<opentick::Tm>(p[0])),
-            std::get<double>(p[1]), std::get<double>(p[2]),
-            std::get<double>(p[3]), std::get<double>(p[4]),
-            std::get<double>(p[5])});
-      }
-    }
+        opentick::Args{sec, interval, start_time, end_time}, callback);
+    if (!callback) return fut->Get();
   } catch (std::exception& e) {
-    return json{"error", e.what()};
+    if (callback) {
+      callback(opentick::ResultSet{}, e.what());
+    }
   }
-  return out;
+  return {};
 }
 
 }  // namespace opentrade
