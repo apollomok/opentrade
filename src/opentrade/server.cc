@@ -249,8 +249,8 @@ void Server::Start(int port, int nthreads) {
 
   ServeStatic();
 
-  kHttpServer.resource["^/api$"]["POST"] = [](ResponsePtr response,
-                                              RequestPtr request) {
+  kHttpServer.resource["^/api[/]$"]["POST"] = [](ResponsePtr response,
+                                                 RequestPtr request) {
     auto sessionToken = FindInMap(request->header, "session-token");
     std::make_shared<Connection>(
         std::make_shared<HttpWrapper>(response, request), kIoService)

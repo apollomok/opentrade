@@ -2,8 +2,9 @@
 
 import json
 import requests
+import time
 
-url = 'http://127.0.0.1:9111/api'
+url = 'http://127.0.0.1:9111/api/'
 
 
 def test():
@@ -25,6 +26,18 @@ def test():
       })
   res = json.loads(res.text)
   print(res)
+  now = int(time.time())
+  # ['OpenTick', security_id, interval, start_time, end_time]
+  cmd = ['OpenTick', 12295, 1, now - 3600 * 24 * 5, now]
+  res = requests.post(
+      url,
+      data=json.dumps(cmd),
+      headers={
+          'session-token': session_token
+      })
+  res = json.loads(res.text)
+  print(res)
+
 
 
 if __name__ == '__main__':

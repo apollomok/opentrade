@@ -13,6 +13,7 @@
 #include "indicator_handler.h"
 #include "logger.h"
 #include "market_data.h"
+#include "opentick.h"
 #include "position.h"
 #include "security.h"
 #include "server.h"
@@ -587,6 +588,14 @@ void Connection::HandleMessageSync(const std::string& msg,
         j.push_back("Can not write");
       }
       Send(j);
+    } else if (action == "OpenTick") {
+      auto sec = Get<int64_t>(j[1]);
+      auto interval = Get<int64_t>(j[2]);
+      auto start = Get<int64_t>(j[3]);
+      auto end = Get<int64_t>(j[4]);
+      std::string tbl = "bar";
+      if (j.size() > 5) tbl = Get<std::string>(j[5]);
+      Send(OpenTick::Instance().RequestJson(sec, interval, start, end, tbl));
     } else {
       Send(json{"error", "msg", "action", "unknown"});
     }

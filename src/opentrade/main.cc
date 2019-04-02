@@ -14,6 +14,7 @@
 #include "exchange_connectivity.h"
 #include "logger.h"
 #include "market_data.h"
+#include "opentick.h"
 #include "position.h"
 #include "python.h"
 #include "risk.h"
@@ -33,6 +34,7 @@ int main(int argc, char *argv[]) {
   std::string config_file_path;
   std::string log_config_file_path;
   std::string db_url;
+  std::string opentick_url;
   uint16_t db_pool_size = 1;
   auto db_create_tables = false;
   auto algo_threads = 0;
@@ -87,7 +89,9 @@ int main(int argc, char *argv[]) {
                                      ->default_value("log.conf"),
                                  "log4cxx config file path")(
                 "db_url", bpo::value<std::string>(&db_url),
-                "database connection url");
+                "database connection url")(
+                "opentick", bpo::value<std::string>(&opentick_url),
+                "opentick connection url");
 
     bpo::options_description config_file_options;
     config_file_options.add(config);
@@ -237,6 +241,9 @@ int main(int argc, char *argv[]) {
       }
     }
   }
+
+  if (opentick_url.size())
+    opentrade::OpenTick::Instance().Initialize(opentick_url);
 
   AlgoManager::Instance().Add(new opentrade::BarHandler<>);
 
