@@ -25,6 +25,7 @@ void OpenTick::Initialize(const std::string& url) {
   auto host = strs2[0];
   conn_ = opentick::Connection::Create(host, port, dbname);
   conn_->SetLogger(std::make_shared<OpenTickLogger>());
+  conn_->SetAutoReconnect(3);
   conn_->Connect();
 }
 
@@ -33,7 +34,6 @@ opentick::ResultSet OpenTick::Request(Security::IdType sec, int interval,
                                       const std::string& tbl,
                                       opentick::Callback callback) {
   if (!conn_->IsConnected()) {
-    conn_->ConnectAsync();
     if (callback) callback({}, "OpenTick not connected");
     return {};
   }
