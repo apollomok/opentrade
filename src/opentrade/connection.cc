@@ -389,7 +389,7 @@ void Connection::HandleMessageSync(const std::string& msg,
     auto j = json::parse(msg);
     auto action = Get<std::string>(j[0]);
     if (action.empty()) {
-      json j = {"error", "msg", "action", "empty action"};
+      json j = {"error", "msg", "empty action"};
       LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
       Send(j);
       return;
@@ -397,7 +397,7 @@ void Connection::HandleMessageSync(const std::string& msg,
     if (action != "login" && !user_) {
       user_ = FindInMap(kTokens, token);
       if (!user_) {
-        Send(json{"error", "msg", "action", "you must login first"});
+        Send(json{"error", action, "you must login first"});
         return;
       }
     }
@@ -495,8 +495,7 @@ void Connection::HandleMessageSync(const std::string& msg,
       auto id = Get<int64_t>(j[1]);
       auto ord = GlobalOrderBook::Instance().Get(id);
       if (!ord) {
-        json j = {"error", "cancel", "order id",
-                  "Invalid order id: " + std::to_string(id)};
+        json j = {"error", "cancel", "Invalid order id: " + std::to_string(id)};
         LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
         Send(j);
         return;
@@ -604,7 +603,7 @@ void Connection::HandleMessageSync(const std::string& msg,
               self->Send(json{"error", "OpenTick", err});
               return;
             }
-            json out;
+            json out = "[]"_json;
             if (res) {
               try {
                 for (auto& p : *res) {
@@ -624,20 +623,20 @@ void Connection::HandleMessageSync(const std::string& msg,
             self->Send(out);
           });
     } else {
-      Send(json{"error", "msg", "action", "unknown"});
+      Send(json{"error", "msg", "unknown action"});
     }
   } catch (nlohmann::detail::parse_error& e) {
     LOG_DEBUG(GetAddress() << ": invalid json string: " << msg);
-    Send(json{"error", "json", msg, "invalid json string"});
+    Send(json{"error", "json", "invalid json string", msg});
   } catch (nlohmann::detail::exception& e) {
     LOG_DEBUG(GetAddress() << ": json error: " << e.what() << ", " << msg);
     std::string error = "json error: ";
     error += e.what();
-    Send(json{"error", "json", msg, error});
+    Send(json{"error", "json", error, msg});
   } catch (std::exception& e) {
     LOG_DEBUG(GetAddress() << ": Connection::OnMessage: " << e.what() << ", "
                            << msg);
-    Send(json{"error", "Connection::OnMessage", msg, e.what()});
+    Send(json{"error", "Connection::OnMessage", e.what(), msg});
   }
 }
 
@@ -845,7 +844,6 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
     json j = {
         "error",
         "position",
-        "security id",
         "Invalid security id: " + security_id,
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
@@ -855,8 +853,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
   auto acc_name = Get<std::string>(j[2]);
   auto acc = AccountManager::Instance().GetSubAccount(acc_name);
   if (!acc) {
-    json j = {"error", "position", "account name",
-              "Invalid account name: " + acc_name};
+    json j = {"error", "position", "Invalid account name: " + acc_name};
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
     Send(j);
     return;
@@ -867,7 +864,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
   if (broker) {
     auto broker_acc = acc->GetBrokerAccount(sec->exchange->id);
     if (!broker_acc) {
-      json j = {"error", "position", "account name",
+      json j = {"error", "position",
                 "Can not find broker for this account and security pair"};
       LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
       Send(j);
@@ -904,8 +901,7 @@ void Connection::OnTarget(const json& j, const std::string& msg) {
   auto sub_account = Get<std::string>(j[1]);
   auto acc = AccountManager::Instance().GetSubAccount(sub_account);
   if (!acc) {
-    json j = {"error", "target", "sub_account",
-              "Invalid sub_account: " + sub_account};
+    json j = {"error", "target", "Invalid sub_account: " + sub_account};
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
     Send(j);
     return;
@@ -1012,8 +1008,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   auto sub_account = Get<std::string>(j[2]);
   auto acc = AccountManager::Instance().GetSubAccount(sub_account);
   if (!acc) {
-    json j = {"error", "order", "sub_account",
-              "Invalid sub_account: " + sub_account};
+    json j = {"error", "order", "Invalid sub_account: " + sub_account};
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
     Send(j);
     return;
@@ -1033,7 +1028,6 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
     json j = {
         "error",
         "order",
-        "security id",
         "Invalid security id: " + security_id,
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
@@ -1045,7 +1039,6 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
     json j = {
         "error",
         "order",
-        "side",
         "Invalid side: " + side_str,
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
@@ -1064,7 +1057,6 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
     json j = {
         "error",
         "order",
-        "stop price",
         "Miss stop price for stop order",
     };
     LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
