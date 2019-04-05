@@ -49,6 +49,7 @@ struct MarketData {
 #endif
   time_t tm = 0;
   struct Trade {
+    time_t tm = 0;
     Qty qty = 0;
     double open = 0;
     double high = 0;
@@ -209,19 +210,20 @@ class MarketDataAdapter : public virtual NetworkAdapter {
   virtual void Subscribe(const Security& sec) noexcept = 0;
   DataSrc::IdType src() const { return src_; }
   void Update(Security::IdType id, const MarketData::Quote& q,
-              uint32_t level = 0);
+              uint32_t level = 0, time_t tm = 0);
   void Update(Security::IdType id, double price, MarketData::Qty size,
-              bool is_bid, uint32_t level = 0);
-  void Update(Security::IdType id, double last_price, MarketData::Qty last_qty);
+              bool is_bid, uint32_t level = 0, time_t tm = 0);
+  void Update(Security::IdType id, double last_price, MarketData::Qty last_qty,
+              time_t tm = 0);
   void Update(Security::IdType id, double last_price, MarketData::Volume volume,
-              double open, double high, double low, double vwap);
-  void UpdateMidAsLastPrice(Security::IdType id);
-  void UpdateAskPrice(Security::IdType id, double v);
-  void UpdateAskSize(Security::IdType id, double v);
-  void UpdateBidPrice(Security::IdType id, double v);
-  void UpdateBidSize(Security::IdType id, double v);
-  void UpdateLastPrice(Security::IdType id, double v);
-  void UpdateLastSize(Security::IdType id, double v);
+              double open, double high, double low, double vwap, time_t tm = 0);
+  void UpdateMidAsLastPrice(Security::IdType id, time_t tm = 0);
+  void UpdateAskPrice(Security::IdType id, double v, time_t tm = 0);
+  void UpdateAskSize(Security::IdType id, double v, time_t tm = 0);
+  void UpdateBidPrice(Security::IdType id, double v, time_t tm = 0);
+  void UpdateBidSize(Security::IdType id, double v, time_t tm = 0);
+  void UpdateLastPrice(Security::IdType id, double v, time_t tm = 0);
+  void UpdateLastSize(Security::IdType id, double v, time_t tm = 0);
 
  protected:
   MarketDataMap* md_ = nullptr;

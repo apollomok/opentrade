@@ -71,10 +71,12 @@ void MarketDataManager::Add(MarketDataAdapter* adapter) {
 }
 
 void MarketDataAdapter::Update(Security::IdType id, const MarketData::Quote& q,
-                               uint32_t level) {
+                               uint32_t level, time_t tm) {
   if (level >= 5) return;
-  auto& q0 = (*md_)[id].depth[level];
+  auto& md = (*md_)[id];
+  auto& q0 = md.depth[level];
   if (q0 == q) return;
+  md.tm = tm ? tm : GetTime();
   q0 = q;
   if (level) return;
   auto& x = AlgoManager::Instance();
@@ -84,9 +86,11 @@ void MarketDataAdapter::Update(Security::IdType id, const MarketData::Quote& q,
 
 void MarketDataAdapter::Update(Security::IdType id, double price,
                                MarketData::Qty size, bool is_bid,
-                               uint32_t level) {
+                               uint32_t level, time_t tm) {
   if (level >= 5) return;
-  auto& q = (*md_)[id].depth[level];
+  auto& md = (*md_)[id];
+  md.tm = tm ? tm : GetTime();
+  auto& q = md.depth[level];
   if (is_bid) {
     q.bid_price = price;
     q.bid_size = size;
@@ -102,8 +106,8 @@ void MarketDataAdapter::Update(Security::IdType id, double price,
 
 static inline void UpdateTrade(MarketData* md, DataSrc::IdType src,
                                Security::IdType id, double last_price,
-                               MarketData::Qty last_qty) {
-  md->tm = GetTime();
+                               MarketData::Qty last_qty, time_t tm) {
+  md->trade.tm = md->tm = tm ? tm : GetTime();
   auto& t = md->trade;
   if (last_price > 0) t.UpdatePx(last_price);
   if (last_qty > 0) t.UpdateVolume(last_qty);
@@ -114,17 +118,19 @@ static inline void UpdateTrade(MarketData* md, DataSrc::IdType src,
 }
 
 void MarketDataAdapter::Update(Security::IdType id, double last_price,
-                               MarketData::Qty last_qty) {
-  UpdateTrade(&(*md_)[id], src_, id, last_price, last_qty);
+                               MarketData::Qty last_qty, time_t tm) {
+  UpdateTrade(&(*md_)[id], src_, id, last_price, last_qty, tm);
 }
 
 void MarketDataAdapter::Update(Security::IdType id, double last_price,
                                MarketData::Volume volume, double open,
-                               double high, double low, double vwap) {
+                               double high, double low, double vwap,
+                               time_t tm) {
   auto& md = (*md_)[id];
   auto d = volume - md.trade.volume;
   if (d <= 0) return;
   if (md.trade.volume == 0) {
+    md.trade.tm = md.tm = tm ? tm : GetTime();
     md.trade.volume = volume;
     md.trade.open = open;
     md.trade.high = high;
@@ -133,73 +139,81 @@ void MarketDataAdapter::Update(Security::IdType id, double last_price,
     md.trade.vwap = vwap;
     return;
   }
-  UpdateTrade(&md, src_, id, last_price, d);
+  UpdateTrade(&md, src_, id, last_price, d, tm);
 }
 
-void MarketDataAdapter::UpdateAskPrice(Security::IdType id, double v) {
+void MarketDataAdapter::UpdateAskPrice(Security::IdType id, double v,
+                                       time_t tm) {
   auto& md = (*md_)[id];
-  md.tm = GetTime();
+  md.tm = tm ? tm : GetTime();
   md.depth[0].ask_price = v;
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
 }
 
-void MarketDataAdapter::UpdateAskSize(Security::IdType id, double v) {
+void MarketDataAdapter::UpdateAskSize(Security::IdType id, double v,
+                                      time_t tm) {
   auto& md = (*md_)[id];
-  md.tm = GetTime();
+  md.tm = tm ? tm : GetTime();
   md.depth[0].ask_size = v;
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
 }
 
-void MarketDataAdapter::UpdateBidPrice(Security::IdType id, double v) {
+void MarketDataAdapter::UpdateBidPrice(Security::IdType id, double v,
+                                       time_t tm) {
   auto& md = (*md_)[id];
-  md.tm = GetTime();
+  md.tm = tm ? tm : GetTime();
   md.depth[0].bid_price = v;
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
 }
 
-void MarketDataAdapter::UpdateBidSize(Security::IdType id, double v) {
+void MarketDataAdapter::UpdateBidSize(Security::IdType id, double v,
+                                      time_t tm) {
   auto& md = (*md_)[id];
-  md.tm = GetTime();
+  md.tm = tm ? tm : GetTime();
   md.depth[0].bid_size = v;
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
 }
 
-void MarketDataAdapter::UpdateLastPrice(Security::IdType id, double v) {
+void MarketDataAdapter::UpdateLastPrice(Security::IdType id, double v,
+                                        time_t tm) {
   if (v <= 0) return;
   auto& md = (*md_)[id];
-  md.tm = GetTime();
+  md.trade.tm = md.tm = tm ? tm : GetTime();
   md.trade.UpdatePx(v);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
 }
 
-void MarketDataAdapter::UpdateLastSize(Security::IdType id, double v) {
+void MarketDataAdapter::UpdateLastSize(Security::IdType id, double v,
+                                       time_t tm) {
   if (v <= 0) return;
   auto& md = (*md_)[id];
-  md.tm = GetTime();
+  md.trade.tm = md.tm = tm ? tm : GetTime();
   md.trade.UpdateVolume(v);
+  md.CheckTradeHook(id);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
 }
 
-void MarketDataAdapter::UpdateMidAsLastPrice(Security::IdType id) {
+void MarketDataAdapter::UpdateMidAsLastPrice(Security::IdType id, time_t tm) {
   auto& md = (*md_)[id];
   auto& q = md.quote();
   auto& t = md.trade;
   if (q.ask_price > q.bid_price && q.bid_price > 0) {
     auto px = (q.ask_price + q.bid_price) / 2;
+    md.trade.tm = md.tm = tm ? tm : GetTime();
     t.UpdatePx(px);
-    md.tm = GetTime();
+    md.CheckTradeHook(id);
     auto& x = AlgoManager::Instance();
     if (!x.IsSubscribed(src_, id)) return;
     x.Update(src_, id);

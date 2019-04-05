@@ -365,6 +365,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readwrite("type", &Contract::type);
 
   bp::class_<MarketData::Trade>("Bar", bp::no_init)
+      .def_readonly("tm", &MarketData::Trade::tm)
       .def_readonly("open", &MarketData::Trade::open)
       .def_readonly("high", &MarketData::Trade::high)
       .def_readonly("low", &MarketData::Trade::low)
@@ -374,8 +375,8 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("vwap", &MarketData::Trade::vwap)
       .def("__str__", +[](const MarketData::Trade &t) {
         std::stringstream ss;
-        ss << "open=" << t.open << ", high=" << t.high << ", low=" << t.low
-           << ", close=" << t.close << ", qty=" << t.qty
+        ss << "tm=" << t.tm << ", open=" << t.open << ", high=" << t.high
+           << ", low=" << t.low << ", close=" << t.close << ", qty=" << t.qty
            << ", volume=" << t.volume << ", vwap=" << t.vwap;
         return ss.str();
       });
