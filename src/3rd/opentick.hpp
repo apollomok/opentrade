@@ -159,7 +159,7 @@ inline std::string Connection::Connect() {
       // thread, dead loop
       auto status = conn_result.wait_for(seconds(default_timeout_));
       if (status == std::future_status::timeout) {
-        throw std::runtime_error("connect timeout");
+        throw Exception("connect timeout");
       }
       conn_result.get();
     }
