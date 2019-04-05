@@ -26,7 +26,7 @@ void OpenTick::Initialize(const std::string& url) {
   conn_ = opentick::Connection::Create(host, port, dbname);
   conn_->SetLogger(std::make_shared<OpenTickLogger>());
   conn_->SetAutoReconnect(3);
-  conn_->Connect();
+  conn_->Start();
 }
 
 opentick::ResultSet OpenTick::Request(Security::IdType sec, int interval,
