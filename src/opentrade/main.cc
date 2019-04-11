@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
   std::string opentick_url;
   uint16_t db_pool_size = 1;
   auto db_create_tables = false;
+  auto db_alter_tables = false;
   auto algo_threads = 0;
 #ifdef BACKTEST
   std::string backtest_file;
@@ -70,6 +71,9 @@ int main(int argc, char *argv[]) {
         ("db_create_tables",
          bpo::value<bool>(&db_create_tables)->default_value(false),
          "create database tables")(
+            "db_alter_tables",
+            bpo::value<bool>(&db_alter_tables)->default_value(false),
+            "alter database tables")(
             "db_pool_size",
             bpo::value<uint16_t>(&db_pool_size)->default_value(4),
             "database connection pool size")(
@@ -130,7 +134,8 @@ int main(int argc, char *argv[]) {
     LOG_ERROR("db_url not configured");
     return 1;
   }
-  opentrade::Database::Initialize(db_url, db_pool_size, db_create_tables);
+  opentrade::Database::Initialize(db_url, db_pool_size, db_create_tables,
+                                  db_alter_tables);
   opentrade::SecurityManager::Initialize();
 
 #ifdef BACKTEST

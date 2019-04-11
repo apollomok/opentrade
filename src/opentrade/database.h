@@ -15,7 +15,7 @@ namespace opentrade {
 class Database {
  public:
   static void Initialize(const std::string& url, uint8_t pool_size,
-                         bool create_tables);
+                         bool create_tables, bool alter_tables);
   static auto Session() { return std::make_unique<soci::session>(*pool_); }
 
   template <typename T>

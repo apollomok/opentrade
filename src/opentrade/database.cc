@@ -167,7 +167,7 @@ static const char create_tables_sql[] = R"(
 )";
 
 void Database::Initialize(const std::string& url, uint8_t pool_size,
-                          bool create_tables) {
+                          bool create_tables, bool alter_tables) {
 #ifndef BACKTEST
   if (pool_size < 2) pool_size = 2;
 #endif
@@ -183,33 +183,34 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   LOG_INFO("Database connected");
   if (create_tables) *Session() << create_tables_sql;
 
-  // for back-compactible, will remove
-  auto sql = Session();
-  *sql << "alter table exchange alter column trade_period type varchar(32);";
-  *sql << "alter table exchange alter column break_period type varchar(32);";
-  *sql << "alter table exchange alter column half_day type varchar(32);";
-  try {
-    *sql << "alter table security drop column name;";
-    *sql << "alter table security add column ric varchar(30);";
-    *sql << "alter table security add column params varchar(1000);";
-    *sql << "alter table exchange drop column \"desc\";";
-    *sql << "alter table exchange add column params varchar(1000);";
-  } catch (...) {
-  }
-  try {
-    *sql << "alter table position drop column \"desc\";";
-    *sql << "alter table position add column info json;";
-  } catch (...) {
-  }
-  try {
-    *sql << "alter table position add column cx_qty float8;";
-  } catch (...) {
-  }
-  try {
-    *sql << "drop index position__index;";
-    *sql << "create index if not exists position__index_acc_sec_tm on "
-            "position(sub_account_id, security_id, tm desc);";
-  } catch (...) {
+  if (alter_tables) {
+    auto sql = Session();
+    *sql << "alter table exchange alter column trade_period type varchar(32);";
+    *sql << "alter table exchange alter column break_period type varchar(32);";
+    *sql << "alter table exchange alter column half_day type varchar(32);";
+    try {
+      *sql << "alter table security drop column name;";
+      *sql << "alter table security add column ric varchar(30);";
+      *sql << "alter table security add column params varchar(1000);";
+      *sql << "alter table exchange drop column \"desc\";";
+      *sql << "alter table exchange add column params varchar(1000);";
+    } catch (...) {
+    }
+    try {
+      *sql << "alter table position drop column \"desc\";";
+      *sql << "alter table position add column info json;";
+    } catch (...) {
+    }
+    try {
+      *sql << "alter table position add column cx_qty float8;";
+    } catch (...) {
+    }
+    try {
+      *sql << "drop index position__index;";
+      *sql << "create index if not exists position__index_acc_sec_tm on "
+              "position(sub_account_id, security_id, tm desc);";
+    } catch (...) {
+    }
   }
 }
 
