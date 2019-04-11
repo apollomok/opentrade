@@ -63,6 +63,7 @@ inline std::multimap<uint64_t, std::function<void()>> kTimers;
 #endif
 
 static const auto kMicroInSec = 1000000lu;
+static const double kMicroInSecF = kMicroInSec;
 static const auto kMicroInMin = kMicroInSec * 60;
 
 inline time_t GetTime() {

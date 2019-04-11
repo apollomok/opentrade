@@ -141,7 +141,6 @@ void AlgoManager::Initialize() {
   self.LoadStore();
   self.algo_id_counter_ += 100;
   LOG_INFO("Algo id starts from " << self.algo_id_counter_);
-  self.work_.reset(new boost::asio::io_service::work(self.io_service_));
   self.seq_counter_ += 100;
 }
 
@@ -164,7 +163,7 @@ void AlgoManager::Update(DataSrc::IdType src, Security::IdType id) {
 void AlgoManager::Run(int nthreads) {
 #ifdef BACKTEST
   threads_.resize(1);
-  strands_.resize(1);
+  strands_ = new StrandMock[1]{};
   runners_ = new AlgoRunner[1]{};
   runners_[0].tid_ = std::this_thread::get_id();
 #else
@@ -172,10 +171,11 @@ void AlgoManager::Run(int nthreads) {
   runners_ = new AlgoRunner[nthreads]{};
   LOG_INFO("algo_threads=" << nthreads);
   threads_.reserve(nthreads);
-  strands_.reserve(nthreads);
+  strands_ = new boost::asio::io_service[nthreads]{};
+  works_.resize(nthreads);
   for (auto i = 0; i < nthreads; ++i) {
-    threads_.emplace_back([this]() { this->io_service_.run(); });
-    strands_.emplace_back(io_service_);
+    works_[i].reset(new boost::asio::io_service::work(strands_[i]));
+    threads_.emplace_back([this, i]() { this->strands_[i].run(); });
     runners_[i].tid_ = threads_[i].get_id();
   }
   StartPermanents();
@@ -415,8 +415,8 @@ inline void AlgoManager::SetTimeout(const Algo& algo,
                                     double seconds) {
   if (seconds < 0) seconds = 0;
 #ifdef BACKTEST
-  kTimers.emplace(kTime + seconds * kMicroInSec, [&algo]() {
-    if (algo.is_active_()) func();
+  kTimers.emplace(kTime + seconds * kMicroInSec, [&algo, func]() {
+    if (algo.is_active()) func();
   });
 #else
   if (seconds <= 0) {
@@ -424,13 +424,12 @@ inline void AlgoManager::SetTimeout(const Algo& algo,
     return;
   }
   auto t = new boost::asio::deadline_timer(
-      io_service_,
+      strands_[algo.id() % threads_.size()],
       boost::posix_time::microseconds((int64_t)(seconds * kMicroInSec)));
-  t->async_wait(
-      strands_[algo.id() % threads_.size()].wrap([&algo, func, t](auto) {
-        if (algo.is_active()) func();
-        delete t;
-      }));
+  t->async_wait([&algo, func, t](auto) {
+    if (algo.is_active()) func();
+    delete t;
+  });
 #endif
 }
 

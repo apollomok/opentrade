@@ -24,12 +24,13 @@ struct BarIndicator : public Indicator {
     current.Update(px, qty);
   }
 
-  void Roll() {
-    last = current;
+  void Roll(time_t tm) {
     {
       Lock lock(m_);
+      last = current;
       bzero(&current, sizeof(current));
     }
+    last.tm = tm - 60 * interval;
   }
 };
 
@@ -69,14 +70,16 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
   }
 
   void StartNext() {
+    auto now = NowInMicro();
     auto n = kMicroInMin * interval;
-    SetTimeout([this]() { OnTimer(); }, (n - (NowInMicro() - tm0_) % n) /
-                                            static_cast<double>(kMicroInSec));
+    auto wait = n - (NowInMicro() - tm0_) % n;
+    auto ind_tm = std::round((now + wait) / kMicroInSecF);
+    SetTimeout([this, ind_tm]() { OnTimer(ind_tm); }, wait / kMicroInSecF);
   }
 
-  void OnTimer() {
+  void OnTimer(time_t tm) {
     for (auto bar : bars_) {
-      bar->Roll();
+      bar->Roll(tm);
       bar->Publish(ind_id);
     }
     StartNext();

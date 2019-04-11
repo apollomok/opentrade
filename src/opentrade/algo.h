@@ -244,19 +244,14 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
       md_refs_;
   AlgoRunner* runners_ = nullptr;
   std::vector<std::thread> threads_;
-  boost::asio::io_service io_service_;
-  std::unique_ptr<boost::asio::io_service::work> work_;
 #ifdef BACKTEST
   struct StrandMock {
     void post(std::function<void()> func) { kTimers.emplace(0, func); }
   };
-  std::vector<StrandMock> strands_;
+  StrandMock* strands_ = nullptr;
 #else
-#if BOOST_VERSION < 106600
-  std::vector<boost::asio::strand> strands_;
-#else
-  std::vector<boost::asio::io_context::strand> strands_;
-#endif
+  std::vector<std::unique_ptr<boost::asio::io_service::work>> works_;
+  boost::asio::io_service* strands_ = nullptr;
 #endif
   std::ofstream of_;
   uint32_t seq_counter_ = 0;

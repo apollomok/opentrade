@@ -72,8 +72,10 @@ struct MarketData {
 
     void UpdateVolume(Qty last_qty) {
       qty = last_qty;
-      vwap = (volume * vwap + close * qty) / (volume + qty);
-      volume += qty;
+      if (qty > 0) {
+        vwap = (volume * vwap + close * qty) / (volume + qty);
+        volume += qty;
+      }
     }
 
     void Update(double px, Qty qty) {
