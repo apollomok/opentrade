@@ -221,6 +221,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         if (!ord) {
           LOG_ERROR("Unknown order id " << id << " on confirmation line #"
                                         << ln);
+          continue;
         }
         auto cm = std::make_shared<Confirmation>();
         cm->exec_type = exec_type;
