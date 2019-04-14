@@ -84,7 +84,7 @@ struct Contract {
     const SubAccount* acc;  // alias of sub_account
   };
   std::map<std::string,
-           std::variant<bool, int64_t, double, std::string, std::any>>*
+           std::variant<bool, int64_t, double, char, std::string, std::any>>*
       optional = nullptr;
   OrderSide side = kBuy;
   OrderType type = kLimit;

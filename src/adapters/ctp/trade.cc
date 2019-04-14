@@ -31,6 +31,12 @@ class Trade : public CThostFtdcTraderSpi,
   void OnRspAuthenticate(CThostFtdcRspAuthenticateField* rsp_auth_field,
                          CThostFtdcRspInfoField* rsp_info, int request_id,
                          bool is_last) override;
+  void OnRspSettlementInfoConfirm(
+      CThostFtdcSettlementInfoConfirmField* settlement_info,
+      CThostFtdcRspInfoField* rsp_info, int request_id, bool is_last);
+  void OnRspQrySettlementInfo(CThostFtdcSettlementInfoField* settlement_info,
+                              CThostFtdcRspInfoField* rsp_info, int request_id,
+                              bool is_last) override;
   void Login();
   void Auth();
 
@@ -193,6 +199,15 @@ void Trade::OnRspUserLogin(CThostFtdcRspUserLoginField* rsp_user_login,
                      << " requestId=" << request_id << ", chain=" << is_last);
     return;
   }
+
+  CThostFtdcQrySettlementInfoField req{};
+  STRCPY(req.BrokerID, broker_id_.c_str());
+  STRCPY(req.InvestorID, user_id_.c_str());
+  auto ret = api_->ReqQrySettlementInfo(&req, ++request_counter_);
+  if (ret) {
+    LOG_ERROR(name() << ": ReqQrySettlementInfo failed: " << ret);
+  }
+
   connected_ = 1;
   LOG_INFO(name() << ": User logged in");
 }
@@ -279,12 +294,14 @@ void Trade::OnRtnOrder(CThostFtdcOrderField* ord) {
     order.front_id = ord->FrontID;
     order.session_id = ord->SessionID;
   } else if (ord->SequenceNo <= (int64_t)order.seq_num) {
+    // some different message has the same seq_num
+    // to-do: need to handle duplicate confirmation ourself
     LOG_DEBUG(name() << ": Low SequenceNo " << ord->SequenceNo << " of state="
                      << ord->OrderStatus << ", expected " << (order.seq_num + 1)
-                     << " for OrderRef=" << id << ", ignore");
-    return;
+                     << " for OrderRef=" << id << ", continue");
+  } else {
+    order.seq_num = ord->SequenceNo;
   }
-  order.seq_num = ord->SequenceNo;
 
   const char* state = "NA";
   switch (ord->OrderStatus) {
@@ -378,8 +395,7 @@ std::string Trade::Cancel(const opentrade::Order& ord) noexcept {
     return "Can not find original order with front_id and session_id";
   }
 
-  CThostFtdcInputOrderActionField c_ord;
-  memset(&c_ord, 0, sizeof(c_ord));
+  CThostFtdcInputOrderActionField c_ord{};
   //经纪公司代码
   STRCPY(c_ord.BrokerID, broker_id_.c_str());
   //投资者代码
@@ -416,8 +432,7 @@ std::string Trade::Cancel(const opentrade::Order& ord) noexcept {
 
 std::string Trade::Place(const opentrade::Order& ord) noexcept {
   // 端登成功,发出报单录入请求
-  CThostFtdcInputOrderField c_ord;
-  memset(&c_ord, 0, sizeof(c_ord));
+  CThostFtdcInputOrderField c_ord{};
   c_ord.OrderPriceType = THOST_FTDC_OPT_BestPrice;
   switch (ord.type) {
     case opentrade::kLimit:
@@ -449,10 +464,16 @@ std::string Trade::Place(const opentrade::Order& ord) noexcept {
   std::stringstream tmp;
   tmp << std::setfill('0') << std::setw(sizeof(c_ord.OrderRef) - 1) << ord.id;
   strncpy(c_ord.OrderRef, tmp.str().c_str(), sizeof(c_ord.OrderRef) - 1);
+  char offset = 0;
+  char hedge = 0;
+  if (ord.optional) {
+    offset = opentrade::GetParam(*ord.optional, "offset_flag", offset);
+    hedge = opentrade::GetParam(*ord.optional, "hedge_flag", hedge);
+  }
   // 组合开平标志
-  STRCPY(c_ord.CombOffsetFlag, "0");
+  c_ord.CombOffsetFlag[0] = offset;
   // 组合投机套保标志
-  STRCPY(c_ord.CombHedgeFlag, "1");
+  c_ord.CombHedgeFlag[0] = hedge;
   // 数量
   c_ord.VolumeTotalOriginal = ord.qty;
   // 有效期类型
@@ -501,6 +522,56 @@ std::string Trade::Place(const opentrade::Order& ord) noexcept {
         << "IsSwapOrder=" << c_ord.IsSwapOrder << std::endl;
   });
   return {};
+}
+
+void Trade::OnRspSettlementInfoConfirm(
+    CThostFtdcSettlementInfoConfirmField* settlement_info,
+    CThostFtdcRspInfoField* rsp_info, int request_id, bool is_last) {
+  if (rsp_info && rsp_info->ErrorID != 0) {
+    LOG_ERROR(name() << ": OnRspSettlementInfoConfirm, erroCode = "
+                     << rsp_info->ErrorID << " errorMsg = "
+                     << rsp_info->ErrorMsg << " requestId = " << request_id
+                     << " chain = " << is_last);
+    return;
+  }
+  if (settlement_info) {
+    LOG_DEBUG(name() << ": OnRspSettlementInfoConfirm: request_id="
+                     << request_id << " is_last=" << is_last
+                     << " ConfirmDate=" << settlement_info->ConfirmDate
+                     << " ConfirmTime=" << settlement_info->ConfirmTime);
+  }
+  LOG_INFO(name() << ": Settlement confirmed");
+}
+
+void Trade::OnRspQrySettlementInfo(
+    CThostFtdcSettlementInfoField* settlement_info,
+    CThostFtdcRspInfoField* rsp_info, int request_id, bool is_last) {
+  if (rsp_info && rsp_info->ErrorID != 0) {
+    LOG_ERROR(
+        name() << ": OnRspQrySettlementInfo, erroCode = " << rsp_info->ErrorID
+               << " errorMsg = " << rsp_info->ErrorMsg
+               << " requestId = " << request_id << " chain = " << is_last);
+    return;
+  }
+  if (settlement_info) {
+    LOG_DEBUG(name() << ": OnRspQrySettlementInfo: request_id=" << request_id
+                     << " is_last=" << is_last
+                     << " TradingDay=" << settlement_info->TradingDay
+                     << " SettlementID=" << settlement_info->SettlementID
+                     << " Content:\n"
+                     << settlement_info->Content);
+  }
+  if (is_last) {
+    CThostFtdcSettlementInfoConfirmField req{};
+    STRCPY(req.BrokerID, broker_id_.c_str());
+    STRCPY(req.InvestorID, user_id_.c_str());
+
+    auto ret = api_->ReqSettlementInfoConfirm(&req, ++request_counter_);
+    if (ret) {
+      LOG_ERROR(name() << ": ReqSettlementInfoConfirm failed: " << ret);
+    }
+    LOG_INFO(name() << ": ReqSettlementInfoConfirm sent");
+  }
 }
 
 extern "C" {
