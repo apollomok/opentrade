@@ -85,7 +85,7 @@ static const char create_tables_sql[] = R"(
     opt_attribute char(1),
     maturity_date int4, -- e.g. 20201230 => 2020-12-30
     strike_price float8,
-    exchange_id int2 references exchange(id), -- on update cascade on delete cascade,
+    exchange_id int2 not null references exchange(id), -- on update cascade on delete cascade,
     underlying_id int4 references security(id), -- on update cascade on delete cascade,
     params varchar(1000),
     primary key(id)

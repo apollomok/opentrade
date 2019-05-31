@@ -43,7 +43,7 @@ class Trade : public CThostFtdcTraderSpi,
  private:
   CThostFtdcTraderApi* api_ = nullptr;
   std::string address_, broker_id_, user_id_, password_;
-  std::string product_info_, auth_code_;
+  std::string product_info_, auth_code_, app_id_;
   struct Order {
     int front_id = -1;
     int session_id = -1;
@@ -80,6 +80,7 @@ void Trade::Start() noexcept {
 
   product_info_ = config("product_info");
   auth_code_ = config("auth_code");
+  app_id_ = config("app_id");
 
   auto path = opentrade::kStorePath / (name() + "-session");
   std::ifstream ifs(path.c_str());
@@ -154,6 +155,7 @@ void Trade::Auth() {
   STRCPY(reqAuth.UserID, user_id_.c_str());
   STRCPY(reqAuth.UserProductInfo, product_info_.c_str());
   STRCPY(reqAuth.AuthCode, auth_code_.c_str());
+  STRCPY(reqAuth.AppID, app_id_.c_str());
   api_->ReqAuthenticate(&reqAuth, ++request_counter_);
 }
 
