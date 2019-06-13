@@ -33,7 +33,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 
 ---
 
-# Steps to run on Ubuntu 18.04
+# Steps to run on Ubuntu 18.04 or later
 * **Compile**
   * Prepare dev environment.
   ```bash
@@ -74,11 +74,14 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    ```bash
    sudo apt remove --purge postgres*
    sudo apt autoremove
-   sudo apt install -y postgresql-10 postgresql-contrib postgresql-client
+   sudo apt install -y postgresql-10 || sudo apt install -y postgresql-11
+   sudo apt install -y postgresql-contrib postgresql-client
+   # add data to database as user 'postgres'
    sudo su postgres;
    cd;
    wget https://github.com/opentradesolutions/data/raw/master/opentrade-pg_dumpall.sql
-   psql -f opentrade-pg_dumpall.sql 
+   psql -f opentrade-pg_dumpall.sql
+   exit # become yourself again
    ```
  
  * **Run opentrade**
