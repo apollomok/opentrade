@@ -405,7 +405,7 @@ void Algo::Stop() {
     is_active_ = false;
     for (auto inst : instruments_) inst->Cancel();
     AlgoManager::Instance().Persist(
-        *this, kError.empty() ? "teminated" : "failed", kError);
+        *this, kError.empty() ? "terminated" : "failed", kError);
     OnStop();
   }
 }
