@@ -10,6 +10,7 @@
 #include "algo.h"
 #include "backtest.h"
 #include "bar_handler.h"
+#include "consolidation.h"
 #include "database.h"
 #include "exchange_connectivity.h"
 #include "logger.h"
@@ -251,6 +252,7 @@ int main(int argc, char *argv[]) {
     opentrade::OpenTick::Instance().Initialize(opentick_url);
 
   AlgoManager::Instance().Add(new opentrade::BarHandler<>);
+  AlgoManager::Instance().Add(new opentrade::ConsolidationHandler);
 
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();
