@@ -7,8 +7,9 @@ namespace opentrade {
 
 static const Indicator::IdType kBar = 0;
 
-template <int interval = 1>
+template <int interval = 1, Indicator::IdType ind_id = kBar>
 struct BarIndicator : public Indicator {
+  static const Indicator::IdType kId = ind_id;
   MarketData::Trade current;
   MarketData::Trade last;
   bp::object GetPyObject() const override {
@@ -37,7 +38,7 @@ struct BarIndicator : public Indicator {
 template <int interval = 1, Indicator::IdType ind_id = kBar>
 class BarHandler : public IndicatorHandler, public TradeTickHook {
  public:
-  typedef BarIndicator<interval> Ind;
+  typedef BarIndicator<interval, ind_id> Ind;
   explicit BarHandler(const char* name = "bar") {
     set_name(name);
     create_func_ = []() { return new BarHandler; };
@@ -49,20 +50,22 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
   Indicator::IdType id() const override { return ind_id; }
 
   bool Subscribe(Instrument* inst, bool listen) noexcept override {
-    auto bar = const_cast<Ind*>(inst->Get<Ind>(ind_id));
-    if (!bar) {
-      inst->HookTradeTick(this);
-      bar = new Ind{};
-      bars_.push_back(bar);
-      const_cast<MarketData&>(inst->md()).Set(bar, ind_id);
-    }
-    if (listen) bar->AddListener(inst);
+    Async([=]() {
+      auto bar = const_cast<Ind*>(inst->Get<Ind>());
+      if (!bar) {
+        inst->HookTradeTick(this);
+        bar = new Ind{};
+        bars_.push_back(bar);
+        const_cast<MarketData&>(inst->md()).Set(bar);
+      }
+      if (listen) bar->AddListener(inst);
+    });
     return true;
   }
 
   void OnTrade(Security::IdType id, const MarketData* md, time_t tm, double px,
                double qty) noexcept override {
-    auto bar = const_cast<Ind*>(md->Get<Ind>(ind_id));
+    auto bar = const_cast<Ind*>(md->Get<Ind>());
     if (!bar) return;
     bar->Update(px, qty);
   }

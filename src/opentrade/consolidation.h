@@ -7,16 +7,18 @@
 namespace opentrade {
 
 static const Indicator::IdType kConsolidation = 1;
-static const char* kConsolidationSrc = "CONS";
+static const DataSrc kConsolidationSrc("CONS");
 static const char* kConsolidationBook = "ConsolidationBook";
 
-struct ConsolidationBook : public Indicator {};
+struct ConsolidationBook : public Indicator {
+  static const Indicator::IdType kId = kConsolidation;
+};
 
 class ConsolidationFeed : public MarketDataAdapter {
  public:
   ConsolidationFeed() {
     set_name("consolidation");
-    config_["src"] = kConsolidationSrc;
+    config_["src"] = kConsolidationSrc.str();
     create_func_ = []() { return new ConsolidationFeed; };
   }
   void Start() noexcept override {}
@@ -30,9 +32,11 @@ class ConsolidationHandler : public IndicatorHandler {
     set_name(kConsolidationBook);
     create_func_ = []() { return new ConsolidationHandler; };
   }
-  Indicator::IdType id() const override { return kConsolidation; }
+  Indicator::IdType id() const override { return Ind::kId; }
   void OnStart() noexcept override;
   bool Subscribe(Instrument* inst, bool listen) noexcept override;
+  void OnMarketQuote(const Instrument& inst, const MarketData& md,
+                     const MarketData& md0) noexcept override;
 
  private:
 };

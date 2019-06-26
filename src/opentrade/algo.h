@@ -62,6 +62,7 @@ class Algo : public Adapter {
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
   typedef std::shared_ptr<ParamMap> ParamMapPtr;
   void SetTimeout(std::function<void()> func, double seconds);
+  void Async(std::function<void()> func) { SetTimeout(func, 0); }
   static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept { return {}; }
@@ -94,7 +95,7 @@ class Algo : public Adapter {
 
  protected:
   Instrument* Subscribe(const Security& sec, DataSrc src = {},
-                        bool listen = true);
+                        bool listen = true, Instrument* parent = nullptr);
   void Stop();
   Order* Place(const Contract& contract, Instrument* inst);
   void Cross(double qty, double price, OrderSide side, const SubAccount* acc,
@@ -117,6 +118,7 @@ class Instrument {
       : algo_(algo), sec_(sec), src_(src) {}
   Algo& algo() { return *algo_; }
   const Algo& algo() const { return *algo_; }
+  Instrument* parent() { return parent_; }
   const Security& sec() const { return sec_; }
   DataSrc src() const { return src_; }
   const MarketData& md() const { return *md_; }
@@ -154,12 +156,17 @@ class Instrument {
   }
   bool Subscribe(Indicator::IdType id, bool listen = false);
   bool SubscribeByName(const std::string& name, bool listen = false);
+  template <typename T>
+  const T* Get() const {
+    return md_->Get<T>();
+  }
   template <typename T = Indicator>
   const T* Get(Indicator::IdType id) const {
     return md_->Get<T>(id);
   }
 
  private:
+  Instrument* parent_ = nullptr;
   Algo* algo_ = nullptr;
   const Security& sec_;
   const MarketData* md_ = nullptr;
@@ -231,6 +238,9 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
     return FindInMap(algo_of_token_, token);
   }
   void Cancel(Instrument* inst);
+  auto tid(const Algo& algo) const {
+    return runners_[algo.id() % threads_.size()].tid_;
+  }
 
  private:
   std::atomic<Algo::IdType> algo_id_counter_ = 0;

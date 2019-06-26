@@ -14,7 +14,7 @@ static const char* kApiVersion =
 #ifdef BACKTEST
     "backtest_"
 #endif
-    "1.1";
+    "1.2";
 
 class Adapter {
  public:

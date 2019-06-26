@@ -388,19 +388,24 @@ Algo::~Algo() {
   for (auto& inst : instruments_) delete inst;
 }
 
-Instrument* Algo::Subscribe(const Security& sec, DataSrc src, bool listen) {
+Instrument* Algo::Subscribe(const Security& sec, DataSrc src, bool listen,
+                            Instrument* parent) {
+  assert(std::this_thread::get_id() == AlgoManager::Instance().tid(*this));
   auto adapter = MarketDataManager::Instance().Subscribe(sec, src);
   assert(adapter);
   auto inst = new Instrument(this, sec, DataSrc(adapter->src()));
+  inst->parent_ = parent;
   inst->md_ = &MarketDataManager::Instance().Get(sec, adapter->src());
   inst->id_ = ++Instrument::id_counter_;
   inst->listen_ = listen;
+  std::atomic_thread_fence(std::memory_order_release);
   instruments_.insert(inst);
   if (listen) AlgoManager::Instance().Register(inst);
   return inst;
 }
 
 void Algo::Stop() {
+  assert(std::this_thread::get_id() == AlgoManager::Instance().tid(*this));
   if (is_active_) {
     is_active_ = false;
     for (auto inst : instruments_) inst->Cancel();

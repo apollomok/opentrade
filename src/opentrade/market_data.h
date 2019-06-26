@@ -114,20 +114,26 @@ struct MarketData {
     std::vector<TradeTickHook*> trade_tick_hooks;
   };
 
-  void Set(Indicator* value, Indicator::IdType id) {
-    assert(id < 16);
+  template <typename T>
+  void Set(T* value) {
+    assert(T::kId < 16);
     std::unique_lock<std::shared_mutex> lock(mutex_);
     if (!mngr_) mngr_ = new IndicatorManager;
-    if (mngr_->inds.size() <= id) mngr_->inds.resize(id + 1);
-    mngr_->inds[id] = value;
+    if (mngr_->inds.size() <= T::kId) mngr_->inds.resize(T::kId + 1);
+    mngr_->inds[T::kId] = value;
   }
 
-  template <typename T>
+  template <typename T = Indicator>
   const T* Get(Indicator::IdType id) const {
     if (!mngr_) return {};
     std::shared_lock<std::shared_mutex> lock(mutex_);
     if (id >= mngr_->inds.size()) return {};
     return dynamic_cast<T*>(mngr_->inds.at(id));
+  }
+
+  template <typename T>
+  const T* Get() const {
+    return Get<T>(T::kId);
   }
 
   void HookTradeTick(TradeTickHook* hook) {
@@ -179,6 +185,7 @@ struct DataSrc {
   operator IdType() const { return value; }
   const char* str() const { return GetStr(value); }
   const IdType operator()() { return value; }
+  operator IdType() { return value; }
   DataSrc& operator=(IdType v) {
     value = v;
     return *this;
