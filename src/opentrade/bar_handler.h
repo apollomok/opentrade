@@ -50,14 +50,12 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
 
   bool Subscribe(Instrument* inst, bool listen) noexcept override {
     auto bar = const_cast<Ind*>(inst->Get<Ind>(ind_id));
-    if (bar) {
-      if (listen) bar->AddListener(inst);
-      return true;
+    if (!bar) {
+      inst->HookTradeTick(this);
+      bar = new Ind{};
+      bars_.push_back(bar);
+      const_cast<MarketData&>(inst->md()).Set(bar, ind_id);
     }
-    inst->HookTradeTick(this);
-    bar = new Ind{};
-    bars_.push_back(bar);
-    const_cast<MarketData&>(inst->md()).Set(bar, ind_id);
     if (listen) bar->AddListener(inst);
     return true;
   }
