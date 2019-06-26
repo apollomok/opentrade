@@ -174,7 +174,9 @@ void PositionManager::Initialize() {
       std::stringstream buffer;
       buffer << is.rdbuf();
       try {
-        auto j = json::parse(buffer.str());
+        auto str = buffer.str();
+        if (str.empty()) continue;
+        auto j = json::parse(str);
         extern TargetsPtr LoadTargets(const json& j);
         self.SetTargets(*acc, LoadTargets(j));
         LOG_INFO("Target file " << path << " loaded");

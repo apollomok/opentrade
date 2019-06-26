@@ -14,17 +14,6 @@ struct ConsolidationBook : public Indicator {
   static const Indicator::IdType kId = kConsolidation;
 };
 
-class ConsolidationFeed : public MarketDataAdapter {
- public:
-  ConsolidationFeed() {
-    set_name("consolidation");
-    config_["src"] = kConsolidationSrc.str();
-    create_func_ = []() { return new ConsolidationFeed; };
-  }
-  void Start() noexcept override {}
-  void Subscribe(const opentrade::Security& sec) noexcept override {}
-};
-
 class ConsolidationHandler : public IndicatorHandler {
  public:
   typedef ConsolidationBook Ind;

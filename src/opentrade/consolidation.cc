@@ -2,6 +2,18 @@
 
 namespace opentrade {
 
+class ConsolidationFeed : public MarketDataAdapter {
+ public:
+  ConsolidationFeed() {
+    connected_ = 1;
+    set_name(kConsolidationSrc.str());
+    config_["src"] = kConsolidationSrc.str();
+    create_func_ = []() { return new ConsolidationFeed; };
+  }
+  void Start() noexcept override {}
+  void Subscribe(const opentrade::Security& sec) noexcept override {}
+};
+
 void ConsolidationHandler::OnStart() noexcept {
   MarketDataManager::Instance().Add(new ConsolidationFeed);
 }
