@@ -93,16 +93,12 @@ void ConsolidationHandler::OnMarketQuote(const Instrument& inst,
   assert(inst.src_idx() < MarketDataManager::Instance().adapters().size() - 1);
   auto pinst = const_cast<Instrument*>(&inst);
   auto book = const_cast<Ind*>(pinst->Get<Ind>());
-  if (md.quote().ask_price != md0.quote().ask_price ||
-      md.quote().ask_size != md0.quote().ask_size) {
-    book->Update(md.quote().ask_price, md.quote().ask_size, pinst, &book->asks,
-                 &book->bids);
-  }
-  if (md.quote().bid_price != md0.quote().bid_price ||
-      md.quote().bid_size != md0.quote().bid_size) {
-    book->Update(md.quote().bid_price, md.quote().bid_size, pinst, &book->bids,
-                 &book->asks);
-  }
+  auto& q0 = md0.quote();
+  auto& q = md.quote();
+  if (q.ask_price != q0.ask_price || q.ask_size != q0.ask_size)
+    book->Update(q.ask_price, q.ask_size, pinst, &book->asks, &book->bids);
+  if (q.bid_price != q0.bid_price || q.bid_size != q0.bid_size)
+    book->Update(q.bid_price, q.bid_size, pinst, &book->bids, &book->asks);
 }
 
 }  // namespace opentrade

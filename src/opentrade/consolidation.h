@@ -44,8 +44,8 @@ struct PriceLevel {
 
 typedef PriceLevels<PriceLevel, std::less, tbb::tbb_allocator> AskLevels;
 typedef PriceLevels<PriceLevel, std::greater, tbb::tbb_allocator> BidLevels;
-static_assert(AskLevels::IsAsk(), "AskLevels comp function wrong");
-static_assert(!BidLevels::IsAsk(), "BidLevels comp function wrong");
+static_assert(AskLevels::IsAsk(), "AskLevels cmp function wrong");
+static_assert(!BidLevels::IsAsk(), "BidLevels cmp function wrong");
 
 struct ConsolidationBook : public Indicator {
   static const Indicator::IdType kId = kConsolidation;
