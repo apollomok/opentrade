@@ -210,6 +210,14 @@ struct DataSrc {
     str[i] = 0;
     return str;
   }
+
+  static auto GetIndex(IdType src) {
+    // not thread safe under windows (gcc --fno-threadsafe-statics)
+    static std::map<IdType, uint8_t> kIndices;
+    static std::mutex kMutex;
+    std::unique_lock<std::mutex> lock(kMutex);
+    return kIndices.emplace(src, kIndices.size()).first->second;
+  }
 };
 
 class MarketDataAdapter : public virtual NetworkAdapter {

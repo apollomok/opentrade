@@ -395,6 +395,7 @@ Instrument* Algo::Subscribe(const Security& sec, DataSrc src, bool listen,
   assert(adapter);
   auto inst = new Instrument(this, sec, DataSrc(adapter->src()));
   inst->parent_ = parent;
+  if (parent) inst->src_idx_ = DataSrc::GetIndex(src);
   inst->md_ = &MarketDataManager::Instance().Get(sec, adapter->src());
   inst->id_ = ++Instrument::id_counter_;
   inst->listen_ = listen;

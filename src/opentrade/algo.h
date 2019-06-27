@@ -119,6 +119,7 @@ class Instrument {
   Algo& algo() { return *algo_; }
   const Algo& algo() const { return *algo_; }
   Instrument* parent() { return parent_; }
+  auto src_idx() const { return src_idx_; }
   const Security& sec() const { return sec_; }
   DataSrc src() const { return src_; }
   const MarketData& md() const { return *md_; }
@@ -166,7 +167,6 @@ class Instrument {
   }
 
  private:
-  Instrument* parent_ = nullptr;
   Algo* algo_ = nullptr;
   const Security& sec_;
   const MarketData* md_ = nullptr;
@@ -180,6 +180,8 @@ class Instrument {
   double outstanding_sell_qty_ = 0;
   size_t id_ = 0;
   bool listen_ = true;
+  uint8_t src_idx_ = -1;  // for fast looking up in price consolidation
+  Instrument* parent_ = nullptr;
   friend class AlgoManager;
   friend class Algo;
   static inline std::atomic<size_t> id_counter_ = 0;
