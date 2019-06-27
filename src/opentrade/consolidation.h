@@ -13,11 +13,11 @@ static const Indicator::IdType kConsolidation = 1;
 static const DataSrc kConsolidationSrc("CONS");
 static const char* kConsolidationBook = "ConsolidationBook";
 
-template <typename T, template <typename> typename Comp,
+template <typename T, template <typename> typename Cmp,
           template <typename> typename Alloc = std::allocator>
-struct PriceLevels : public std::set<T, Comp<T>, Alloc<T>> {
-  typedef Comp<double> PriceComp;
-  static constexpr bool IsAsk() { return PriceComp()(0, 1); }
+struct PriceLevels : public std::set<T, Cmp<T>, Alloc<T>> {
+  static inline Cmp<double> kPriceCmp;
+  static constexpr bool IsAsk() { return kPriceCmp(0, 1); }
 };
 
 struct PriceLevel {
@@ -32,32 +32,34 @@ struct PriceLevel {
   };
   typedef std::list<Quote, tbb::tbb_allocator<Quote>> Quotes;
   Quotes quotes;
-  union {
-    PriceLevels<PriceLevel, std::less, tbb::tbb_allocator>::iterator parent_a;
-    PriceLevels<PriceLevel, std::greater, tbb::tbb_allocator>::iterator
-        parent_b;
-  };
+  std::set<PriceLevel>::iterator
+      self;  // for erase myself from levels efficiently
   bool operator<(const PriceLevel& rhs) const { return price < rhs.price; }
   bool operator>(const PriceLevel& rhs) const { return price > rhs.price; }
   auto Insert(int64_t size, Instrument* inst) {
-    quotes.emplace_back(size, inst, this);
-    return std::prev(quotes.end());
+    quotes.emplace_front(size, inst, this);
+    return quotes.begin();
   }
 };
+
+typedef PriceLevels<PriceLevel, std::less, tbb::tbb_allocator> AskLevels;
+typedef PriceLevels<PriceLevel, std::greater, tbb::tbb_allocator> BidLevels;
+static_assert(AskLevels::IsAsk(), "AskLevels comp function wrong");
+static_assert(!BidLevels::IsAsk(), "BidLevels comp function wrong");
 
 struct ConsolidationBook : public Indicator {
   static const Indicator::IdType kId = kConsolidation;
   typedef std::unique_lock<std::mutex> Lock;
   std::vector<PriceLevel::Quotes::iterator> quotes;
-  PriceLevels<PriceLevel, std::less, tbb::tbb_allocator> asks;
-  PriceLevels<PriceLevel, std::greater, tbb::tbb_allocator> bids;
+  AskLevels asks;
+  BidLevels bids;
   std::mutex m;
   template <typename A, typename B>
   void Update(double price, int64_t size, Instrument* inst, A* a, B* b);
-  template <typename A>
-  void Erase(PriceLevel::Quotes::iterator it, A* a);
-  template <typename A>
-  void Insert(double price, int64_t size, Instrument* inst, A* a);
+  template <bool reset, typename A>
+  void Erase(PriceLevel::Quotes::const_iterator it, A* a);
+  template <typename A, typename B>
+  void Insert(double price, int64_t size, Instrument* inst, A* a, B* b);
 };
 
 struct ConsolidationHandler : public IndicatorHandler {

@@ -4,31 +4,29 @@ namespace opentrade {
 
 static PriceLevel::Quotes kEmptyQuotes;
 
-template <typename A>
-inline void ConsolidationBook::Erase(PriceLevel::Quotes::iterator it, A* a) {
-  it->parent->quotes.erase(it);
-  if (it->parent->quotes.empty()) {
-    if constexpr (A::IsAsk()) {
-      a->erase(it->parent->parent_a);
-    } else {
-      a->erase(it->parent->parent_b);
-    }
-  }
+template <bool reset, typename A>
+inline void ConsolidationBook::Erase(PriceLevel::Quotes::const_iterator it,
+                                     A* a) {
+  if constexpr (reset) quotes[it->inst->src_idx()] = kEmptyQuotes.end();
+  auto level = it->parent;
+  level->quotes.erase(it);
+  if (level->quotes.empty()) a->erase(level->self);
 }
 
-template <typename A>
+template <typename A, typename B>
 inline void ConsolidationBook::Insert(double price, int64_t size,
-                                      Instrument* inst, A* a) {
+                                      Instrument* inst, A* a, B* b) {
   auto p = a->emplace(price);
   auto& level = const_cast<PriceLevel&>(*p.first);
-  if (p.second) {
-    if constexpr (A::IsAsk()) {
-      level.parent_a = p.first;
-    } else {
-      level.parent_b = p.first;
+  if (p.second) level.self = p.first;
+  quotes[inst->src_idx()] = level.Insert(size, inst);
+  // remove crossed levels of b, lock allowed
+  for (auto it = b->begin(); it != b->end() && A::kPriceCmp(price, it->price);
+       ++it) {
+    for (auto it2 = it->quotes.begin(); it2 != it->quotes.end(); ++it2) {
+      Erase<true>(it2, b);
     }
   }
-  quotes[inst->src_idx()] = level.Insert(size, inst);
 }
 
 template <typename A, typename B>
@@ -37,20 +35,17 @@ inline void ConsolidationBook::Update(double price, int64_t size,
   auto it = quotes[inst->src_idx()];
   Lock lock(m);
   if (it == kEmptyQuotes.end()) {
-    if (price > 0) {
-      Insert(price, size, inst, a);
-    }
+    if (price > 0) Insert(price, size, inst, a, b);
   } else {
     if (price > 0) {
       if (price == it->parent->price) {
         it->size = size;
       } else {
-        Erase(it, a);
-        Insert(price, size, inst, a);
+        Erase<false>(it, a);
+        Insert(price, size, inst, a, b);
       }
     } else {
-      Erase(it, a);
-      quotes[inst->src_idx()] = kEmptyQuotes.end();
+      Erase<true>(it, a);
     }
   }
 }
@@ -102,6 +97,11 @@ void ConsolidationHandler::OnMarketQuote(const Instrument& inst,
       md.quote().ask_size != md0.quote().ask_size) {
     book->Update(md.quote().ask_price, md.quote().ask_size, pinst, &book->asks,
                  &book->bids);
+  }
+  if (md.quote().bid_price != md0.quote().bid_price ||
+      md.quote().bid_size != md0.quote().bid_size) {
+    book->Update(md.quote().bid_price, md.quote().bid_size, pinst, &book->bids,
+                 &book->asks);
   }
 }
 
