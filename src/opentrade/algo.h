@@ -86,6 +86,8 @@ class Algo : public Adapter {
     return {};
   }
 
+  // initialize global variable here.
+  // only called once when loading .so
   void Start() noexcept override {}
 
   bool is_active() const { return is_active_; }
@@ -118,7 +120,7 @@ class Instrument {
       : algo_(algo), sec_(sec), src_(src) {}
   Algo& algo() { return *algo_; }
   const Algo& algo() const { return *algo_; }
-  Instrument* parent() { return parent_; }
+  const Instrument* parent() const { return parent_; }
   auto src_idx() const { return src_idx_; }
   const Security& sec() const { return sec_; }
   DataSrc src() const { return src_; }

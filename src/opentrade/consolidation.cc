@@ -15,7 +15,7 @@ inline void ConsolidationBook::Erase(PriceLevel::Quotes::const_iterator it,
 
 template <typename A, typename B>
 inline void ConsolidationBook::Insert(double price, int64_t size,
-                                      Instrument* inst, A* a, B* b) {
+                                      const Instrument* inst, A* a, B* b) {
   auto p = a->emplace(price);
   auto& level = const_cast<PriceLevel&>(*p.first);
   if (p.second) level.self = p.first;
@@ -31,7 +31,7 @@ inline void ConsolidationBook::Insert(double price, int64_t size,
 
 template <typename A, typename B>
 inline void ConsolidationBook::Update(double price, int64_t size,
-                                      Instrument* inst, A* a, B* b) {
+                                      const Instrument* inst, A* a, B* b) {
   auto it = quotes[inst->src_idx()];
   Lock lock(m);
   if (it == kEmptyQuotes.end()) {
@@ -88,17 +88,15 @@ bool ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
 void ConsolidationHandler::OnMarketQuote(const Instrument& inst,
                                          const MarketData& md,
                                          const MarketData& md0) noexcept {
-  auto parent = const_cast<Instrument*>(&inst)->parent();
-  assert(parent);
   assert(inst.src_idx() < MarketDataManager::Instance().adapters().size() - 1);
-  auto pinst = const_cast<Instrument*>(&inst);
-  auto book = const_cast<Ind*>(pinst->Get<Ind>());
+  assert(inst.parent());
+  auto book = const_cast<Ind*>(inst.parent()->Get<Ind>());
   auto& q0 = md0.quote();
   auto& q = md.quote();
   if (q.ask_price != q0.ask_price || q.ask_size != q0.ask_size)
-    book->Update(q.ask_price, q.ask_size, pinst, &book->asks, &book->bids);
+    book->Update(q.ask_price, q.ask_size, &inst, &book->asks, &book->bids);
   if (q.bid_price != q0.bid_price || q.bid_size != q0.bid_size)
-    book->Update(q.bid_price, q.bid_size, pinst, &book->bids, &book->asks);
+    book->Update(q.bid_price, q.bid_size, &inst, &book->bids, &book->asks);
 }
 
 }  // namespace opentrade

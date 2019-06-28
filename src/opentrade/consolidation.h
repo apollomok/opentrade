@@ -24,10 +24,10 @@ struct PriceLevel {
   explicit PriceLevel(double price) : price(price) {}
   double price;
   struct Quote {
-    Quote(int64_t size, Instrument* inst, PriceLevel* parent)
+    Quote(int64_t size, const Instrument* inst, PriceLevel* parent)
         : size(size), inst(inst), parent(parent) {}
     int64_t size;
-    Instrument* inst;
+    const Instrument* inst;
     PriceLevel* parent;
   };
   typedef std::list<Quote, tbb::tbb_allocator<Quote>> Quotes;
@@ -36,7 +36,7 @@ struct PriceLevel {
       self;  // for erase myself from levels efficiently
   bool operator<(const PriceLevel& rhs) const { return price < rhs.price; }
   bool operator>(const PriceLevel& rhs) const { return price > rhs.price; }
-  auto Insert(int64_t size, Instrument* inst) {
+  auto Insert(int64_t size, const Instrument* inst) {
     quotes.emplace_front(size, inst, this);
     return quotes.begin();
   }
@@ -55,11 +55,11 @@ struct ConsolidationBook : public Indicator {
   BidLevels bids;
   std::mutex m;
   template <typename A, typename B>
-  void Update(double price, int64_t size, Instrument* inst, A* a, B* b);
+  void Update(double price, int64_t size, const Instrument* inst, A* a, B* b);
   template <bool reset, typename A>
   void Erase(PriceLevel::Quotes::const_iterator it, A* a);
   template <typename A, typename B>
-  void Insert(double price, int64_t size, Instrument* inst, A* a, B* b);
+  void Insert(double price, int64_t size, const Instrument* inst, A* a, B* b);
 };
 
 struct ConsolidationHandler : public IndicatorHandler {
