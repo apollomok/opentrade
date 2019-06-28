@@ -76,8 +76,7 @@ inline void AlgoManager::Register(Instrument* inst) {
 
 void AlgoManager::Modify(Algo* algo, Algo::ParamMapPtr params) {
   if (!algo || !params) return;
-  strands_[algo->id_ % threads_.size()].post(
-      [params, algo]() { algo->OnModify(*params.get()); });
+  algo->Async([params, algo]() { algo->OnModify(*params.get()); });
 }
 
 Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
@@ -121,7 +120,7 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
   }
   if (dynamic_cast<IndicatorHandler*>(algo)) return algo;
   Persist(*algo, "new", params ? params_raw : "{\"test\":true}");
-  strands_[algo->id_ % threads_.size()].post([params, algo]() {
+  algo->Async([params, algo]() {
     kError = params ? algo->OnStart(*params.get()) : algo->Test();
     if (!kError.empty()) {
       algo->Stop();
@@ -207,7 +206,7 @@ void AlgoManager::StartPermanents() {
   for (auto& pair : algos_) {
     auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
     if (!ih) return;
-    ih->OnStart();
+    ih->Async([ih]() { ih->OnStart(); });
   }
 }
 
@@ -265,7 +264,7 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
         return;
     }
   }
-  strands_[inst->algo().id() % threads_.size()].post([cm, inst]() {
+  inst->algo().Async([cm, inst]() {
     switch (cm->exec_type) {
       case kPartiallyFilled:
       case kFilled:
@@ -299,20 +298,18 @@ void AlgoManager::Handle(Confirmation::Ptr cm) {
 void AlgoManager::Stop() {
   for (auto& pair : algos_) {
     auto algo = pair.second;
-    strands_[algo->id_ % threads_.size()].post([algo]() { algo->Stop(); });
+    algo->Async([algo]() { algo->Stop(); });
   }
 }
 
 void AlgoManager::Stop(Algo::IdType id) {
   auto algo = FindInMap(algos_, id);
-  if (algo)
-    strands_[algo->id_ % threads_.size()].post([algo]() { algo->Stop(); });
+  if (algo) algo->Async([algo]() { algo->Stop(); });
 }
 
 void AlgoManager::Stop(const std::string& token) {
   auto algo = FindInMap(algo_of_token_, token);
-  if (algo)
-    strands_[algo->id_ % threads_.size()].post([algo]() { algo->Stop(); });
+  if (algo) algo->Async([algo]() { algo->Stop(); });
 }
 
 void AlgoManager::Stop(Security::IdType sec, SubAccount::IdType acc) {
@@ -395,7 +392,7 @@ Instrument* Algo::Subscribe(const Security& sec, DataSrc src, bool listen,
   assert(adapter);
   auto inst = new Instrument(this, sec, DataSrc(adapter->src()));
   inst->parent_ = parent;
-  if (parent) inst->src_idx_ = DataSrc::GetIndex(src);
+  if (parent) inst->src_idx_ = MarketDataManager::Instance().GetIndex(src);
   inst->md_ = &MarketDataManager::Instance().Get(sec, adapter->src());
   inst->id_ = ++Instrument::id_counter_;
   inst->listen_ = listen;
@@ -444,7 +441,7 @@ void Algo::SetTimeout(std::function<void()> func, double seconds) {
 }
 
 void AlgoManager::Cancel(Instrument* inst) {
-  strands_[inst->algo().id() % threads_.size()].post([=]() { inst->Cancel(); });
+  inst->algo().Async([=]() { inst->Cancel(); });
 }
 
 Order* Algo::Place(const Contract& contract, Instrument* inst) {

@@ -56,13 +56,12 @@ class ConsolidationFeed : public MarketDataAdapter {
     connected_ = 1;
     set_name(kConsolidationSrc.str());
     config_["src"] = kConsolidationSrc.str();
-    create_func_ = []() { return new ConsolidationFeed; };
   }
   void Start() noexcept override {}
   void Subscribe(const opentrade::Security& sec) noexcept override {}
 };
 
-void ConsolidationHandler::OnStart() noexcept {
+void ConsolidationHandler::Start() noexcept {
   MarketDataManager::Instance().Add(new ConsolidationFeed);
 }
 
@@ -72,7 +71,7 @@ bool ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
     auto book = const_cast<Ind*>(inst->Get<Ind>());
     if (!book) {
       book = new Ind{};
-      book->quotes.resize(MarketDataManager::Instance().adapters().size() - 1,
+      book->quotes.resize(MarketDataManager::Instance().adapters().size(),
                           kEmptyQuotes.end());
       const_cast<MarketData&>(inst->md()).Set(book);
       for (auto& p : MarketDataManager::Instance().adapters()) {
@@ -88,7 +87,7 @@ bool ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
 void ConsolidationHandler::OnMarketQuote(const Instrument& inst,
                                          const MarketData& md,
                                          const MarketData& md0) noexcept {
-  assert(inst.src_idx() < MarketDataManager::Instance().adapters().size() - 1);
+  assert(inst.src_idx() < MarketDataManager::Instance().adapters().size());
   assert(inst.parent());
   auto book = const_cast<Ind*>(inst.parent()->Get<Ind>());
   auto& q0 = md0.quote();

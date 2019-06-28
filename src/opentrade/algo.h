@@ -62,7 +62,13 @@ class Algo : public Adapter {
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
   typedef std::shared_ptr<ParamMap> ParamMapPtr;
   void SetTimeout(std::function<void()> func, double seconds);
-  void Async(std::function<void()> func) { SetTimeout(func, 0); }
+#ifdef UNIT_TEST
+  virtual
+#endif
+      void
+      Async(std::function<void()> func) {
+    SetTimeout(func, 0);
+  }
   static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept { return {}; }
@@ -191,6 +197,10 @@ class Instrument {
 
 class AlgoRunner {
  public:
+  AlgoRunner() {}
+#ifdef UNIT_TEST
+  explicit AlgoRunner(std::thread::id tid) : tid_(tid) {}
+#endif
   void operator()();
 
  private:
@@ -246,7 +256,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
     return runners_[algo.id() % threads_.size()].tid_;
   }
 
- private:
+ protected:
   std::atomic<Algo::IdType> algo_id_counter_ = 0;
   tbb::concurrent_unordered_map<Algo::IdType, Algo*> algos_;
   tbb::concurrent_unordered_map<std::string, Algo*> algo_of_token_;

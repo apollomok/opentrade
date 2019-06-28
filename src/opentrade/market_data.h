@@ -210,14 +210,6 @@ struct DataSrc {
     str[i] = 0;
     return str;
   }
-
-  static auto GetIndex(IdType src) {
-    // not thread safe under windows (gcc --fno-threadsafe-statics)
-    static std::map<IdType, uint8_t> kIndices;
-    static std::mutex kMutex;
-    std::unique_lock<std::mutex> lock(kMutex);
-    return kIndices.emplace(src, kIndices.size()).first->second;
-  }
 };
 
 class MarketDataAdapter : public virtual NetworkAdapter {
@@ -260,6 +252,11 @@ class MarketDataManager : public AdapterManager<MarketDataAdapter>,
   const MarketData& GetLite(Security::IdType id, DataSrc::IdType src = 0);
   MarketDataAdapter* GetDefault() const { return default_; }
   auto& srcs() const { return srcs_; }
+  auto GetIndex(DataSrc::IdType src) {
+    auto it = srcs_.find(src);
+    if (it == srcs_.end()) return static_cast<decltype(it->second)>(-1);
+    return it->second;
+  }
 
  private:
   MarketDataAdapter* GetRoute(const Security& sec, DataSrc::IdType src);
@@ -270,7 +267,7 @@ class MarketDataManager : public AdapterManager<MarketDataAdapter>,
   std::map<std::pair<DataSrc::IdType, Exchange::IdType>,
            std::vector<MarketDataAdapter*>>
       routes_;
-  std::set<std::string> srcs_;
+  std::map<DataSrc::IdType, uint8_t> srcs_;
 };
 
 }  // namespace opentrade

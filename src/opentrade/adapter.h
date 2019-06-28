@@ -27,6 +27,7 @@ class Adapter {
   typedef Adapter* (*CFunc)();
   typedef std::function<Adapter*()> Func;
   Adapter* Clone() {
+    if (!create_func_) return this;
     auto inst = create_func_();
     inst->set_name(name());
     inst->set_config(config());

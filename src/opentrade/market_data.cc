@@ -47,12 +47,12 @@ void MarketDataManager::Add(MarketDataAdapter* adapter) {
   auto src = adapter->config("src");
   if (!src.empty()) {
     LOG_INFO("Started md " << adapter->name() << " src=" << src);
-    srcs_.insert(src);
   }
   if (src.size() > 4) {
     LOG_FATAL("Invalid market data src: " << src << ", maximum length is 4");
   }
   auto src_id = DataSrc::GetId(src.c_str());
+  srcs_.emplace(src_id, srcs_.size());
   auto markets = adapter->config("markets");
   if (markets.empty()) markets = adapter->config("exchanges");
   adapter->md_ = &md_of_src_[src_id];

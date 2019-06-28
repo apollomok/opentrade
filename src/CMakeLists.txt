@@ -14,6 +14,11 @@ if(BACKTEST)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBACKTEST")
 endif()
 
+if(UNIT_TEST)
+  message(STATUS "Building unit_test")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNIT_TEST")
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 find_path(QUICKFIX_INCLUDE_PATH quickfix/FixFields.h)
@@ -69,9 +74,23 @@ link_libraries(${PYTHON_LIBRARIES}) # Deprecated but so convenient!
 find_package(Boost REQUIRED COMPONENTS system program_options date_time filesystem iostreams python3) 
 include_directories({Boost_INCLUDE_DIRS})
 
+set(EXE_DEPS 
+  ${PROJECT_NAME}_static
+  ${LOG4CXX_LIBRARY_PATH}
+  ${QUICKFIX_LIBRARY_PATH}
+  ${SOCI_CORE_LIBRARY_PATH}
+  ${SOCI_POSTGRES_LIBRARY_PATH}
+  ${TBB_LIBRARY_PATH}
+  ${Boost_LIBRARIES}
+  dl pthread crypto
+)
+
 add_subdirectory(opentrade)
 add_subdirectory(algos)
 if(NOT BACKTEST)
 add_subdirectory(adapters)
 add_subdirectory(fix)
+endif()
+if(UNIT_TEST)
+add_subdirectory(unit_test)
 endif()

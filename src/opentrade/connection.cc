@@ -1187,8 +1187,8 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     for (auto& pair : AccountManager::Instance().broker_accounts_) {
       Send(json{"broker_account", pair.first, pair.second->name});
     }
-    for (auto& src : MarketDataManager::Instance().srcs()) {
-      Send(json{"src", src});
+    for (auto& pair : MarketDataManager::Instance().srcs()) {
+      Send(json{"src", DataSrc::GetStr(pair.first)});
     }
     for (auto& pair : AlgoManager::Instance().adapters()) {
       if (pair.first.at(0) == '_') continue;

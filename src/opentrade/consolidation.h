@@ -64,12 +64,9 @@ struct ConsolidationBook : public Indicator {
 
 struct ConsolidationHandler : public IndicatorHandler {
   typedef ConsolidationBook Ind;
-  ConsolidationHandler() {
-    set_name(kConsolidationBook);
-    create_func_ = []() { return new ConsolidationHandler; };
-  }
+  ConsolidationHandler() { set_name(kConsolidationBook); }
   Indicator::IdType id() const override { return Ind::kId; }
-  void OnStart() noexcept override;
+  void Start() noexcept override;
   bool Subscribe(Instrument* inst, bool listen) noexcept override;
   void OnMarketQuote(const Instrument& inst, const MarketData& md,
                      const MarketData& md0) noexcept override;

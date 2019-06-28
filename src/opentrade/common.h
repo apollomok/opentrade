@@ -57,13 +57,25 @@ struct ParamsBase {
 template <typename V>
 class Singleton {
  public:
-  static V& Instance() {
-    static V kInstance;
-    return kInstance;
+  static V& Instance() { return *kInstance; }
+
+#ifdef UNIT_TEST
+  template <typename T = V>
+  static V& Reset() {
+    delete kInstance;
+    kInstance = new T;
+    return *kInstance;
   }
+#endif
+
+  Singleton(const Singleton&) = delete;
+  Singleton& operator=(const Singleton&) = delete;
 
  protected:
   Singleton() {}
+
+ private:
+  static inline V* kInstance = new V;
 };
 
 inline TaskPool kSharedTaskPool;
