@@ -24,9 +24,8 @@ struct PriceLevel {
   explicit PriceLevel(double price) : price(price) {}
   double price;
   struct Quote {
-    Quote(int64_t size, const Instrument* inst, PriceLevel* parent)
-        : size(size), inst(inst), parent(parent) {}
-    int64_t size;
+    Quote(const Instrument* inst, PriceLevel* parent)
+        : inst(inst), parent(parent) {}
     const Instrument* inst;
     PriceLevel* parent;
   };
@@ -36,8 +35,8 @@ struct PriceLevel {
       self;  // for erase myself from levels efficiently
   bool operator<(const PriceLevel& rhs) const { return price < rhs.price; }
   bool operator>(const PriceLevel& rhs) const { return price > rhs.price; }
-  auto Insert(int64_t size, const Instrument* inst) {
-    quotes.emplace_front(size, inst, this);
+  auto Insert(const Instrument* inst) {
+    quotes.emplace_front(inst, this);
     return quotes.begin();
   }
 };
@@ -50,16 +49,18 @@ static_assert(!BidLevels::IsAsk(), "BidLevels cmp function wrong");
 struct ConsolidationBook : public Indicator {
   static const Indicator::IdType kId = kConsolidation;
   typedef std::unique_lock<std::mutex> Lock;
-  std::vector<PriceLevel::Quotes::iterator> quotes;
+  std::vector<PriceLevel::Quotes::iterator> ask_quotes;
+  std::vector<PriceLevel::Quotes::iterator> bid_quotes;
   AskLevels asks;
   BidLevels bids;
   std::mutex m;
+  void Reset();
   template <typename A, typename B>
-  void Update(double price, int64_t size, const Instrument* inst, A* a, B* b);
+  void Update(double price, const Instrument* inst, A* a, B* b);
   template <bool reset, typename A>
   void Erase(PriceLevel::Quotes::const_iterator it, A* a);
   template <typename A, typename B>
-  void Insert(double price, int64_t size, const Instrument* inst, A* a, B* b);
+  void Insert(double price, const Instrument* inst, A* a, B* b);
 };
 
 struct ConsolidationHandler : public IndicatorHandler {

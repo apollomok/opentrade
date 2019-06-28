@@ -62,13 +62,7 @@ class Algo : public Adapter {
   typedef std::unordered_map<std::string, ParamDef::Value> ParamMap;
   typedef std::shared_ptr<ParamMap> ParamMapPtr;
   void SetTimeout(std::function<void()> func, double seconds);
-#ifdef UNIT_TEST
-  virtual
-#endif
-      void
-      Async(std::function<void()> func) {
-    SetTimeout(func, 0);
-  }
+  void Async(std::function<void()> func) { SetTimeout(func, 0); }
   static bool Cancel(const Order& ord);
 
   virtual std::string OnStart(const ParamMap& params) noexcept { return {}; }
@@ -269,14 +263,24 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   AlgoRunner* runners_ = nullptr;
   std::vector<std::thread> threads_;
 #ifdef BACKTEST
-  struct StrandMock {
+  struct Strand {
     void post(std::function<void()> func) { kTimers.emplace(0, func); }
   };
-  StrandMock* strands_ = nullptr;
 #else
-  std::vector<std::unique_ptr<boost::asio::io_service::work>> works_;
-  boost::asio::io_service* strands_ = nullptr;
+  struct Strand {
+#ifdef UNIT_TEST
+    virtual void
+#else
+    void
 #endif
+    post(std::function<void()> func) {
+      io->post(func);
+    }
+    boost::asio::io_service* io;
+  };
+  std::vector<std::unique_ptr<boost::asio::io_service::work>> works_;
+#endif
+  Strand* strands_ = nullptr;
   std::ofstream of_;
   uint32_t seq_counter_ = 0;
   friend class AlgoRunner;

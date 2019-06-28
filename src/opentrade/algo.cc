@@ -32,13 +32,14 @@ inline void AlgoRunner::operator()() {
       key = *it;
       dirties_.erase(it);
     }
-    auto md = MarketDataManager::Instance().GetLite(key.second, key.first);
     auto& pair = instruments_[key];
+    auto& insts = pair.second;
+    auto it = insts.begin();
+    if (it == insts.end()) continue;
+    auto md = (*it)->md();
     auto& md0 = pair.first;
     bool trade_update = md0.trade != md.trade;
     bool quote_update = md0.quote() != md.quote();
-    auto& insts = pair.second;
-    auto it = insts.begin();
     while (it != insts.end()) {
       auto& algo = (*it)->algo();
       if (!algo.is_active() || !(*it)->listen()) {
@@ -170,11 +171,12 @@ void AlgoManager::Run(int nthreads) {
   runners_ = new AlgoRunner[nthreads]{};
   LOG_INFO("algo_threads=" << nthreads);
   threads_.reserve(nthreads);
-  strands_ = new boost::asio::io_service[nthreads]{};
+  strands_ = new Strand[nthreads]{};
   works_.resize(nthreads);
   for (auto i = 0; i < nthreads; ++i) {
-    works_[i].reset(new boost::asio::io_service::work(strands_[i]));
-    threads_.emplace_back([this, i]() { this->strands_[i].run(); });
+    strands_[i].io = new boost::asio::io_service;
+    works_[i].reset(new boost::asio::io_service::work(*strands_[i].io));
+    threads_.emplace_back([this, i]() { strands_[i].io->run(); });
     runners_[i].tid_ = threads_[i].get_id();
   }
   StartPermanents();
@@ -427,7 +429,7 @@ inline void AlgoManager::SetTimeout(const Algo& algo,
     return;
   }
   auto t = new boost::asio::deadline_timer(
-      strands_[algo.id() % threads_.size()],
+      *strands_[algo.id() % threads_.size()].io,
       boost::posix_time::microseconds((int64_t)(seconds * kMicroInSec)));
   t->async_wait([&algo, func, t](auto) {
     if (algo.is_active()) func();

@@ -59,7 +59,7 @@ class Python : public Algo {
   ParamDefs def_;
   bp::object obj_;
   std::string test_token_;
-};  // namespace opentrade
+};
 
 void InitalizePy();
 void PrintPyError(const char*, bool fatal = false);

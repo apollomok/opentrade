@@ -63,7 +63,7 @@ class Singleton {
   template <typename T = V>
   static V& Reset() {
     delete kInstance;
-    kInstance = new T;
+    kInstance = new T{};
     return *kInstance;
   }
 #endif
@@ -75,7 +75,7 @@ class Singleton {
   Singleton() {}
 
  private:
-  static inline V* kInstance = new V;
+  static inline V* kInstance = new V{};
 };
 
 inline TaskPool kSharedTaskPool;

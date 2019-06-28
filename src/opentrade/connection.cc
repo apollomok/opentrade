@@ -328,7 +328,7 @@ static inline bool JsonifyScala(const T& v, json* j) {
     return false;
   }
   return true;
-}  // namespace opentrade
+}
 
 static inline void Jsonify(const ParamDef::Value& v, json* j) {
   if (JsonifyScala(v, j)) return;
