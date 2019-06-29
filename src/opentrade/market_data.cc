@@ -9,6 +9,7 @@ namespace opentrade {
 inline MarketDataAdapter* MarketDataManager::GetRoute(const Security& sec,
                                                       DataSrc::IdType src) {
   auto it = routes_.find(std::make_pair(src, sec.exchange->id));
+  if (it == routes_.end() && src) it = routes_.find(std::make_pair(src, 0));
   return it == routes_.end() ? default_
                              : it->second[sec.id % it->second.size()];
 }
@@ -68,6 +69,7 @@ void MarketDataManager::Add(MarketDataAdapter* adapter) {
     }
     routes_[std::make_pair(src_id, e->id)].push_back(adapter);
   }
+  routes_[std::make_pair(src_id, 0)].push_back(adapter);
 }
 
 void MarketDataAdapter::Update(Security::IdType id, const MarketData::Quote& q,
