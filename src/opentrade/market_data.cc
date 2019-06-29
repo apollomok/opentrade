@@ -69,7 +69,7 @@ void MarketDataManager::Add(MarketDataAdapter* adapter) {
     }
     routes_[std::make_pair(src_id, e->id)].push_back(adapter);
   }
-  routes_[std::make_pair(src_id, 0)].push_back(adapter);
+  if (markets.empty()) routes_[std::make_pair(src_id, 0)].push_back(adapter);
 }
 
 void MarketDataAdapter::Update(Security::IdType id, const MarketData::Quote& q,
