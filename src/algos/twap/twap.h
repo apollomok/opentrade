@@ -25,13 +25,13 @@ class TWAP : public Algo {
   void OnConfirmation(const Confirmation& cm) noexcept override;
   const ParamDefs& GetParamDefs() noexcept override;
   void Timer();
+  virtual Instrument* Subscribe();
+  virtual const MarketData& md() { return inst_->md(); }
 
- private:
+ protected:
   Instrument* inst_ = nullptr;
-  const SubAccount* acc_ = nullptr;
-  double qty_ = 0;
+  SecurityTuple st_;
   double price_ = 0;
-  OrderSide side_ = kBuy;
   time_t begin_time_ = 0;
   time_t end_time_ = 0;
   double min_size_ = 0;

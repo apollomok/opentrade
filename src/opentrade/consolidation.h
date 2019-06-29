@@ -53,7 +53,7 @@ struct ConsolidationBook : public Indicator {
   std::vector<PriceLevel::Quotes::iterator> bid_quotes;
   AskLevels asks;
   BidLevels bids;
-  std::mutex m;
+  mutable std::mutex m;
   void Reset();
   template <typename A, typename B>
   void Update(double price, const Instrument* inst, A* a, B* b);
