@@ -1,11 +1,11 @@
-#include "opentrade/consolidation.h"
 #include "../twap/twap.h"
+#include "opentrade/consolidation.h"
 
 namespace opentrade {
 
 struct SmartRoute : public TWAP {
   Instrument* Subscribe() override {
-    st_.src = DataSrc("CONS");
+    st_.src = kConsolidationSrc;
     auto inst = TWAP::Subscribe();
     inst->Subscribe(kConsolidation);
     return inst;

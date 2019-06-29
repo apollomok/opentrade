@@ -68,7 +68,7 @@ TEST_CASE("ConsolidationHandler", "[ConsolidationHandler]") {
 
   Security sec;
   sec.exchange = new Exchange;
-  auto inst_cons = handler.CreateInstrument(sec, DataSrc("CONS"));
+  auto inst_cons = handler.CreateInstrument(sec, kConsolidationSrc);
   auto inst_a = handler.CreateInstrument(sec, DataSrc("A"), inst_cons);
   auto inst_b = handler.CreateInstrument(sec, DataSrc("B"), inst_cons);
   auto inst_c = handler.CreateInstrument(sec, DataSrc("C"), inst_cons);
