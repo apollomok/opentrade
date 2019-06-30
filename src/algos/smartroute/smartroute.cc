@@ -22,7 +22,7 @@ struct SmartRoute : public TWAP {
       if (!book->asks.empty()) p = &*book->asks.begin();
     }
     if (p) {
-      // to-do: logic here to choose destionation
+      // to-do: logic here to choose destination
       auto dest = p->quotes.begin()->inst;
       st_.acc = AccountManager::Instance().GetSubAccount(dest->src().str());
       return dest->md();
