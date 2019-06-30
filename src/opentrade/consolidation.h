@@ -68,7 +68,7 @@ struct ConsolidationHandler : public IndicatorHandler {
   ConsolidationHandler() { set_name(kConsolidationBook); }
   Indicator::IdType id() const override { return Ind::kId; }
   void Start() noexcept override;
-  bool Subscribe(Instrument* inst, bool listen) noexcept override;
+  void Subscribe(Instrument* inst, bool listen) noexcept override;
   void OnMarketQuote(const Instrument& inst, const MarketData& md,
                      const MarketData& md0) noexcept override;
 };

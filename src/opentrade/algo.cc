@@ -482,17 +482,15 @@ bool Algo::Cancel(const Order& ord) {
   return ExchangeConnectivityManager::Instance().Cancel(ord);
 }
 
-bool Instrument::Subscribe(Indicator::IdType id, bool listen) {
+void Instrument::Subscribe(Indicator::IdType id, bool listen) {
   auto ih = IndicatorHandlerManager::Instance().Get(id);
-  if (ih) return ih->Subscribe(this, listen);
-  return false;
+  if (ih) ih->Subscribe(this, listen);
 }
 
-bool Instrument::SubscribeByName(const std::string& name, bool listen) {
+void Instrument::SubscribeByName(const std::string& name, bool listen) {
   auto& m = IndicatorHandlerManager::Instance().name2id();
   auto it = m.find(name);
-  if (it == m.end()) return false;
-  return Subscribe(it->second, listen);
+  if (it != m.end()) Subscribe(it->second, listen);
 }
 
 }  // namespace opentrade

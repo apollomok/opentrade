@@ -48,7 +48,7 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
 
   Indicator::IdType id() const override { return ind_id; }
 
-  bool Subscribe(Instrument* inst, bool listen) noexcept override {
+  void Subscribe(Instrument* inst, bool listen) noexcept override {
     Async([=]() {
       auto bar = const_cast<Ind*>(inst->Get<Ind>());
       if (!bar) {
@@ -59,7 +59,6 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
       }
       if (listen) bar->AddListener(inst);
     });
-    return true;
   }
 
   void OnTrade(Security::IdType id, const MarketData* md, time_t tm, double px,

@@ -81,7 +81,7 @@ void ConsolidationHandler::Start() noexcept {
   MarketDataManager::Instance().Add(new ConsolidationFeed);
 }
 
-bool ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
+void ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
   assert(kConsolidationSrc == inst->src());
   Async([=]() {
     auto book = const_cast<Ind*>(inst->Get<Ind>());
@@ -99,7 +99,6 @@ bool ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
     }
     if (listen) book->AddListener(inst);
   });
-  return true;
 }
 
 void ConsolidationHandler::OnMarketQuote(const Instrument& inst,
