@@ -231,7 +231,7 @@ void Indicator::Publish(IdType id) {
       it = subs_.erase(it);
       continue;
     }
-    algo.SetTimeout([&algo, id, inst]() { algo.OnIndicator(id, *inst); }, 0);
+    algo.Async([&algo, id, inst]() { algo.OnIndicator(id, *inst); });
     ++it;
   }
 }

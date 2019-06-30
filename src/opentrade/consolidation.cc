@@ -82,6 +82,7 @@ void ConsolidationHandler::Start() noexcept {
 }
 
 void ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
+  assert(listen == false);  // listen not implmented yet
   assert(kConsolidationSrc == inst->src());
   Async([=]() {
     auto book = const_cast<Ind*>(inst->Get<Ind>());

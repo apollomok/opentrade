@@ -122,23 +122,43 @@ TEST_CASE("ConsolidationHandler", "[ConsolidationHandler]") {
     handler.OnMarketQuote(*inst_b, md, md0);
     handler.OnMarketQuote(*inst_c, md, md0);
     handler.OnMarketQuote(*inst_d, md, md0);
-    REQUIRE((asks.size() == 1 && asks.begin()->quotes.size() == 4 &&
-             asks.begin()->price == ask && bids.size() == 1 &&
-             bids.begin()->quotes.size() == 4 && bids.begin()->price == bid));
+    REQUIRE((Stringify(book) == "1|1DCBA    1|0.5DCBA"));
     auto md0_a = md, md0_b = md, md0_c = md, md0_d = md;
-    ask = 1.1;
-    bid = 0.4;
+    ask = 1.1, bid = 0.4;
     handler.OnMarketQuote(*inst_a, md, md0_a);
-    REQUIRE((asks.size() == 2 && asks.begin()->quotes.size() == 3 &&
-             asks.begin()->price == md0_a.quote().ask_price &&
-             bids.size() == 2 && bids.begin()->quotes.size() == 3 &&
-             bids.begin()->price == md0_a.quote().bid_price));
+    REQUIRE((Stringify(book) == "2|1DCB|1.1A    2|0.5DCB|0.4A"));
     md0_a = md;
-    ask = 0.9;
-    bid = 0.3;
+    ask = 0.9, bid = 0.3;
     handler.OnMarketQuote(*inst_b, md, md0_b);
     md0_b = md;
     REQUIRE((Stringify(book) == "3|0.9B|1DC|1.1A    3|0.5DC|0.4A|0.3B"));
+    md = md0_c, ask = 0;
+    handler.OnMarketQuote(*inst_c, md, md0_c);
+    md0_c = md;
+    md = md0_d, ask = 0;
+    handler.OnMarketQuote(*inst_d, md, md0_d);
+    md0_d = md;
+    REQUIRE((Stringify(book) == "2|0.9B|1.1A    3|0.5DC|0.4A|0.3B"));
+    md = md0_d, ask = 0.5;
+    handler.OnMarketQuote(*inst_d, md, md0_d);
+    md0_d = md;
+    REQUIRE((Stringify(book) == "3|0.5D|0.9B|1.1A    3|0.5DC|0.4A|0.3B"));
+    md = md0_d, ask = 0.4;
+    handler.OnMarketQuote(*inst_d, md, md0_d);
+    md0_d = md;
+    REQUIRE((Stringify(book) == "3|0.4D|0.9B|1.1A    2|0.4A|0.3B"));
+    md = md0_d, ask = 0.3;
+    handler.OnMarketQuote(*inst_d, md, md0_d);
+    md0_d = md;
+    REQUIRE((Stringify(book) == "3|0.3D|0.9B|1.1A    1|0.3B"));
+    md = md0_a, bid = 0.3;
+    handler.OnMarketQuote(*inst_a, md, md0_a);
+    md0_a = md;
+    REQUIRE((Stringify(book) == "3|0.3D|0.9B|1.1A    1|0.3AB"));
+    md = md0_a, bid = 1.2;
+    handler.OnMarketQuote(*inst_a, md, md0_a);
+    md0_a = md;
+    REQUIRE((Stringify(book) == "0    2|1.2A|0.3B"));
   }
 }
 
