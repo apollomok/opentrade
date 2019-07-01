@@ -53,6 +53,7 @@ endif()
 find_path(SOCI_INCLUDE_PATH soci/soci.h)
 find_library(SOCI_CORE_LIBRARY_PATH soci_core)
 find_library(SOCI_POSTGRES_LIBRARY_PATH soci_postgresql)
+find_library(SOCI_SQLITE3_LIBRARY_PATH soci_sqlite3)
 if(SOCI_INCLUDE_PATH AND SOCI_CORE_LIBRARY_PATH)
   message(STATUS "Found soci")
   include_directories(${SOCI_INCLUDE_PATH}/soci)
@@ -92,6 +93,7 @@ set(EXE_DEPS
   ${QUICKFIX_LIBRARY_PATH}
   ${SOCI_CORE_LIBRARY_PATH}
   ${SOCI_POSTGRES_LIBRARY_PATH}
+  ${SOCI_SQLITE3_LIBRARY_PATH}
   ${TBB_LIBRARY_PATH}
   ${Boost_LIBRARIES}
   dl pthread crypto

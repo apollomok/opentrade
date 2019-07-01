@@ -1,6 +1,8 @@
 #include "database.h"
 
 #include <postgresql/soci-postgresql.h>
+#include <sqlite3/soci-sqlite3.h>
+#include <boost/algorithm/string.hpp>
 
 #include "logger.h"
 #include "security.h"
@@ -32,7 +34,7 @@ class SqlLog : public std::ostream, std::streambuf {
 static const char create_tables_sql[] = R"(
   create sequence if not exists exchange_id_seq start with 100;
   create table if not exists exchange(
-    id int2 default nextval('exchange_id_seq') not null,
+    id int2 primary key default nextval('exchange_id_seq') not null,
     "name" varchar(50) not null,
     "mic" char(4),
     "country" char(2),
@@ -45,22 +47,21 @@ static const char create_tables_sql[] = R"(
     break_period varchar(32), -- e.g. 11:30-13:00
     half_day varchar(32), -- e.g. 11:30
     half_days varchar(5000), -- e.g. 20181001 20190101
-    tick_size_table varchar(5000),
-    primary key(id)
+    tick_size_table varchar(5000)
   );
   create unique index if not exists exchange_name_index on exchange("name");
-  do $$
-  begin
-  if not exists(
-    select 1 from exchange where id=0
-  ) then
+  --pg  do $$
+  --pg  begin
+  --pg  if not exists(
+  --pg    select 1 from exchange where id=0
+  --pg  ) then
     insert into exchange(id, "name") values(0, 'default');
-  end if;
-  end $$;
+  --pg  end if;
+  --pg  end $$;
 
   create sequence if not exists security_id_seq start with 10000;
   create table if not exists security(
-    id int4 default nextval('security_id_seq') not null,
+    id int4 primary key default nextval('security_id_seq') not null,
     symbol varchar(50) not null,
     local_symbol varchar(50),
     type varchar(12) not null,
@@ -87,40 +88,37 @@ static const char create_tables_sql[] = R"(
     strike_price float8,
     exchange_id int2 not null references exchange(id), -- on update cascade on delete cascade,
     underlying_id int4 references security(id), -- on update cascade on delete cascade,
-    params varchar(1000),
-    primary key(id)
+    params varchar(1000)
   );
   create unique index if not exists security_symbol_exchange_index on security(symbol, exchange_id);
 
   create sequence if not exists user_id_seq start with 100;
   create table if not exists "user"(
-    id int2 default nextval('user_id_seq') not null,
+    id int2 primary key default nextval('user_id_seq') not null,
     "name" varchar(50) not null,
     password varchar(50) not null,
     is_admin boolean,
     is_disabled boolean,
-    limits varchar(1000),
-    primary key(id)
+    limits varchar(1000)
   );
-  do $$
-  begin
-  if not exists(
-    select 1 from "user" where "name" = 'admin'
-  ) then
+  --pg  do $$
+  --pg  begin
+  --pg  if not exists(
+  --pg    select 1 from "user" where "name" = 'admin'
+  --pg  ) then
     insert into "user"(id, "name", password, is_admin)
     values(1, 'admin', 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3', true); -- passwd='test'
     insert into "user"("name", password)
     values('test', 'a94a8fe5ccb19ba61c4c0873d391e987982fbbd3'); -- passwd='test'
-  end if;
-  end $$;
+  --pg  end if;
+  --pg  end $$;
   create unique index if not exists user_name_index on "user"("name");
   
   create sequence if not exists sub_account_id_seq start with 100;
   create table if not exists sub_account(
-    id int2 default nextval('sub_account_id_seq') not null,
+    id int2 primary key default nextval('sub_account_id_seq') not null,
     "name" varchar(50) not null,
-    limits varchar(1000),
-    primary key(id)
+    limits varchar(1000)
   );
   create unique index if not exists sub_account_name_index on sub_account("name");
 
@@ -132,12 +130,11 @@ static const char create_tables_sql[] = R"(
 
   create sequence if not exists broker_account_id_seq start with 100;
   create table if not exists broker_account(
-    id int2 default nextval('broker_account_id_seq') not null,
+    id int2 primary key default nextval('broker_account_id_seq') not null,
     "name" varchar(50) not null,
     adapter varchar(50) not null,
     params varchar(1000),
-    limits varchar(1000),
-    primary key(id)
+    limits varchar(1000)
   );
   create unique index if not exists broker_account_name_index on broker_account("name");
 
@@ -151,7 +148,7 @@ static const char create_tables_sql[] = R"(
   create sequence if not exists position_id_seq start with 100;
   create table if not exists position(
     id bigserial,
-    user_id int2 references "user"(id), -- on update cascade on delete cascade,
+    user_id int2 primary key references "user"(id), -- on update cascade on delete cascade,
     sub_account_id int2 references sub_account(id), -- on update cascade on delete cascade,
     broker_account_id int2 references broker_account(id), -- on update cascade on delete cascade,
     security_id int2 references security(id), -- on update cascade on delete cascade,
@@ -160,8 +157,7 @@ static const char create_tables_sql[] = R"(
     cx_qty float8,
     avg_px float8 not null,
     realized_pnl float8 not null,
-    info json,
-    primary key(id)
+    info json
   );
   create index if not exists position__index_acc_sec_tm on position(sub_account_id, security_id, tm desc);
 )";
@@ -175,13 +171,39 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   static SqlLog log;
   LOG_INFO("Database pool_size=" << (int)pool_size);
   LOG_INFO("Connecting to database " << url);
+  if (url.find("sqlite") != std::string::npos) {
+    LOG_INFO("It is sqlite");
+    is_sqlite_ = true;
+  }
   for (auto i = 0u; i < pool_size; ++i) {
     auto& sql = pool_->at(i);
-    sql.open(soci::postgresql, url);
+    if (is_sqlite_)
+      sql.open(soci::sqlite3, url);
+    else
+      sql.open(soci::postgresql, url);
     sql.set_log_stream(&log);
   }
   LOG_INFO("Database connected");
-  if (create_tables) *Session() << create_tables_sql;
+  if (create_tables) {
+    std::string sql = create_tables_sql;
+    if (is_sqlite_) {
+      boost::replace_all(sql, "int2", "integer");
+      boost::replace_all(sql, "int4", "integer");
+      boost::replace_all(sql, "float8", "real");
+      boost::replace_all(sql, "boolean", "integer");
+      boost::replace_all(sql, "json", "text");
+      boost::replace_all(sql, "default nextval",
+                         "autoincrement, -- default nextval");
+      boost::replace_all(sql, "create sequence", "-- create sequence");
+      boost::replace_all(sql, "underlying_id integer references security",
+                         "underlying_id integer, -- references security");
+      boost::replace_all(sql, "true", "1");
+    } else {
+      boost::replace_all(sql, "--pg  ", "");
+    }
+    std::cout << sql << std::endl;
+    *Session() << sql;
+  }
 
   if (alter_tables) {
     auto sql = Session();

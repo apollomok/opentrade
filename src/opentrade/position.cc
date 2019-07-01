@@ -129,6 +129,13 @@ void PositionManager::Initialize() {
     where tm < :tm
     order by sub_account_id, security_id, tm desc
   )";
+  if (Database::is_sqlite()) {
+    query = R"(
+      select * from position where (sub_account_id, security_id, tm) in 
+        (select sub_account_id, security_id, max(tm) as tm from 
+          (select * from position where tm < :tm) as _ group by sub_account_id, security_id)
+    )";
+  }
   soci::rowset<soci::row> st = (sql->prepare << query, soci::use(tm));
   for (auto it = st.begin(); it != st.end(); ++it) {
     Position p{};

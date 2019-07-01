@@ -68,8 +68,11 @@ class Database {
       return default_value;
   }
 
+  static auto is_sqlite() { return is_sqlite_; }
+
  private:
   inline static soci::connection_pool* pool_ = nullptr;
+  inline static bool is_sqlite_;
 };
 
 }  // namespace opentrade
