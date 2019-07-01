@@ -198,11 +198,16 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
       boost::replace_all(sql, "underlying_id integer references security",
                          "underlying_id integer, -- references security");
       boost::replace_all(sql, "true", "1");
+      // somehow, (*Session() << sql) always fail, so we execute it with sqlite3
+      auto path = kStorePath / "tmp.sql";
+      std::ofstream of(path.string().c_str());
+      of << sql;
+      of.close();
+      system(("sqlite3 " + url + " < " + path.string()).c_str());
     } else {
       boost::replace_all(sql, "--pg  ", "");
+      *Session() << sql;
     }
-    std::cout << sql << std::endl;
-    *Session() << sql;
   }
 
   if (alter_tables) {

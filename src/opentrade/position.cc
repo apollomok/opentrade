@@ -249,11 +249,12 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           static double avg_px;
           static double realized_pnl;
           static std::string info;
+          static std::tm tm;
           static const char* cmd = R"(
             insert into position(user_id, sub_account_id, security_id, 
             broker_account_id, qty, cx_qty, avg_px, realized_pnl, tm, info) 
             values(:user_id, :sub_account_id, :security_id, :broker_account_id,
-            :qty, :cx_qty, :avg_px, :realized_pnl, now() at time zone 'utc', :info)
+            :qty, :cx_qty, :avg_px, :realized_pnl, :tm, :info)
         )";
           static soci::statement st =
               (this->sql_->prepare << cmd, soci::use(user_id),
@@ -290,6 +291,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
             for (auto& pair : *cm->misc) j[pair.first] = pair.second;
           }
           info = j.dump();
+          tm = pt::to_tm(pt::second_clock::universal_time());
           st.execute(true);
         } catch (const soci::postgresql_soci_error& e) {
           LOG_FATAL("Trying update position to database: \n"
