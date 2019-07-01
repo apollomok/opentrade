@@ -249,7 +249,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           static double avg_px;
           static double realized_pnl;
           static std::string info;
-          static std::tm tm;
+          static std::string tm;
           static const char* cmd = R"(
             insert into position(user_id, sub_account_id, security_id, 
             broker_account_id, qty, cx_qty, avg_px, realized_pnl, tm, info) 
@@ -260,7 +260,8 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
               (this->sql_->prepare << cmd, soci::use(user_id),
                soci::use(sub_account_id), soci::use(security_id),
                soci::use(broker_account_id), soci::use(qty), soci::use(cx_qty),
-               soci::use(avg_px), soci::use(realized_pnl), soci::use(info));
+               soci::use(avg_px), soci::use(realized_pnl), soci::use(tm),
+               soci::use(info));
           auto ord = cm->order;
           user_id = ord->user->id;
           sub_account_id = ord->sub_account->id;
@@ -291,7 +292,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
             for (auto& pair : *cm->misc) j[pair.first] = pair.second;
           }
           info = j.dump();
-          tm = pt::to_tm(pt::second_clock::universal_time());
+          tm = GetNowStr<false>();
           st.execute(true);
         } catch (const soci::postgresql_soci_error& e) {
           LOG_FATAL("Trying update position to database: \n"

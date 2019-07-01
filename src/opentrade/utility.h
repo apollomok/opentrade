@@ -95,15 +95,19 @@ static inline int64_t NowInMicro(int tm_gmtoff = 0) {
   return NowUtcInMicro() + tm_gmtoff * kMicroInSec;
 }
 
+template <bool localtime = true>
 static inline const char* GetNowStr() {
   struct timeval tp;
   GetTimeOfDay(&tp);
   struct tm tm_info;
-  localtime_r(&tp.tv_sec, &tm_info);
-  char buf[256];
-  strftime(buf, 26, "%Y-%m-%d %H:%M:%S", &tm_info);
+  if constexpr (localtime) {
+    localtime_r(&tp.tv_sec, &tm_info);
+  } else {
+    gmtime_r(&tp.tv_sec, &tm_info);
+  }
   static thread_local char out[256];
-  snprintf(out, sizeof(out), "%s.%06ld", buf, tp.tv_usec);
+  auto n = strftime(out, sizeof(out), "%Y-%m-%d %H:%M:%S", &tm_info);
+  sprintf(out + n, ".%06ld", tp.tv_usec);
   return out;
 }
 

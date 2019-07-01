@@ -147,8 +147,8 @@ static const char create_tables_sql[] = R"(
 
   create sequence if not exists position_id_seq start with 100;
   create table if not exists position(
-    id bigserial,
-    user_id int2 primary key references "user"(id), -- on update cascade on delete cascade,
+    id bigserial primary key not null,
+    user_id int2 references "user"(id), -- on update cascade on delete cascade,
     sub_account_id int2 references sub_account(id), -- on update cascade on delete cascade,
     broker_account_id int2 references broker_account(id), -- on update cascade on delete cascade,
     security_id int2 references security(id), -- on update cascade on delete cascade,
@@ -184,6 +184,13 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
     sql.set_log_stream(&log);
   }
   LOG_INFO("Database connected");
+  if (!create_tables) {
+    try {
+      *Session() << "select * from exchange limit 1";
+    } catch (const soci::soci_error& e) {
+      create_tables = true;
+    }
+  }
   if (create_tables) {
     std::string sql = create_tables_sql;
     if (is_sqlite_) {
@@ -194,16 +201,21 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
       boost::replace_all(sql, "json", "text");
       boost::replace_all(sql, "default nextval",
                          "autoincrement, -- default nextval");
+      boost::replace_all(sql, "bigserial", "integer primary key autoincrement, --");
       boost::replace_all(sql, "create sequence", "-- create sequence");
       boost::replace_all(sql, "underlying_id integer references security",
                          "underlying_id integer, -- references security");
       boost::replace_all(sql, "true", "1");
+      boost::replace_all(sql, "timestamp", "text");
       // somehow, (*Session() << sql) always fail, so we execute it with sqlite3
       auto path = kStorePath / "tmp.sql";
       std::ofstream of(path.string().c_str());
       of << sql;
       of.close();
-      system(("sqlite3 " + url + " < " + path.string()).c_str());
+      auto cmd = "sqlite3 " + url + " < " + path.string();
+      if (-1 == system(cmd.c_str())) {
+        LOG_FATAL("Failed to run " << cmd);
+      }
     } else {
       boost::replace_all(sql, "--pg  ", "");
       *Session() << sql;
