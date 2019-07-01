@@ -201,7 +201,8 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
       boost::replace_all(sql, "json", "text");
       boost::replace_all(sql, "default nextval",
                          "autoincrement, -- default nextval");
-      boost::replace_all(sql, "bigserial", "integer primary key autoincrement, --");
+      boost::replace_all(sql, "bigserial",
+                         "integer primary key autoincrement, --");
       boost::replace_all(sql, "create sequence", "-- create sequence");
       boost::replace_all(sql, "underlying_id integer references security",
                          "underlying_id integer, -- references security");

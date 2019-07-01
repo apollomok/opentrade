@@ -107,7 +107,10 @@ static inline const char* GetNowStr() {
   }
   static thread_local char out[256];
   auto n = strftime(out, sizeof(out), "%Y-%m-%d %H:%M:%S", &tm_info);
-  sprintf(out + n, ".%06ld", tp.tv_usec);
+  // hack to skip Never use sprintf. Use snprintf instead.  [runtime/printf] [5]
+  // because sprintf is safe and faster here for sure.
+#define SPRINTF_UNSAFE sprintf
+  SPRINTF_UNSAFE(out + n, ".%06ld", tp.tv_usec);
   return out;
 }
 

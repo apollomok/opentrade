@@ -5,7 +5,6 @@
 #include "opentrade/utility.h"
 
 static inline std::string FacetNow() {
-  using namespace boost::posix_time;
   static std::locale loc(std::cout.getloc(), new boost::posix_time::time_facet(
                                                  "%Y-%m-%d %H:%M:%S.%f"));
 

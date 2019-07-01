@@ -268,14 +268,14 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   };
 #else
   struct Strand {
+    // clang-format off
 #ifdef UNIT_TEST
-    virtual void
-#else
-    void
+    virtual
 #endif
-    post(std::function<void()> func) {
+    void post(std::function<void()> func) {
       io->post(func);
     }
+    // clang-format on
     boost::asio::io_service* io;
   };
   std::vector<std::unique_ptr<boost::asio::io_service::work>> works_;
