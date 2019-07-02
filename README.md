@@ -78,7 +78,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    wget https://github.com/opentradesolutions/data/raw/master/test.sqlite3
    ```
 
-   * Or PostgreSQL
+   * **Or** PostgreSQL
    ```bash
    sudo apt remove --purge postgres*
    sudo apt autoremove
