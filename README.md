@@ -61,9 +61,12 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
     libboost-python-dev \
     libsoci-dev \
     libpq-dev \
+    sqlite3 \
+    libsqlite3-dev \
     libquickfix-dev \
     libtbb-dev \
     liblog4cxx-dev
+
   ```
   * Build
   ```bash
