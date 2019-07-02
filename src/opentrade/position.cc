@@ -152,9 +152,15 @@ void PositionManager::Initialize() {
     bod.avg_px = p.avg_px;
     bod.realized_pnl = p.realized_pnl;
     bod.broker_account_id = broker_account_id;
-    tm = Database::GetValue(*it, i++, tm);
-    static const pt::ptime kEpoch(boost::gregorian::date(1970, 1, 1));
-    bod.tm = (pt::time_from_string(tm) - kEpoch).total_seconds();
+    if (Database::is_sqlite()) {
+      tm = Database::GetValue(*it, i++, tm);
+      static const pt::ptime kEpoch(boost::gregorian::date(1970, 1, 1));
+      bod.tm = (pt::time_from_string(tm) - kEpoch).total_seconds();
+    } else {
+      std::tm std_tm;
+      std_tm = Database::GetValue(*it, i++, std_tm);
+      bod.tm = mktime(&std_tm);
+    }
     self.bods_.emplace(std::make_pair(sub_account_id, security_id), bod);
     self.sub_positions_.emplace(std::make_pair(sub_account_id, security_id), p);
     auto& p2 =

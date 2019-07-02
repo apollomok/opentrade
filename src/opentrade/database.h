@@ -60,7 +60,8 @@ class Database {
   template <typename T>
   static T GetValue(soci::row const& row, int index, T default_value) {
     if (row.get_indicator(index) != soci::i_null) {
-      if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+      if constexpr (std::is_same_v<std::decay_t<T>, std::string> ||
+                    std::is_same_v<std::decay_t<T>, std::tm>) {
         return Get<T>(row, index);
       } else {
         // for sqlite3, because underlying storing data type is not
