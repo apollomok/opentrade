@@ -27,7 +27,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 * Order Aggregation
 * Customized indicator extension
 * **Smart Route and FX aggregation**
-* Support both Postgres and Sqlite3
+* Support both PostgreSQL and Sqlite3
 
 ---
 
@@ -73,6 +73,12 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
   ```
   
  * **Setup database**
+   * Sqlite3
+   ```bash
+   wget https://github.com/opentradesolutions/data/raw/master/test.sqlite3
+   ```
+
+   * Or PostgreSQL
    ```bash
    sudo apt remove --purge postgres*
    sudo apt autoremove
@@ -98,6 +104,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    ```
    * Run
    ```Bash
+   # please modify opentrade.conf to use postgres if setup database with PostgreSQL
    cp opentrade.conf-example opentrade.conf
    ./opentrade
    ```
