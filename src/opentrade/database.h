@@ -2,6 +2,7 @@
 #define OPENTRADE_DATABASE_H_
 
 #include <soci.h>
+#include <boost/lexical_cast.hpp>
 #include <boost/type_index.hpp>
 #include <cstring>
 #include <memory>
@@ -18,46 +19,60 @@ class Database {
                          bool create_tables, bool alter_tables);
   static auto Session() { return std::make_unique<soci::session>(*pool_); }
 
-  template <typename T>
+  template <typename T, bool warn = true>
   static T Get(soci::row const& row, int index) {
-    try {
+    if constexpr (!warn) {
       return row.get<T>(index);
-    } catch (const std::bad_cast& e) {
-      auto type = "unknown";
-      switch (row.get_properties(index).get_data_type()) {
-        case soci::dt_string:
-          type = "soci::dt_string";
-          break;
-        case soci::dt_date:
-          type = "soci::dt_date";
-          break;
-        case soci::dt_double:
-          type = "soci::dt_double";
-          break;
-        case soci::dt_integer:
-          type = "soci::dt_integer";
-          break;
-        case soci::dt_long_long:
-          type = "soci::dt_long_long";
-          break;
-        case soci::dt_unsigned_long_long:
-          type = "soci::dt_unsigned_long_long";
-          break;
+    } else {
+      try {
+        return row.get<T>(index);
+      } catch (const std::bad_cast& e) {
+        auto type = "unknown";
+        switch (row.get_properties(index).get_data_type()) {
+          case soci::dt_string:
+            type = "soci::dt_string";
+            break;
+          case soci::dt_date:
+            type = "soci::dt_date";
+            break;
+          case soci::dt_double:
+            type = "soci::dt_double";
+            break;
+          case soci::dt_integer:
+            type = "soci::dt_integer";
+            break;
+          case soci::dt_long_long:
+            type = "soci::dt_long_long";
+            break;
+          case soci::dt_unsigned_long_long:
+            type = "soci::dt_unsigned_long_long";
+            break;
+        }
+        LOG_ERROR("Failed to cast '"
+                  << row.get_properties(index).get_name() << "', expected '"
+                  << type << "' compatible, but you set '"
+                  << boost::typeindex::type_id<T>().pretty_name() << "'");
+        throw e;
       }
-      LOG_ERROR("Failed to cast '"
-                << row.get_properties(index).get_name() << "', expected '"
-                << type << "' compatible, but you set '"
-                << boost::typeindex::type_id<T>().pretty_name() << "'");
-      throw e;
     }
   }
 
   template <typename T>
   static T GetValue(soci::row const& row, int index, T default_value) {
-    if (row.get_indicator(index) != soci::i_null)
-      return Get<T>(row, index);
-    else
-      return default_value;
+    if (row.get_indicator(index) != soci::i_null) {
+      if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+        return Get<T>(row, index);
+      } else {
+        // for sqlite3, because underlying storing data type is not
+        // deterministic
+        try {
+          return Get<T, false>(row, index);
+        } catch (const std::bad_cast&) {
+          return boost::lexical_cast<T>(Get<std::string>(row, index));
+        }
+      }
+    }
+    return default_value;
   }
 
   static const char* GetValue(soci::row const& row, int index,

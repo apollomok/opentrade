@@ -98,27 +98,23 @@ void PositionManager::Initialize() {
   auto& self = Instance();
   auto sql = Database::Session();
 
-  auto tm = pt::to_tm(pt::second_clock::universal_time());
   auto path = kStorePath / "session";
   std::ifstream ifs(path.c_str());
   char buf[256] = {0};
   if (ifs.good()) {
     ifs.read(buf, sizeof(buf) - 1);
-    auto ptime = pt::time_from_string(buf);
-    tm = pt::to_tm(ptime);
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm);
-    self.session_ = buf;
   } else {
+    strncpy(buf, GetNowStr<false>(), sizeof(buf));
     std::ofstream ofs(path.c_str(), std::ofstream::trunc);
     if (!ofs.good()) {
       LOG_FATAL("failed to write file '" << path << "' : " << strerror(errno));
     }
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &tm);
-    self.session_ = buf;
     ofs.write(buf, strlen(buf));
     LOG_INFO("Created new session");
   }
-  LOG_INFO("Session time: " << buf << " UTC");
+  self.session_ = buf;
+  std::string tm = buf;
+  LOG_INFO("Session time: " << tm << " UTC");
   LOG_INFO("Loading BOD from database");
 
   auto query = R"(
@@ -131,9 +127,10 @@ void PositionManager::Initialize() {
   )";
   if (Database::is_sqlite()) {
     query = R"(
-      select * from position where (sub_account_id, security_id, tm) in 
+      select sub_account_id, broker_account_id, security_id, qty, cx_qty, avg_px, realized_pnl, tm
+      from position where (sub_account_id, security_id, tm) in 
         (select sub_account_id, security_id, max(tm) as tm from 
-          (select * from position where tm < :tm) as _ group by sub_account_id, security_id)
+          (select sub_account_id, security_id, tm from position where tm < :tm) as _ group by sub_account_id, security_id)
     )";
   }
   soci::rowset<soci::row> st = (sql->prepare << query, soci::use(tm));
@@ -156,7 +153,8 @@ void PositionManager::Initialize() {
     bod.realized_pnl = p.realized_pnl;
     bod.broker_account_id = broker_account_id;
     tm = Database::GetValue(*it, i++, tm);
-    bod.tm = mktime(&tm);
+    static const pt::ptime kEpoch(boost::gregorian::date(1970, 1, 1));
+    bod.tm = (pt::time_from_string(tm) - kEpoch).total_seconds();
     self.bods_.emplace(std::make_pair(sub_account_id, security_id), bod);
     self.sub_positions_.emplace(std::make_pair(sub_account_id, security_id), p);
     auto& p2 =

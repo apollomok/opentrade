@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "algo.h"
+#include "consolidation.h"
 #include "database.h"
 #include "exchange_connectivity.h"
 #include "indicator_handler.h"
@@ -1188,6 +1189,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
       Send(json{"broker_account", pair.first, pair.second->name});
     }
     for (auto& pair : MarketDataManager::Instance().srcs()) {
+      if (pair.first == kConsolidationSrc) continue;
       Send(json{"src", DataSrc::GetStr(pair.first)});
     }
     for (auto& pair : AlgoManager::Instance().adapters()) {
