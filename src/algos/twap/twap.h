@@ -27,6 +27,7 @@ class TWAP : public Algo {
   void Timer();
   virtual Instrument* Subscribe();
   virtual const MarketData& md() { return inst_->md(); }
+  virtual void Place(Contract* c) { Algo::Place(*c, inst_); }
 
  protected:
   Instrument* inst_ = nullptr;

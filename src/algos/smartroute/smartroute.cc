@@ -24,11 +24,18 @@ struct SmartRoute : public TWAP {
     if (p) {
       // to-do: logic here to choose destination
       auto dest = p->quotes.begin()->inst;
-      st_.acc = AccountManager::Instance().GetSubAccount(dest->src().str());
+      dest_ = dest->src().str();
       return dest->md();
     }
     return inst_->md();
   }
+
+  void Place(Contract* c) override {
+    c->destination = dest_;
+    Algo::Place(*c, inst_);
+  }
+
+  std::string dest_;
 };
 
 }  // namespace opentrade

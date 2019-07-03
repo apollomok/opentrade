@@ -198,7 +198,7 @@ void TWAP::Timer() {
   if (price_ > 0 && ((IsBuy(st_.side) && c.price > price_) ||
                      (!IsBuy(st_.side) && c.price < price_)))
     return;
-  Place(c, inst_);
+  Place(&c);
 }
 
 }  // namespace opentrade

@@ -96,23 +96,25 @@ void ExchangeConnectivityManager::HandleFilled(Order* ord, double qty,
                      kTransNew);
 }
 
-static inline bool CheckAdapter(ExchangeConnectivityAdapter* adapter,
-                                const char* name) {
+static inline auto CheckAdapter(Order* ord) {
+  auto adapter = ord->broker_account->adapter;
+  auto name = ord->broker_account->adapter_name;
+  if (!ord->destination.empty()) {
+    name = ord->destination.c_str();
+    adapter = ExchangeConnectivityManager::Instance().Get(name);
+  }
+  char buf[256];
   if (!adapter) {
-    char buf[256];
     snprintf(buf, sizeof(buf),
              "Exchange connectivity adapter '%s' is not started", name);
     kRiskError = buf;
-    return false;
-  }
-  if (!adapter->connected()) {
-    char buf[256];
+  } else if (!adapter->connected()) {
     snprintf(buf, sizeof(buf),
              "Exchange connectivity adapter '%s' is disconnected", name);
     kRiskError = buf;
-    return false;
   }
-  return true;
+  if (!kRiskError.empty()) HandleConfirmation(ord, kRiskRejected, kRiskError);
+  return adapter;
 }
 
 bool ExchangeConnectivityManager::Place(Order* ord) {
@@ -157,12 +159,8 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     HandleConfirmation(ord, kUnconfirmedNew);
     return true;
   }
-  auto adapter = ord->broker_account->adapter;
-  auto name = ord->broker_account->adapter_name;
-  if (!CheckAdapter(adapter, name)) {
-    HandleConfirmation(ord, kRiskRejected, kRiskError);
-    return false;
-  }
+  auto adapter = CheckAdapter(ord);
+  if (!adapter) return false;
   if (ord->type == kMarket || ord->type == kStop) {
     if (ord->price <= 0) {
       ord->price = ord->sec->CurrentPrice();
@@ -204,12 +202,8 @@ static inline bool Cancel(Order* cancel_order) {
         boost::posix_time::milliseconds(1000 + rand_r(&seed) % 1000));
     return false;
   }
-  auto adapter = cancel_order->broker_account->adapter;
-  auto name = cancel_order->broker_account->adapter_name;
-  if (!CheckAdapter(adapter, name)) {
-    HandleConfirmation(cancel_order, kRiskRejected, kRiskError);
-    return false;
-  }
+  auto adapter = CheckAdapter(cancel_order);
+  if (!adapter) return false;
   HandleConfirmation(cancel_order, kUnconfirmedCancel, "", cancel_order->tm);
   cancel_order->id = GlobalOrderBook::Instance().NewOrderId();
   kRiskError = adapter->Cancel(*cancel_order);

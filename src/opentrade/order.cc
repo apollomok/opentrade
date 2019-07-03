@@ -145,6 +145,7 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
            << static_cast<char>(ord->type) << ' ' << static_cast<char>(ord->tif)
            << ' ' << ord->sec->id << ' ' << ord->user->id << ' '
            << ord->broker_account->id;
+        if (!ord->destination.empty()) ss << ' ' << ord->destination;
       } break;
       case kUnconfirmedCancel:
         ss << ord->id << ' ' << cm->transaction_time << ' ' << ord->orig_id;
@@ -337,9 +338,11 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         uint32_t sec_id;
         uint32_t user_id;
         uint32_t broker_account_id;
-        if (sscanf(body, "%u %ld %u %lf %lf %lf %c %c %c %u %u %u", &id, &tm,
+        char destination[n];
+        *destination = 0;
+        if (sscanf(body, "%u %ld %u %lf %lf %lf %c %c %c %u %u %u %s", &id, &tm,
                    &algo_id, &qty, &price, &stop_price, &side, &type, &tif,
-                   &sec_id, &user_id, &broker_account_id) < 12) {
+                   &sec_id, &user_id, &broker_account_id, destination) < 12) {
           LOG_ERROR("Failed to parse confirmation line #" << ln);
           continue;
         }
@@ -355,6 +358,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
           ord.side = static_cast<opentrade::OrderSide>(side);
           ord.type = static_cast<opentrade::OrderType>(type);
           ord.tif = static_cast<opentrade::TimeInForce>(tif);
+          ord.destination = destination;
           Security sec{};
           sec.id = sec_id;
           ord.sec = &sec;

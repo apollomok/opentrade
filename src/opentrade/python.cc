@@ -478,7 +478,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("unlisten", &Instrument::UnListen)
       .def("subscribe", &Instrument::SubscribeByName,
            (bp::arg("self"), bp::arg("indicator_name"),
-            bp::arg("listen") = true))
+            bp::arg("listen") = false))
       .def("get",
            +[](Instrument &inst, Indicator::IdType indicator_id) {
              auto ind = inst.Get(indicator_id);

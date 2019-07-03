@@ -287,6 +287,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
                     {"side", side},
                     {"type", type},
                     {"id", ord->id}};
+          if (!ord->destination.empty()) j["destination"] = ord->destination;
           if (cm->exec_trans_type == kTransCancel) j["bust"] = true;
           if (ord->type == kOTC)
             j["otc"] = true;
