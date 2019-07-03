@@ -79,7 +79,7 @@ static bool CheckMsgRate(const char* name, const AccountBase& acc,
 }
 
 static bool Check(const char* name, const Order& ord, const AccountBase& acc,
-                  const Position& pos) {
+                  const Position* pos) {
   if (!CheckMsgRate(name, acc, ord.sec->id)) return false;
 
   auto& l = acc.limits;
@@ -105,15 +105,17 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
     }
   }
 
+  if (!pos) return true;
+
   if (l.value > 0) {
     double v2;
-    auto net = pos.total_bought - pos.total_sold;
+    auto net = pos->total_bought - pos->total_sold;
     if (ord.IsBuy())
-      v2 = std::max(std::abs(net + pos.total_outstanding_buy + v),
-                    std::abs(net - pos.total_outstanding_sell));
+      v2 = std::max(std::abs(net + pos->total_outstanding_buy + v),
+                    std::abs(net - pos->total_outstanding_sell));
     else
-      v2 = std::max(std::abs(net + pos.total_outstanding_buy),
-                    std::abs(net - pos.total_outstanding_sell - v));
+      v2 = std::max(std::abs(net + pos->total_outstanding_buy),
+                    std::abs(net - pos->total_outstanding_sell - v));
     if (v2 > l.value) {
       snprintf(buf, sizeof(buf),
                "%s limit breach: security intraday trade value %f > %f, "
@@ -126,8 +128,8 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
   }
 
   if (l.turnover > 0) {
-    double v2 = pos.total_bought + pos.total_outstanding_buy + pos.total_sold +
-                pos.total_outstanding_sell + v;
+    double v2 = pos->total_bought + pos->total_outstanding_buy +
+                pos->total_sold + pos->total_outstanding_sell + v;
     if (v2 > l.turnover) {
       snprintf(buf, sizeof(buf),
                "%s limit breach: security intraday turnover %f > %f, "
@@ -173,7 +175,8 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
 
   if (l.total_long_value > 0 && ord.IsBuy()) {
     auto v2 = acc.position_value.long_value;
-    auto net = pos.qty + pos.total_outstanding_buy - pos.total_outstanding_sell;
+    auto net =
+        pos->qty + pos->total_outstanding_buy - pos->total_outstanding_sell;
     auto d = ord.qty;
     if (net < 0) {
       auto tmp = net + ord.qty;
@@ -193,7 +196,8 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
 
   if (l.total_short_value > 0 && !ord.IsBuy()) {
     auto v2 = acc.position_value.short_value;
-    auto net = pos.qty + pos.total_outstanding_buy - pos.total_outstanding_sell;
+    auto net =
+        pos->qty + pos->total_outstanding_buy - pos->total_outstanding_sell;
     auto d = ord.qty;
     if (net > 0) {
       auto tmp = net - ord.qty;
@@ -244,17 +248,23 @@ bool RiskManager::Check(const Order& ord) {
 
   if (!opentrade::Check(
           "sub_account", ord, *ord.sub_account,
-          PositionManager::Instance().Get(*ord.sub_account, *ord.sec)))
+          &PositionManager::Instance().Get(*ord.sub_account, *ord.sec)))
     return false;
 
   if (!opentrade::Check(
           "broker_account", ord, *ord.broker_account,
-          PositionManager::Instance().Get(*ord.broker_account, *ord.sec)))
+          &PositionManager::Instance().Get(*ord.broker_account, *ord.sec)))
     return false;
 
   if (!opentrade::Check("user", ord, *ord.user,
-                        PositionManager::Instance().Get(*ord.user, *ord.sec)))
+                        &PositionManager::Instance().Get(*ord.user, *ord.sec)))
     return false;
+
+  if (!ord.destination.empty()) {
+    auto acc = AccountManager::Instance().GetBrokerAccount(ord.destination);
+    if (acc && !opentrade::Check("destination", ord, *acc, nullptr))
+      return false;
+  }
 
   return true;
 }
