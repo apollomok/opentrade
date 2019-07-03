@@ -404,6 +404,10 @@ void Connection::HandleMessageSync(const std::string& msg,
     }
     if (action == "login" || action == "validate_user") {
       OnLogin(action, j);
+    } else if (action == "change_password") {
+      OnAdminUsers(
+          json{"", "", "", user_->id, {{"password", Get<std::string>(j[1])}, }},
+          action, "modify");
     } else if (action == "bod") {
       json out;
       for (auto& pair : PositionManager::Instance().bods_) {
