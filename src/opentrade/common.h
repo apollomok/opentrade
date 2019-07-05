@@ -80,6 +80,7 @@ class Singleton {
 
 inline TaskPool kSharedTaskPool;
 inline TaskPool kWriteTaskPool;
+inline TaskPool kDatabaseTaskPool;
 }  // namespace opentrade
 
 #endif  // OPENTRADE_COMMON_H_

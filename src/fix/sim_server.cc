@@ -29,6 +29,7 @@ static thread_local boost::uuids::random_generator kUuidGen;
 class SimServer : public opentrade::MarketDataAdapter, public FIX::Application {
  public:
   void Start() noexcept override;
+  void Stop() noexcept override {}
   void Subscribe(const Security& sec) noexcept override;
   void onCreate(const FIX::SessionID& session_id) override {
     if (!session_) session_ = FIX::Session::lookupSession(session_id);

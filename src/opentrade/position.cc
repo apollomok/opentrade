@@ -198,8 +198,6 @@ void PositionManager::Initialize() {
   }
 }
 
-static TaskPool kDatabaseTaskPool;
-
 void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
   auto ord = cm->order;
   auto sec = ord->sec;

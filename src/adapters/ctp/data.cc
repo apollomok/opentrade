@@ -12,11 +12,13 @@ class Data : public CThostFtdcMdSpi, public opentrade::MarketDataAdapter {
  public:
   ~Data();
   void Start() noexcept override;
+  void Stop() noexcept override;
   void Subscribe(const Security &sec) noexcept override;
   void Reconnect() noexcept override;
 
  private:
   void Subscribe2(const Security &sec);
+  void Close();
   void OnFrontConnected() override;
   void OnFrontDisconnected(int reason) override;
   void OnRspUserLogin(CThostFtdcRspUserLoginField *rsp_user_login,
@@ -38,7 +40,6 @@ class Data : public CThostFtdcMdSpi, public opentrade::MarketDataAdapter {
                              CThostFtdcRspInfoField *rsp_info, int request_id,
                              bool is_last) override;
   void OnRtnForQuoteRsp(CThostFtdcForQuoteRspField *data) override;
-
   void OnHeartBeatWarning(int time_lapse) override;
 
  private:
@@ -84,14 +85,22 @@ void Data::Subscribe(const Security &sec) noexcept {
   });
 }
 
+void Data::Close() {
+  connected_ = 0;
+  if (api_) {
+    api_->Join();
+    api_->RegisterSpi(NULL);
+    api_->Release();
+  }
+}
+
+void Data::Stop() noexcept {
+  tp_.AddTask([this]() { Close(); });
+}
+
 void Data::Reconnect() noexcept {
   tp_.AddTask([this]() {
-    connected_ = 0;
-    if (api_) {
-      api_->Join();
-      api_->RegisterSpi(NULL);
-      api_->Release();
-    }
+    Close();
     api_ = CThostFtdcMdApi::CreateFtdcMdApi();
     api_->RegisterSpi(this);
     LOG_INFO(name() << ": Connecting to " << address_);

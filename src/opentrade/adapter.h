@@ -49,6 +49,7 @@ class Adapter {
 class NetworkAdapter : public Adapter {
  public:
   virtual void Reconnect() noexcept {}
+  virtual void Stop() noexcept = 0;
   virtual bool connected() const noexcept { return 1 == connected_; }
 
  protected:

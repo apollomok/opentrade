@@ -496,7 +496,13 @@ void Connection::HandleMessageSync(const std::string& msg,
         GlobalOrderBook::Instance().Cancel();
       }
       std::this_thread::sleep_for(std::chrono::seconds(1));
-      // to-do: safe exit
+      auto& ecs = ExchangeConnectivityManager::Instance().adapters();
+      for (auto& it : ecs) {
+        it.second->Stop();
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      kDatabaseTaskPool.Stop();
+      kWriteTaskPool.Stop();
       if (system(("kill -9 " + std::to_string(getpid())).c_str())) return;
     } else if (action == "cancel") {
       auto id = Get<int64_t>(j[1]);

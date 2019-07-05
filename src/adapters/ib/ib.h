@@ -23,6 +23,7 @@ class IB : public opentrade::ExchangeConnectivityAdapter,
   IB();
   ~IB();
   void Start() noexcept override;
+  void Stop() noexcept override { Disconnect(); }
   void Reconnect() noexcept override;
   std::string Place(const opentrade::Order& ord) noexcept override;
   std::string Cancel(const opentrade::Order& ord) noexcept override;

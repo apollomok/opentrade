@@ -74,6 +74,7 @@ class ConsolidationFeed : public MarketDataAdapter {
     config_["src"] = kConsolidationSrc.str();
   }
   void Start() noexcept override {}
+  void Stop() noexcept override {}
   void Subscribe(const opentrade::Security& sec) noexcept override {}
 };
 

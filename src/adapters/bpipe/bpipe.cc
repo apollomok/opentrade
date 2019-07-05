@@ -111,13 +111,21 @@ void BPIPE::Start() noexcept {
   Reconnect();
 }
 
+void BPIPE::Close() {
+  connected_ = 0;
+  if (session_) {
+    session_->stop();
+    delete session_;  // release fd
+  }
+}
+
+void BPIPE::Stop() noexcept {
+  tp_.AddTask([this]() { Close(); });
+}
+
 void BPIPE::Reconnect() noexcept {
   tp_.AddTask([this]() {
-    connected_ = 0;
-    if (session_) {
-      session_->stop();
-      delete session_;  // release fd
-    }
+    Close();
     session_ = new bbg::Session(options_, this);
     session_->startAsync();
   });

@@ -17,10 +17,12 @@ namespace bbg = BloombergLP::blpapi;
 class BPIPE : public opentrade::MarketDataAdapter, public bbg::EventHandler {
  public:
   void Start() noexcept override;
+  void Stop() noexcept override;
   void Reconnect() noexcept override;
   void Subscribe(const opentrade::Security& sec) noexcept override;
 
  protected:
+  void Close();
   bool processEvent(const bbg::Event& evt, bbg::Session* session) override;
   void OnConnect();
 

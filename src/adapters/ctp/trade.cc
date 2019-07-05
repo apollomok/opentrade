@@ -10,11 +10,13 @@ class Trade : public CThostFtdcTraderSpi,
  public:
   ~Trade();
   void Start() noexcept override;
+  void Stop() noexcept override;
   void Reconnect() noexcept override;
   std::string Place(const opentrade::Order& ord) noexcept override;
   std::string Cancel(const opentrade::Order& ord) noexcept override;
 
  private:
+  void Close();
   void OnFrontConnected() override;
   void OnFrontDisconnected(int reason) override;
   void OnRspUserLogin(CThostFtdcRspUserLoginField* rsp_user_login,
@@ -113,14 +115,22 @@ void Trade::Start() noexcept {
   Reconnect();
 }
 
+void Trade::Close() {
+  connected_ = 0;
+  if (api_) {
+    api_->Join();
+    api_->RegisterSpi(NULL);
+    api_->Release();
+  }
+}
+
+void Trade::Stop() noexcept {
+  tp_.AddTask([this]() { Close(); });
+}
+
 void Trade::Reconnect() noexcept {
   tp_.AddTask([this]() {
-    connected_ = 0;
-    if (api_) {
-      api_->Join();
-      api_->RegisterSpi(NULL);
-      api_->Release();
-    }
+    Close();
     api_ = CThostFtdcTraderApi::CreateFtdcTraderApi();
     api_->RegisterSpi(this);
     LOG_INFO(name() << ": Connecting to " << address_);

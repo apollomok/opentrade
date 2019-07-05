@@ -52,6 +52,8 @@ class Fix : public FIX::Application,
     threaded_socket_initiator_->start();
   }
 
+  void Stop() noexcept override { threaded_socket_initiator_->stop(); }
+
   void onCreate(const FIX::SessionID& session_id) override {
     if (!session_) session_ = FIX::Session::lookupSession(session_id);
   }
