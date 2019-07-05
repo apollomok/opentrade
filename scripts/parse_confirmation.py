@@ -84,6 +84,7 @@ def parse(fn, callback):
     mm = mmap.mmap(f.fileno(), 0)
     offset = 0
     while offset + 6 < len(mm):
+      offset0 = offset
       seq = struct.unpack('I', mm[offset:offset + 4])[0]
       offset += 4
       n = struct.unpack('H', mm[offset:offset + 2])[0]
@@ -95,32 +96,36 @@ def parse(fn, callback):
       body = mm[offset:offset + n]
       offset += n + 2  # body + '\0' + '\n'
       fds = body.split()
+      raw = mm[offset0:offset]
       if exec_type == kNew:
         id, tm, order_id = fds
-        callback(exec_type, id, tm, order_id)
+        callback(raw, exec_type, id, tm, order_id)
       elif exec_type == kPartiallyFilled or exec_type == kFilled:
         id, tm, last_shares, last_px, exec_trans_type, exec_id = fds
-        callback(exec_type, id, tm, last_shares, last_px, exec_trans_type,
+        callback(raw, exec_type, id, tm, last_shares, last_px, exec_trans_type,
                  exec_id)
       elif exec_type == kUnconfirmedNew:
-        id, tm, algo_id, qty, price, stop_price, side, type, tif, sec_id, user_id, broker_account_id = fds
-        callback(exec_type, id, tm, algo_id, qty, price, stop_price, side, type,
-                 tif, sec_id, user_id, broker_account_id)
+        id, tm, algo_id, qty, price, stop_price, side, type, tif, \
+            sec_id, user_id, broker_account_id = fds[:12]
+        dest = ''
+        if len(fds) > 12: dest = fds[12]
+        callback(raw, exec_type, id, tm, algo_id, qty, price, stop_price, side,
+                 type, tif, sec_id, user_id, broker_account_id, dest)
       elif exec_type == kUnconfirmedCancel:
         id, tm, orig_id = fds
-        callback(exec_type, id, tm, orig_id)
+        callback(raw, exec_type, id, tm, orig_id)
       elif exec_type == kRiskRejected:
         id = fds[0]
         text = ' '.join(fds[1])
-        callback(exec_type, id, None, text)
+        callback(raw, exec_type, id, None, text)
       else:
         id, tm = fds[:2]
         text = '.'.join(fds[2:])
-        callback(exec_type, id, tm, text)
+        callback(raw, exec_type, id, tm, text)
     assert (offset == len(mm))
 
 
-def print_confirmation(*args):
+def print_confirmation(raw, *args):
   exec_type = kExecTypes[args[0]]
   id = args[1]
   tm = args[2]
