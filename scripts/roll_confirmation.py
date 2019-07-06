@@ -5,6 +5,7 @@ scripts/roll_confirmation.py archives/`date -d '1 days ago' "+%Y%m%d"`/store/con
 '''
 
 import datetime
+import time
 import os
 from parse_confirmation import *
 
@@ -14,7 +15,7 @@ now = time.time()
 one_day = 24 * 3600
 
 
-def check_confirmation(raw, exec_id, id, *args):
+def check_confirmation(seq, raw, exec_type, id, *args):
   if exec_type == kUnconfirmedNew:
     tm, algo_id, qty = args[:3]
     x = now - int(tm) / 1e6
@@ -22,9 +23,9 @@ def check_confirmation(raw, exec_id, id, *args):
       log('too old orders skipped', x / one_day, 'days ago')
       return
     orders[id] = float(qty)
-    confirmations.append(id, raw)
+    confirmations.append((id, raw))
   elif exec_type == kNew:
-    confirmations.append(id, raw)
+    confirmations.append((id, raw))
   elif exec_type in (kRiskRejected, kCanceled, kRejected, kExpired, kCalculated,
                      kDoneForDay):
     if id in orders: del orders[id]
@@ -51,20 +52,29 @@ def main():
   fh = open(dest, 'wb')
   rolls = []
   parse(src, check_confirmation)
-  rolls = [raw for id, raw in confirmations if id in orders]
+  rolls = [(id, raw) for id, raw in confirmations if id in orders]
   log(len(orders), 'orders rolled')
-  n = 0
-  for c in rolls:
-    n += 1
-    seq = struct.unpack('I', n)
-    for i in xrange(len(seq)):
-      c[i] = seq[i]
-    fh.write(c)
+  seq = 0
+  for id, raw in rolls:
+    seq += 1
+    raw = struct.pack('I', seq) + raw[4:]
+    if raw[4] == kUnconfirmedNew:
+      # modify qty
+      qty = orders[id]
+      a = raw[:7]
+      n = 7
+      while raw[n] != '\0':
+        n += 1
+      b = raw[7:n]
+      b = b.split(' ')
+      b[3] = str(qty)
+      raw = a + ' '.join(b) + '\0\n'
+    fh.write(raw)
   fh.close()
 
 
 def log(*args):
-  args = [datetime.datetime.now()] + args
+  args = (datetime.datetime.now(),) + args
   print(' '.join([str(x) for x in args]))
 
 

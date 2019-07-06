@@ -83,14 +83,14 @@ def parse(fn, callback):
     # memory-map the file, size 0 means whole file
     mm = mmap.mmap(f.fileno(), 0)
     offset = 0
-    while offset + 6 < len(mm):
+    while offset + 9 < len(mm):
       offset0 = offset
       seq = struct.unpack('I', mm[offset:offset + 4])[0]
       offset += 4
-      sub_account_id = struct.unpack('H', mm[offset:offset + 2])[0]
-      offset += 2
       exec_type = mm[offset]
       offset += 1
+      sub_account_id = struct.unpack('H', mm[offset:offset + 2])[0]
+      offset += 2
       n = 0
       while mm[offset + n] != '\0':
         n += 1
@@ -100,38 +100,38 @@ def parse(fn, callback):
       raw = mm[offset0:offset]
       if exec_type == kNew:
         id, tm, order_id = fds
-        callback(raw, exec_type, id, tm, order_id)
+        callback(seq, raw, exec_type, id, tm, order_id)
       elif exec_type == kPartiallyFilled or exec_type == kFilled:
         id, tm, last_shares, last_px, exec_trans_type, exec_id = fds
-        callback(raw, exec_type, id, tm, last_shares, last_px, exec_trans_type,
-                 exec_id)
+        callback(seq, raw, exec_type, id, tm, last_shares, last_px,
+                 exec_trans_type, exec_id)
       elif exec_type == kUnconfirmedNew:
         id, tm, algo_id, qty, price, stop_price, side, type, tif, \
             sec_id, user_id, broker_account_id = fds[:12]
         dest = ''
         if len(fds) > 12: dest = fds[12]
-        callback(raw, exec_type, id, tm, algo_id, qty, price, stop_price, side,
-                 type, tif, sec_id, user_id, broker_account_id, dest)
+        callback(seq, raw, exec_type, id, tm, algo_id, qty, price, stop_price,
+                 side, type, tif, sec_id, user_id, broker_account_id, dest)
       elif exec_type == kUnconfirmedCancel:
         id, tm, orig_id = fds
-        callback(raw, exec_type, id, tm, orig_id)
+        callback(seq, raw, exec_type, id, tm, orig_id)
       elif exec_type == kRiskRejected:
         id = fds[0]
         text = ' '.join(fds[1])
-        callback(raw, exec_type, id, None, text)
+        callback(seq, raw, exec_type, id, None, text)
       else:
         id, tm = fds[:2]
         text = '.'.join(fds[2:])
-        callback(raw, exec_type, id, tm, text)
+        callback(seq, raw, exec_type, id, tm, text)
     assert (offset == len(mm))
 
 
-def print_confirmation(raw, *args):
+def print_confirmation(seq, raw, *args):
   exec_type = kExecTypes[args[0]]
   id = args[1]
   tm = args[2]
   tm = datetime.datetime.fromtimestamp(float(tm) / 1e6) if tm else ''
-  args = (exec_type, id, str(tm)) + args[3:]
+  args = (seq, exec_type, id, str(tm)) + args[3:]
   print(args)
 
 

@@ -137,7 +137,7 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
       case kExpired:
       case kCalculated:
       case kDoneForDay:
-        ss << ord->id << ' ' << cm->transaction_time << ' ' << cm->text.c_str();
+        ss << ord->id << ' ' << cm->transaction_time << ' ' << cm->text;
         break;
       case kUnconfirmedNew: {
         ss << std::setprecision(15) << ord->id << ' ' << cm->transaction_time
@@ -152,18 +152,17 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
         ss << ord->id << ' ' << cm->transaction_time << ' ' << ord->orig_id;
         break;
       case kRiskRejected:
-        ss << ord->id << ' ' << cm->text.c_str();
+        ss << ord->id << ' ' << cm->text;
         break;
       default:
         break;
     }
     auto str = ss.str();
     if (str.empty()) return;
-    // excluding length and seq and exec_type and ending '\0\n'
     of_.write(reinterpret_cast<const char*>(&cm->seq), sizeof(cm->seq));
+    of_ << static_cast<char>(cm->exec_type);
     of_.write(reinterpret_cast<const char*>(&ord->sub_account->id),
               sizeof(ord->sub_account->id));
-    of_ << static_cast<char>(cm->exec_type);
     of_ << str << '\0' << std::endl;
   });
 }
@@ -179,10 +178,10 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
     auto seq = *reinterpret_cast<const uint32_t*>(p);
     if (!conn) seq_counter_ = seq;
     p += 4;
-    auto sub_account_id = *reinterpret_cast<const SubAccount::IdType*>(p);
-    p += sizeof(SubAccount::IdType);
     auto exec_type = static_cast<opentrade::OrderStatus>(*p);
     p += 1;
+    auto sub_account_id = *reinterpret_cast<const SubAccount::IdType*>(p);
+    p += sizeof(SubAccount::IdType);
     auto body = p;
     auto n = strlen(body);
     p += n + 2;  // body + '\0' + '\n'
