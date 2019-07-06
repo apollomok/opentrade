@@ -111,6 +111,7 @@ void PositionManager::Initialize() {
     }
     ofs.write(buf, strlen(buf));
     LOG_INFO("Created new session");
+    GlobalOrderBook::Instance().ReadPreviousDayExecIds();
   }
   self.session_ = buf;
   std::string tm = buf;
@@ -282,6 +283,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           json j = {{"tm", cm->transaction_time},
                     {"qty", cm->last_shares},
                     {"px", cm->last_px},
+                    {"exec_id", cm->exec_id},
                     {"side", side},
                     {"type", type},
                     {"id", ord->id}};

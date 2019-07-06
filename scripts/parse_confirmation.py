@@ -87,12 +87,13 @@ def parse(fn, callback):
       offset0 = offset
       seq = struct.unpack('I', mm[offset:offset + 4])[0]
       offset += 4
-      n = struct.unpack('H', mm[offset:offset + 2])[0]
-      offset += 2
       sub_account_id = struct.unpack('H', mm[offset:offset + 2])[0]
       offset += 2
       exec_type = mm[offset]
       offset += 1
+      n = 0
+      while mm[offset + n] != '\0':
+        n += 1
       body = mm[offset:offset + n]
       offset += n + 2  # body + '\0' + '\n'
       fds = body.split()

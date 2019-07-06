@@ -1,4 +1,4 @@
-﻿#include <unordered_set>
+#include <unordered_set>
 #include <tbb/concurrent_unordered_map.h>
 
 #include "api/ThostFtdcMdApi.h"

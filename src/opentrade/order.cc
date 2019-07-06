@@ -14,6 +14,7 @@
 #include "logger.h"
 #include "position.h"
 #include "server.h"
+#include "database.h"
 
 namespace fs = boost::filesystem;
 
@@ -136,7 +137,7 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
       case kExpired:
       case kCalculated:
       case kDoneForDay:
-        ss << ord->id << ' ' << cm->transaction_time << ' ' << cm->text;
+        ss << ord->id << ' ' << cm->transaction_time << ' ' << cm->text.c_str();
         break;
       case kUnconfirmedNew: {
         ss << std::setprecision(15) << ord->id << ' ' << cm->transaction_time
@@ -151,7 +152,7 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
         ss << ord->id << ' ' << cm->transaction_time << ' ' << ord->orig_id;
         break;
       case kRiskRejected:
-        ss << ord->id << ' ' << cm->text;
+        ss << ord->id << ' ' << cm->text.c_str();
         break;
       default:
         break;
@@ -160,8 +161,6 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
     if (str.empty()) return;
     // excluding length and seq and exec_type and ending '\0\n'
     of_.write(reinterpret_cast<const char*>(&cm->seq), sizeof(cm->seq));
-    uint16_t n = str.size();
-    of_.write(reinterpret_cast<const char*>(&n), sizeof(n));
     of_.write(reinterpret_cast<const char*>(&ord->sub_account->id),
               sizeof(ord->sub_account->id));
     of_ << static_cast<char>(cm->exec_type);
@@ -175,19 +174,17 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
   auto p = m.data();
   auto p_end = p + m.size();
   auto ln = 0;
-  while (p + 6 < p_end) {
+  while (p + 9 < p_end) {
     ln++;
     auto seq = *reinterpret_cast<const uint32_t*>(p);
     if (!conn) seq_counter_ = seq;
     p += 4;
-    auto n = *reinterpret_cast<const uint16_t*>(p);
-    if (p + n + 5 + sizeof(SubAccount::IdType) > p_end) break;
-    p += 2;
     auto sub_account_id = *reinterpret_cast<const SubAccount::IdType*>(p);
     p += sizeof(SubAccount::IdType);
     auto exec_type = static_cast<opentrade::OrderStatus>(*p);
     p += 1;
     auto body = p;
+    auto n = strlen(body);
     p += n + 2;  // body + '\0' + '\n'
     if (seq <= seq0) continue;
     if (conn) {
@@ -497,6 +494,31 @@ void GlobalOrderBook::Cancel() {
     auto ord = pair.second;
     if (ord->IsLive()) ExchangeConnectivityManager::Instance().Cancel(*ord);
   }
+}
+
+// to avoid duplicate execution due to message resent or some other unknown
+// circumstances
+void GlobalOrderBook::ReadPreviousDayExecIds() {
+  auto sql = Database::Session();
+  LOG_INFO("ReadPreviousDayExecIds");
+  std::string tm = GetNowStr<false, -24 * 3600>();
+  soci::rowset<soci::row> st =
+      (sql->prepare << "select info from position where tm>:tm", soci::use(tm));
+  for (auto it = st.begin(); it != st.end(); ++it) {
+    std::string info;
+    info = Database::GetValue(*it, 0, info);
+    if (!info.empty()) {
+      try {
+        auto j = json::parse(info);
+        auto id = j["id"].get<int64_t>();
+        auto exec_id = j["exec_id"].get<std::string>();
+        IsDupExecId(id, exec_id);
+      } catch (std::exception& e) {
+        LOG_ERROR(e.what());
+      }
+    }
+  }
+  LOG_INFO(exec_ids_.size() << " exec ids loaded");
 }
 
 }  // namespace opentrade

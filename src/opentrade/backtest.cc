@@ -1,4 +1,4 @@
-﻿#ifdef BACKTEST
+#ifdef BACKTEST
 
 #include "backtest.h"
 

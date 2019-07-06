@@ -95,10 +95,13 @@ static inline int64_t NowInMicro(int tm_gmtoff = 0) {
   return NowUtcInMicro() + tm_gmtoff * kMicroInSec;
 }
 
-template <bool localtime = true>
+template <bool localtime = true, int offset_seconds = 0>
 static inline const char* GetNowStr() {
   struct timeval tp;
   GetTimeOfDay(&tp);
+  if constexpr (offset_seconds) {
+    tp.tv_sec += offset_seconds;
+  }
   struct tm tm_info;
   if constexpr (localtime) {
     localtime_r(&tp.tv_sec, &tm_info);

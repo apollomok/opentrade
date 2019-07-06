@@ -161,6 +161,7 @@ class GlobalOrderBook : public Singleton<GlobalOrderBook> {
   void Cancel();
   void Handle(Confirmation::Ptr cm, bool offline = false);
   void LoadStore(uint32_t seq0 = 0, Connection* conn = nullptr);
+  void ReadPreviousDayExecIds();
 
  private:
   void UpdateOrder(Confirmation::Ptr cm);

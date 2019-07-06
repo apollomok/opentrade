@@ -1,4 +1,4 @@
-﻿#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_unordered_map.h>
 
 #include "api/ThostFtdcTraderApi.h"
 #include "opentrade/exchange_connectivity.h"

@@ -1,4 +1,4 @@
-﻿#include <tbb/concurrent_unordered_set.h>
+#include <tbb/concurrent_unordered_set.h>
 #include <boost/unordered_map.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>

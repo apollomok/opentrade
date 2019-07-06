@@ -1,4 +1,4 @@
-﻿#include "bpipe.h"
+#include "bpipe.h"
 
 #include <blpapi_correlationid.h>
 #include <blpapi_element.h>
