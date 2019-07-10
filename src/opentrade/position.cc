@@ -128,10 +128,10 @@ void PositionManager::Initialize() {
   )";
   if (Database::is_sqlite()) {
     query = R"(
-      select sub_account_id, broker_account_id, security_id, qty, cx_qty, avg_px, realized_pnl, tm
-      from position where (sub_account_id, security_id, tm) in 
-        (select sub_account_id, security_id, max(tm) as tm from 
-          (select sub_account_id, security_id, tm from position where tm < :tm) as _ group by sub_account_id, security_id)
+    select A.sub_account_id, broker_account_id, A.security_id, qty, cx_qty, avg_px, realized_pnl, A.tm
+      from position as A inner join
+        (select sub_account_id, security_id, max(tm) as tm  from position where tm < :tm group by sub_account_id,security_id) as B
+      on A.sub_account_id = B.sub_account_id and A.security_id = B.security_id and A.tm = B.tm
     )";
   }
   soci::rowset<soci::row> st = (sql->prepare << query, soci::use(tm));
