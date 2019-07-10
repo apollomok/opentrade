@@ -163,7 +163,7 @@ void AlgoManager::Update(DataSrc::IdType src, Security::IdType id) {
 void AlgoManager::Run(int nthreads) {
 #ifdef BACKTEST
   threads_.resize(1);
-  strands_ = new StrandMock[1]{};
+  strands_ = new Strand[1]{};
   runners_ = new AlgoRunner[1]{};
   runners_[0].tid_ = std::this_thread::get_id();
 #else

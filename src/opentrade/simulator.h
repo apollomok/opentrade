@@ -17,6 +17,7 @@ class Simulator : public ExchangeConnectivityAdapter, public MarketDataAdapter {
  public:
   explicit Simulator(std::ostream& of) : of_(of) { connected_ = 1; }
   void Start() noexcept override {}
+  void Stop() noexcept override {}
   void Reconnect() noexcept override {}
   void Subscribe(const opentrade::Security& sec) noexcept override {}
   std::string Place(const opentrade::Order& ord) noexcept override;

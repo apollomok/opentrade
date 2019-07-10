@@ -10,11 +10,11 @@
 
 #include "algo.h"
 #include "connection.h"
+#include "database.h"
 #include "exchange_connectivity.h"
 #include "logger.h"
 #include "position.h"
 #include "server.h"
-#include "database.h"
 
 namespace fs = boost::filesystem;
 
