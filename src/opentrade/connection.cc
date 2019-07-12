@@ -1146,6 +1146,19 @@ void Connection::OnSecurities(const json& j) {
   Send(out);
 }
 
+void Connection::Disable(const json& j, AccountBase* acc) {
+  if (!acc) {
+    Send(json{"error", "", "Unknown account id"});
+    return;
+  }
+  if (j.size() == 4) {  // enable
+    acc->disabled_reason.store(boost::shared_ptr<std::string>{});
+    return;
+  }
+  acc->disabled_reason.store(
+      boost::shared_ptr<std::string>(new std::string(Get<std::string>(j[4]))));
+}
+
 void Connection::OnLogin(const std::string& action, const json& j) {
   auto name = Get<std::string>(j[1]);
   auto password = sha1(Get<std::string>(j[2]));
@@ -1256,7 +1269,7 @@ void Connection::SendTestMsg(const std::string& token, const std::string& msg,
 
 void Connection::OnAdmin(const json& j) {
   if (!user_->is_admin) {
-    throw std::runtime_error("admin requireid");
+    throw std::runtime_error("admin required");
   }
   auto name = Get<std::string>(j[1]);
   auto action = Get<std::string>(j[2]);
@@ -1608,6 +1621,8 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
     inst.users_.emplace(user->id, user);
     inst.user_of_name_[user->name] = user;
     Send(json{"admin", name, action, user->id});
+  } else if (action == "disable") {
+    Disable(j, const_cast<User*>(inst.GetUser(GetNum(j[3]))));
   }
 }
 
@@ -1758,6 +1773,8 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
     inst.broker_accounts_.emplace(broker->id, broker);
     inst.broker_account_of_name_[broker->name] = broker;
     Send(json{"admin", name, action, broker->id});
+  } else if (action == "disable") {
+    Disable(j, const_cast<BrokerAccount*>(inst.GetBrokerAccount(GetNum(j[3]))));
   }
 }
 
@@ -1884,6 +1901,8 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     inst.sub_accounts_.emplace(sub->id, sub);
     inst.sub_account_of_name_[sub->name] = sub;
     Send(json{"admin", name, action, sub->id});
+  } else if (action == "disable") {
+    Disable(j, const_cast<SubAccount*>(inst.GetSubAccount(GetNum(j[3]))));
   }
 }
 

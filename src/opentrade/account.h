@@ -2,6 +2,7 @@
 #define OPENTRADE_ACCOUNT_H_
 
 #include <tbb/concurrent_unordered_map.h>
+#include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -15,25 +16,24 @@ namespace opentrade {
 class ExchangeConnectivityAdapter;
 
 struct AccountBase {
+  typedef uint16_t IdType;
+  IdType id = 0;
+  const char* name = "";
   Limits limits;
   Throttle throttle_in_sec;
   tbb::concurrent_unordered_map<Security::IdType, Throttle>
       throttle_per_security_in_sec;
   PositionValue position_value;
+  // https://stackoverflow.com/questions/40223599/what-is-the-difference-between-stdshared-ptr-and-stdexperimentalatomic-sha
+  boost::atomic_shared_ptr<std::string> disabled_reason;
 };
 
 struct BrokerAccount : public AccountBase, public ParamsBase {
-  typedef uint16_t IdType;
-  IdType id = 0;
-  const char* name = "";
   const char* adapter_name = "";
   ExchangeConnectivityAdapter* adapter = nullptr;
 };
 
 struct SubAccount : public AccountBase {
-  typedef uint16_t IdType;
-  IdType id = 0;
-  const char* name = "";
   typedef std::unordered_map<Exchange::IdType, const BrokerAccount*>
       BrokerAccountMap;
   typedef std::shared_ptr<const BrokerAccountMap> BrokerAccountMapPtr;
@@ -53,9 +53,6 @@ struct SubAccount : public AccountBase {
 };
 
 struct User : public AccountBase {
-  typedef uint16_t IdType;
-  IdType id = 0;
-  const char* name = "";
   const char* password = "";
   bool is_admin = false;
   bool is_disabled = false;

@@ -168,7 +168,7 @@ BOOST_PYTHON_MODULE(opentrade) {
   bp::class_<DataSrc>("DataSrc", bp::init<const char *>())
       .def("__str__", &DataSrc::str);
 
-  bp::class_<SubAccount>("SubAccount", bp::no_init)
+  bp::class_<SubAccount, boost::noncopyable>("SubAccount", bp::no_init)
       .def("__str__",
            +[](const SubAccount &acc) { return std::string(acc.name); })
       .add_property(

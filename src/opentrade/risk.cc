@@ -80,10 +80,18 @@ static bool CheckMsgRate(const char* name, const AccountBase& acc,
 
 static bool Check(const char* name, const Order& ord, const AccountBase& acc,
                   const Position* pos) {
+  char buf[256];
+  auto disabled_reason = acc.disabled_reason.load();
+  if (disabled_reason) {
+    snprintf(buf, sizeof(buf), "%s %s is disabled by %s", name, acc.name,
+             disabled_reason->c_str());
+    kRiskError = buf;
+    return false;
+  }
+
   if (!CheckMsgRate(name, acc, ord.sec->id)) return false;
 
   auto& l = acc.limits;
-  char buf[256];
 
   if (l.order_qty > 0 && ord.qty > l.order_qty) {
     snprintf(buf, sizeof(buf), "%s limit breach: single order quantity %f > %f",
@@ -255,6 +263,13 @@ bool RiskManager::Check(const Order& ord) {
           "broker_account", ord, *ord.broker_account,
           &PositionManager::Instance().Get(*ord.broker_account, *ord.sec)))
     return false;
+
+  if (ord.user->is_disabled) {
+    char buf[256];
+    snprintf(buf, sizeof(buf), "user %s is disabled", ord.user->name);
+    kRiskError = buf;
+    return false;
+  }
 
   if (!opentrade::Check("user", ord, *ord.user,
                         &PositionManager::Instance().Get(*ord.user, *ord.sec)))
