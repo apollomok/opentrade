@@ -66,20 +66,8 @@ inline void ConsolidationBook::Update(double price, const Instrument* inst,
   }
 }
 
-class ConsolidationFeed : public MarketDataAdapter {
- public:
-  ConsolidationFeed() {
-    connected_ = 1;
-    set_name(kConsolidationSrc.str());
-    config_["src"] = kConsolidationSrc.str();
-  }
-  void Start() noexcept override {}
-  void Stop() noexcept override {}
-  void Subscribe(const opentrade::Security& sec) noexcept override {}
-};
-
 void ConsolidationHandler::Start() noexcept {
-  MarketDataManager::Instance().Add(new ConsolidationFeed);
+  MarketDataManager::Instance().Add(new DummyFeed(kConsolidationSrc.str()));
 }
 
 void ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {

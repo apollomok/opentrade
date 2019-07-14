@@ -2,6 +2,7 @@
 #define OPENTRADE_UTILITY_H_
 
 #include <sys/time.h>
+#include <any>
 #include <boost/algorithm/string.hpp>
 #include <cstring>
 #include <ctime>
@@ -55,6 +56,24 @@ template <typename M>
 inline std::string GetParam(const M& var_map, const std::string& name,
                             const char* default_value) {
   return GetParam<M, std::string>(var_map, name).value_or(default_value);
+}
+
+template <typename V>
+inline std::string ToString(const V& variant) {
+  std::string out;
+  std::visit(
+      [&out](auto&& v) {
+        using T = std::decay_t<decltype(v)>;
+        if constexpr (std::is_same_v<T, std::any>) {
+          return;
+        } else if constexpr (std::is_same_v<T, std::string>) {
+          out = v;
+        } else {
+          out = std::to_string(v);
+        }
+      },
+      variant);
+  return out;
 }
 
 #ifdef BACKTEST

@@ -305,20 +305,27 @@ class Fix : public FIX::Application,
     msg->setField(FIX::ExDestination(ord.sec->exchange->name));
   }
 
+  inline void Set(const std::string& key, const std::string& value,
+                  FIX::Message* msg) {
+    if (key.find(kTagPrefix) == 0) {
+      auto tag = atoi(key.c_str() + kTagPrefix.length());
+      if (!tag) return;
+      if (msg->isHeaderField(tag)) {
+        msg->getHeader().setField(tag, value);
+        if (value == kRemoveTag) msg->getHeader().removeField(tag);
+      } else {
+        msg->setField(tag, value);
+        if (value == kRemoveTag) msg->removeField(tag);
+      }
+    }
+  }
+
   void SetBrokerTags(const Order& ord, FIX::Message* msg) {
     auto params = ord.broker_account->params();
-    for (auto& pair : *params) {
-      if (pair.first.find(kTagPrefix) == 0) {
-        auto tag = atoi(pair.first.c_str() + kTagPrefix.length());
-        if (!tag) continue;
-        if (msg->isHeaderField(tag)) {
-          msg->getHeader().setField(tag, pair.second);
-          if (pair.second == kRemoveTag) msg->getHeader().removeField(tag);
-        } else {
-          msg->setField(tag, pair.second);
-          if (pair.second == kRemoveTag) msg->removeField(tag);
-        }
-      }
+    for (auto& pair : *params) Set(pair.first, pair.second, msg);
+    if (ord.optional) {
+      for (auto& pair : *ord.optional)
+        Set(pair.first, ToString(pair.second), msg);
     }
   }
 

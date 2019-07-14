@@ -73,6 +73,18 @@ struct ConsolidationHandler : public IndicatorHandler {
                      const MarketData& md0) noexcept override;
 };
 
+class DummyFeed : public MarketDataAdapter {
+ public:
+  explicit DummyFeed(const std::string& src) {
+    connected_ = 1;
+    set_name(src);
+    config_["src"] = src;
+  }
+  void Start() noexcept override {}
+  void Stop() noexcept override {}
+  void Subscribe(const opentrade::Security& sec) noexcept override {}
+};
+
 }  // namespace opentrade
 
 #endif  // OPENTRADE_CONSOLIDATION_H_
