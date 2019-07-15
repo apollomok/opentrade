@@ -395,6 +395,7 @@ class Fix : public FIX::Application,
   void CreatePriceSources() {
     auto srcs = Split(config("srcs"), ",");
     for (auto& src : srcs) srcs_.push_back(new DummyFeed(src));
+    if (srcs_.empty()) srcs_.push_back(this);
   }
 
  protected:
