@@ -82,7 +82,7 @@ class DummyFeed : public MarketDataAdapter {
   }
   void Start() noexcept override {}
   void Stop() noexcept override {}
-  void Subscribe(const opentrade::Security& sec) noexcept override {}
+  void SubscribeSync(const opentrade::Security& sec) noexcept override {}
 };
 
 }  // namespace opentrade

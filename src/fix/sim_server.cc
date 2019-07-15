@@ -20,7 +20,6 @@
 #include "opentrade/logger.h"
 #include "opentrade/market_data.h"
 #include "opentrade/security.h"
-#include "opentrade/task_pool.h"
 
 using Security = opentrade::Security;
 
@@ -30,7 +29,7 @@ class SimServer : public opentrade::MarketDataAdapter, public FIX::Application {
  public:
   void Start() noexcept override;
   void Stop() noexcept override {}
-  void Subscribe(const Security& sec) noexcept override;
+  void SubscribeSync(const Security& sec) noexcept override {}
   void onCreate(const FIX::SessionID& session_id) override {
     if (!session_) session_ = FIX::Session::lookupSession(session_id);
   }
@@ -60,8 +59,6 @@ class SimServer : public opentrade::MarketDataAdapter, public FIX::Application {
       active_orders_;
   boost::unordered_map<std::pair<std::string, std::string>, const Security*>
       sec_of_name_;
-  opentrade::TaskPool tp_;
-  tbb::concurrent_unordered_set<Security::IdType> subs_;
   tbb::concurrent_unordered_set<std::string> used_ids_;
 };
 
@@ -232,10 +229,6 @@ void SimServer::HandleTick(const Security* sec, char type, double px,
         it++;
     }
   });
-}
-
-void SimServer::Subscribe(const Security& sec) noexcept {
-  subs_.insert(sec.id);
 }
 
 void SimServer::fromApp(const FIX::Message& msg,

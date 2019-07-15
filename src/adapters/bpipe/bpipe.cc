@@ -131,15 +131,7 @@ void BPIPE::Reconnect() noexcept {
   });
 }
 
-void BPIPE::Subscribe(const opentrade::Security& sec) noexcept {
-  tp_.AddTask([this, &sec] {
-    if (!subs_.insert(&sec).second) return;
-    if (!connected()) return;
-    Subscribe2(sec);
-  });
-}
-
-void BPIPE::Subscribe2(const opentrade::Security& sec) {
+void BPIPE::SubscribeSync(const opentrade::Security& sec) noexcept {
   bbg::SubscriptionList sub;
   std::string symbol("//blp/mktdata/bbgid/");
   symbol += sec.bbgid;
@@ -151,7 +143,7 @@ void BPIPE::Subscribe2(const opentrade::Security& sec) {
       "BEST_ASK1_SZ,BEST_ASK2_SZ,BEST_ASK3_SZ,BEST_ASK4_SZ,BEST_ASK5_SZ";
   if (depth_) fields += depth;
 
-  auto ticker = ++ticker_counter_;
+  auto ticker = ++request_counter_;
   tickers_[ticker] = &sec;
   sub.add(symbol.c_str(), fields.c_str(), "", bbg::CorrelationId(ticker));
   session_->subscribe(sub, identity_);
@@ -230,7 +222,7 @@ void BPIPE::ProcessResponse(const bbg::Event& evt) {
     if (msg_type == "AuthorizationSuccess") {
       tp_.AddTask([this]() {
         connected_ = 1;
-        for (auto sec : subs_) Subscribe2(*sec);
+        ReSubscribeAll();
       });
       LOG_INFO(name() << ": Connected");
     } else if (msg_type == "AuthorizationFailure") {
@@ -306,8 +298,8 @@ void BPIPE::ProcessTokenStatus(const bbg::Event& evt) {
       LOG_INFO(name() << ": TokenGenerationSuccess");
       auto req = auth_service_.createAuthorizationRequest();
       req.set("token", msg.getElementAsString("token"));
-      session_->sendAuthorizationRequest(req, &identity_,
-                                         bbg::CorrelationId(++ticker_counter_));
+      session_->sendAuthorizationRequest(
+          req, &identity_, bbg::CorrelationId(++request_counter_));
     } else if (msg.messageType() == "TokenGenerationFailure") {
       LOG_ERROR(name() << ": TokenGenerationFailure");
     }

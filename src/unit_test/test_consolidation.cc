@@ -7,15 +7,6 @@ using fakeit::Mock;
 
 namespace opentrade {
 
-struct MockFeed : public MarketDataAdapter {
-  explicit MockFeed(const std::string& src) {
-    set_name(src);
-    config_["src"] = src;
-  }
-  void Start() noexcept override {}
-  void Subscribe(const opentrade::Security& sec) noexcept override {}
-};
-
 struct MockConsolidationHandler : public ConsolidationHandler {
   auto CreateInstrument(const Security& sec, DataSrc src,
                         Instrument* parent = nullptr) {
@@ -61,10 +52,10 @@ TEST_CASE("ConsolidationHandler", "[ConsolidationHandler]") {
   algo_mngr.Add(&handler);
   handler.Start();
 
-  md_mngr.Add(new MockFeed("A"));
-  md_mngr.Add(new MockFeed("B"));
-  md_mngr.Add(new MockFeed("C"));
-  md_mngr.Add(new MockFeed("D"));
+  md_mngr.Add(new DummyFeed("A"));
+  md_mngr.Add(new DummyFeed("B"));
+  md_mngr.Add(new DummyFeed("C"));
+  md_mngr.Add(new DummyFeed("D"));
 
   Security sec;
   sec.exchange = new Exchange;

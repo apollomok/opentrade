@@ -2,6 +2,8 @@
 #define OPENTRADE_MARKET_DATA_H_
 
 #include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_unordered_set.h>
+#include <atomic>
 #include <boost/python.hpp>
 #include <map>
 #include <set>
@@ -216,7 +218,13 @@ class MarketDataAdapter : public virtual NetworkAdapter {
  public:
   typedef tbb::concurrent_unordered_map<Security::IdType, MarketData>
       MarketDataMap;
-  virtual void Subscribe(const Security& sec) noexcept = 0;
+  void Subscribe(const Security& sec) {
+    tp_.AddTask([this, &sec]() {
+      if (!subs_.insert(&sec).second) return;
+      if (!connected()) return;
+      SubscribeSync(sec);
+    });
+  }
   DataSrc::IdType src() const { return src_; }
   void Update(Security::IdType id, const MarketData::Quote& q,
               uint32_t level = 0, time_t tm = 0);
@@ -235,7 +243,16 @@ class MarketDataAdapter : public virtual NetworkAdapter {
   void UpdateLastSize(Security::IdType id, double v, time_t tm = 0);
 
  protected:
+  void ReSubscribeAll() {
+    for (auto sec : subs_) SubscribeSync(*sec);
+  }
+  virtual void SubscribeSync(const Security& sec) noexcept = 0;
+
+ protected:
   MarketDataMap* md_ = nullptr;
+  std::atomic<int> request_counter_ = 0;
+  tbb::concurrent_unordered_set<const opentrade::Security*> subs_;
+  TaskPool tp_;
 
  private:
   DataSrc::IdType src_ = 0;

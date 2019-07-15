@@ -4,7 +4,6 @@
 #include "api/ThostFtdcMdApi.h"
 #include "opentrade/logger.h"
 #include "opentrade/market_data.h"
-#include "opentrade/task_pool.h"
 
 using Security = opentrade::Security;
 
@@ -13,11 +12,10 @@ class Data : public CThostFtdcMdSpi, public opentrade::MarketDataAdapter {
   ~Data();
   void Start() noexcept override;
   void Stop() noexcept override;
-  void Subscribe(const Security &sec) noexcept override;
   void Reconnect() noexcept override;
 
  private:
-  void Subscribe2(const Security &sec);
+  void SubscribeSync(const Security &sec) noexcept override;
   void Close();
   void OnFrontConnected() override;
   void OnFrontDisconnected(int reason) override;
@@ -45,10 +43,7 @@ class Data : public CThostFtdcMdSpi, public opentrade::MarketDataAdapter {
  private:
   CThostFtdcMdApi *api_ = nullptr;
   std::string address_, broker_id_, user_id_, password_;
-  std::unordered_set<const Security *> subs_;
   tbb::concurrent_unordered_map<std::string, const Security *> instruments_;
-  opentrade::TaskPool tp_;
-  std::atomic<int> request_counter_ = 0;
 };
 
 Data::~Data() { api_->Release(); }
@@ -77,14 +72,6 @@ void Data::Start() noexcept {
   Reconnect();
 }
 
-void Data::Subscribe(const Security &sec) noexcept {
-  tp_.AddTask([this, &sec]() {
-    if (!subs_.insert(&sec).second) return;
-    if (!connected()) return;
-    Subscribe2(sec);
-  });
-}
-
 void Data::Close() {
   connected_ = 0;
   if (api_) {
@@ -109,7 +96,7 @@ void Data::Reconnect() noexcept {
   });
 }
 
-void Data::Subscribe2(const Security &sec) {
+void Data::SubscribeSync(const Security &sec) noexcept {
   char *req[1] = {const_cast<char *>(sec.local_symbol)};
   instruments_[sec.local_symbol] = &sec;
   api_->SubscribeMarketData(req, 1);
@@ -238,8 +225,8 @@ void Data::OnRspUserLogin(CThostFtdcRspUserLoginField *rsp_user_login,
     return;
   }
   tp_.AddTask([this]() {
-    for (auto sec : subs_) Subscribe2(*sec);
     connected_ = 1;
+    ReSubscribeAll();
   });
   LOG_INFO(name() << ": User logged in");
 }
