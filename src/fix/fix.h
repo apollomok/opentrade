@@ -10,7 +10,6 @@
 #include <quickfix/NullStore.h>
 #include <quickfix/Session.h>
 #include <quickfix/ThreadedSocketInitiator.h>
-#include <quickfix/fix42/Allocation.h>
 #include <quickfix/fix42/ExecutionReport.h>
 #include <quickfix/fix42/NewOrderSingle.h>
 #include <quickfix/fix42/OrderCancelReject.h>
@@ -18,12 +17,23 @@
 #include <quickfix/fix42/OrderCancelRequest.h>
 #include <quickfix/fix42/OrderStatusRequest.h>
 #include <quickfix/fix42/Reject.h>
-#include <quickfix/fix42/SettlementInstructions.h>
+#include <quickfix/fix44/ExecutionReport.h>
+#include <quickfix/fix44/NewOrderSingle.h>
+#include <quickfix/fix44/OrderCancelReject.h>
+#include <quickfix/fix44/OrderCancelReplaceRequest.h>
+#include <quickfix/fix44/OrderCancelRequest.h>
+#include <quickfix/fix44/OrderStatusRequest.h>
+#include <quickfix/fix44/Reject.h>
 #include "quickfix/fix42/MarketDataIncrementalRefresh.h"
 #include "quickfix/fix42/MarketDataRequest.h"
 #include "quickfix/fix42/MarketDataRequestReject.h"
 #include "quickfix/fix42/MarketDataSnapshotFullRefresh.h"
 #include "quickfix/fix42/TradingSessionStatus.h"
+#include "quickfix/fix44/MarketDataIncrementalRefresh.h"
+#include "quickfix/fix44/MarketDataRequest.h"
+#include "quickfix/fix44/MarketDataRequestReject.h"
+#include "quickfix/fix44/MarketDataSnapshotFullRefresh.h"
+#include "quickfix/fix44/TradingSessionStatus.h"
 #undef throw
 
 #include "filelog.h"
@@ -39,10 +49,10 @@ namespace opentrade {
 static inline const std::string kRemoveTag = "<remove>";
 static inline const std::string kTagPrefix = "tag";
 
-class Fix : public FIX::Application,
-            public FIX::MessageCracker,
-            public ExchangeConnectivityAdapter,
-            public MarketDataAdapter {
+class FixAdapter : public FIX::Application,
+                   public FIX::MessageCracker,
+                   public ExchangeConnectivityAdapter,
+                   public MarketDataAdapter {
  public:
   void Start() noexcept override {
     CreatePriceSources();
@@ -413,44 +423,49 @@ class Fix : public FIX::Application,
       reqs_;
 };
 
-class Fix42 : public opentrade::Fix {
+template <typename NewOrderSingle, typename OrderCancelRequest,
+          typename ExecutionReport, typename TradingSessionStatus,
+          typename OrderCancelReject, typename MarketDataSnapshotFullRefresh,
+          typename MarketDataIncrementalRefresh,
+          typename MarketDataRequestReject, typename MarketDataRequest>
+class FixTmpl : public FixAdapter {
  public:
-  void onMessage(const FIX42::ExecutionReport& msg, const FIX::SessionID& id) {
+  void onMessage(const ExecutionReport& msg, const FIX::SessionID& id) {
     OnExecutionReport(msg, id);
   }
 
-  void onMessage(const FIX42::TradingSessionStatus& status,
+  void onMessage(const TradingSessionStatus& status,
                  const FIX::SessionID& session) override {
     LOG_INFO(name() << status);
   }
 
-  void onMessage(const FIX42::OrderCancelReject& msg,
-                 const FIX::SessionID& id) {
+  void onMessage(const OrderCancelReject& msg,
+                 const FIX::SessionID& id) override {
     OnCancelRejected(msg, id);
   }
 
   std::string Place(const opentrade::Order& ord) noexcept override {
-    FIX42::NewOrderSingle msg;
+    NewOrderSingle msg;
     return SetAndSend(ord, &msg);
   }
 
   std::string Cancel(const opentrade::Order& ord) noexcept override {
-    FIX42::OrderCancelRequest msg;
+    OrderCancelRequest msg;
     return SetAndSend(ord, &msg);
   }
 
-  void onMessage(const FIX42::MarketDataSnapshotFullRefresh& depth,
+  void onMessage(const MarketDataSnapshotFullRefresh& depth,
                  const FIX::SessionID& session) override {
-    OnMarketData<FIX42::MarketDataSnapshotFullRefresh::NoMDEntries>(depth);
+    OnMarketData<typename MarketDataSnapshotFullRefresh::NoMDEntries>(depth);
   }
 
-  void onMessage(const FIX42::MarketDataIncrementalRefresh& depth_refresh,
+  void onMessage(const MarketDataIncrementalRefresh& depth_refresh,
                  const FIX::SessionID& session) override {
-    OnMarketData<FIX42::MarketDataIncrementalRefresh::NoMDEntries>(
+    OnMarketData<typename MarketDataIncrementalRefresh::NoMDEntries>(
         depth_refresh);
   }
 
-  void onMessage(const FIX42::MarketDataRequestReject& reject,
+  void onMessage(const MarketDataRequestReject& reject,
                  const FIX::SessionID& session) override {
     auto req_id = atoi(reject.getField(FIX::FIELD::MDReqID).c_str());
     LOG_WARN(name() << ": #" << req_id << " subscription rejected");
@@ -464,7 +479,7 @@ class Fix42 : public opentrade::Fix {
       FIX::MarketDepth mkt_depth(GetDepth());
       auto n = ++request_counter_;
       FIX::MDReqID md_req_id(std::to_string(n));
-      FIX42::MarketDataRequest req(md_req_id, sub_type, mkt_depth);
+      MarketDataRequest req(md_req_id, sub_type, mkt_depth);
       req.set(FIX::MDUpdateType(FIX::MDUpdateType_INCREMENTAL_REFRESH));
       SetRelatedSymbol(sec, DataSrc(src->src()), &req);
       Send(&req);
@@ -474,11 +489,29 @@ class Fix42 : public opentrade::Fix {
 
   void SetRelatedSymbol(const Security& sec, DataSrc src,
                         FIX::Message* msg) noexcept override {
-    FIX42::MarketDataRequest::NoRelatedSym symbol_group;
+    typename MarketDataRequest::NoRelatedSym symbol_group;
     symbol_group.set(FIX::Symbol(sec.symbol));
     if (src.value) symbol_group.set(FIX::SecurityExchange(src.str()));
     msg->addGroup(symbol_group);
   }
+};
+
+class Fix42
+    : public FixTmpl<FIX42::NewOrderSingle, FIX42::OrderCancelRequest,
+                     FIX42::ExecutionReport, FIX42::TradingSessionStatus,
+                     FIX42::OrderCancelReject,
+                     FIX42::MarketDataSnapshotFullRefresh,
+                     FIX42::MarketDataIncrementalRefresh,
+                     FIX42::MarketDataRequestReject, FIX42::MarketDataRequest> {
+};
+
+class Fix44
+    : public FixTmpl<FIX44::NewOrderSingle, FIX44::OrderCancelRequest,
+                     FIX44::ExecutionReport, FIX44::TradingSessionStatus,
+                     FIX44::OrderCancelReject,
+                     FIX44::MarketDataSnapshotFullRefresh,
+                     FIX44::MarketDataIncrementalRefresh,
+                     FIX44::MarketDataRequestReject, FIX44::MarketDataRequest> {
 };
 
 }  // namespace opentrade
