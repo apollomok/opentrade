@@ -532,10 +532,10 @@ void Connection::HandleMessageSync(const std::string& msg,
         json j2;
         while (f.getline(str, LINE_LENGTH)) {
           int tm;
-          double a, b;
-          if (3 == sscanf(str, "%d %lf %lf", &tm, &a, &b)) {
+          double realized, unrealized;
+          if (3 == sscanf(str, "%d %lf %lf", &tm, &realized, &unrealized)) {
             if (tm <= tm0) continue;
-            j2.push_back(json{tm, a, b});
+            j2.push_back(json{tm, realized, unrealized});
           }
         }
         if (j2.size()) Send(json{"Pnl", id, j2});

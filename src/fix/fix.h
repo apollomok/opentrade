@@ -4,7 +4,6 @@
 #include <tbb/concurrent_unordered_map.h>
 #include <fstream>
 #include <memory>
-#include <optional>
 #define throw(...)
 #include <quickfix/MessageCracker.h>
 #include <quickfix/NullStore.h>
