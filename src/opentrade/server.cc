@@ -83,6 +83,18 @@ void Server::Publish(Confirmation::Ptr cm) {
   });
 }
 
+void Server::Publish(const std::string& msg) {
+#ifdef BACKTEST
+  return;
+#endif
+  kIoService->post([msg]() {
+    LockGuard lock(kMutex);
+    for (auto& pair : kSocketMap) {
+      pair.second->Send(msg);
+    }
+  });
+}
+
 void Server::Publish(const SubAccount& acc, const std::string& msg) {
 #ifdef BACKTEST
   return;

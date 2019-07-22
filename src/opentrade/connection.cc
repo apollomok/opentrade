@@ -1146,17 +1146,30 @@ void Connection::OnSecurities(const json& j) {
   Send(out);
 }
 
-void Connection::Disable(const json& j, AccountBase* acc) {
+bool Connection::Disable(const json& j, AccountBase* acc) {
   if (!acc) {
     Send(json{"error", "", "Unknown account id"});
-    return;
+    return false;
   }
+  auto old = acc->disabled_reason.load();
   if (j.size() == 4) {  // enable
     acc->disabled_reason.store(boost::shared_ptr<std::string>{});
-    return;
+    return !!old;
   }
   acc->disabled_reason.store(
       boost::shared_ptr<std::string>(new std::string(Get<std::string>(j[4]))));
+  return !old;
+}
+
+std::string Connection::GetDisabledSubAccounts() {
+  json out = {"disabled_sub_accounts"};
+  for (auto& pair : AccountManager::Instance().sub_accounts_) {
+    auto reason = pair.second->disabled_reason.load();
+    if (reason) {
+      out.push_back(json{pair.second->name, *reason});
+    }
+  }
+  return out.dump();
 }
 
 void Connection::OnLogin(const std::string& action, const json& j) {
@@ -1217,6 +1230,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
       if (pair.first == kConsolidationSrc) continue;
       Send(json{"src", DataSrc::GetStr(pair.first)});
     }
+    Send(GetDisabledSubAccounts());
     for (auto& pair : AlgoManager::Instance().adapters()) {
       if (pair.first.at(0) == '_') continue;
       if (dynamic_cast<IndicatorHandler*>(pair.second)) continue;
@@ -1268,11 +1282,11 @@ void Connection::SendTestMsg(const std::string& token, const std::string& msg,
 }
 
 void Connection::OnAdmin(const json& j) {
-  if (!user_->is_admin) {
-    throw std::runtime_error("admin required");
-  }
   auto name = Get<std::string>(j[1]);
   auto action = Get<std::string>(j[2]);
+  if (!user_->is_admin && !(name == "sub accounts" && action == "disable")) {
+    throw std::runtime_error("admin required");
+  }
   if (!strcasecmp(name.c_str(), "users")) {
     OnAdminUsers(j, name, action);
   } else if (!strcasecmp(name.c_str(), "broker accounts")) {
@@ -1902,7 +1916,14 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     inst.sub_account_of_name_[sub->name] = sub;
     Send(json{"admin", name, action, sub->id});
   } else if (action == "disable") {
-    Disable(j, const_cast<SubAccount*>(inst.GetSubAccount(GetNum(j[3]))));
+    auto id = GetNum(j[3]);
+    if (user_->is_admin || user_->GetSubAccount(id)) {
+      if (Disable(j, const_cast<SubAccount*>(inst.GetSubAccount(id)))) {
+        Server::Publish(GetDisabledSubAccounts());
+      }
+    } else {
+      throw std::runtime_error("permission required");
+    }
   }
 }
 
