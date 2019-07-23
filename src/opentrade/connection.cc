@@ -1167,7 +1167,7 @@ std::string Connection::GetDisabledSubAccounts() {
   for (auto& pair : AccountManager::Instance().sub_accounts_) {
     auto reason = pair.second->disabled_reason.load();
     if (reason) {
-      out.push_back(json{pair.second->name, *reason});
+      out.push_back(json{pair.second->id, *reason});
     }
   }
   return out.dump();
@@ -1211,10 +1211,6 @@ void Connection::OnLogin(const std::string& action, const json& j) {
   if (!user_ && !transport_->stateless) {
     user_ = user;
     PublishMarketdata();
-    auto accs = user->sub_accounts();
-    for (auto& pair : *accs) {
-      Send(json{"sub_account", pair.first, pair.second->name});
-    }
     if (user->is_admin) {
       for (auto& pair : AccountManager::Instance().users_) {
         auto tmp = pair.second->sub_accounts();
@@ -1222,6 +1218,14 @@ void Connection::OnLogin(const std::string& action, const json& j) {
           Send(json{"user_sub_account", pair.first, pair2.first,
                     pair2.second->name});
         }
+      }
+      for (auto& pair : AccountManager::Instance().sub_accounts_) {
+        Send(json{"sub_account", pair.first, pair.second->name});
+      }
+    } else {
+      auto accs = user->sub_accounts();
+      for (auto& pair : *accs) {
+        Send(json{"sub_account", pair.first, pair.second->name});
       }
     }
     for (auto& pair : AccountManager::Instance().broker_accounts_) {
@@ -1362,12 +1366,12 @@ void Connection::OnAdmin(const json& j) {
     }
     auto accs = user->sub_accounts();
     if (action == "add") {
-      auto tmp = std::make_shared<User::SubAccountMap>(*accs);
+      auto tmp = boost::make_shared<User::SubAccountMap>(*accs);
       tmp->emplace(sub->id, sub);
       std::atomic_thread_fence(std::memory_order_release);
       user->set_sub_accounts(tmp);
     } else if (action == "delete") {
-      auto tmp = std::make_shared<User::SubAccountMap>();
+      auto tmp = boost::make_shared<User::SubAccountMap>();
       for (auto& pair : *accs) {
         if (pair.first == sub_id) continue;
         tmp->emplace(pair.first, pair.second);
@@ -1461,12 +1465,12 @@ void Connection::OnAdmin(const json& j) {
     }
     auto accs = sub->broker_accounts();
     if (action == "add") {
-      auto tmp = std::make_shared<SubAccount::BrokerAccountMap>(*accs);
+      auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>(*accs);
       tmp->emplace(exch->id, broker);
       std::atomic_thread_fence(std::memory_order_release);
       sub->set_broker_accounts(tmp);
     } else if (action == "delete") {
-      auto tmp = std::make_shared<SubAccount::BrokerAccountMap>();
+      auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>();
       for (auto& pair : *accs) {
         if (pair.first == exch_id) continue;
         tmp->emplace(pair.first, pair.second);

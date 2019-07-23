@@ -26,11 +26,13 @@ const typename V::mapped_type& FindInMap(const V& map,
 template <typename V>
 const typename V::mapped_type& FindInMap(std::shared_ptr<V> map,
                                          const typename V::key_type& key) {
-  static const typename V::mapped_type kValue{};
-  if (!map) return kValue;
-  auto it = map->find(key);
-  if (it == map->end()) return kValue;
-  return it->second;
+  return FindInMap(*map, key);
+}
+
+template <typename V>
+const typename V::mapped_type& FindInMap(boost::shared_ptr<V> map,
+                                         const typename V::key_type& key) {
+  return FindInMap(*map, key);
 }
 
 template <typename M, typename V>

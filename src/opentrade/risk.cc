@@ -90,7 +90,7 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
 
   auto disabled_reason = acc.disabled_reason.load();
   if (disabled_reason) {
-    snprintf(buf, sizeof(buf), "%s %s is disabled by %s", name, acc.name,
+    snprintf(buf, sizeof(buf), "%s %s is disabled by \"%s\"", name, acc.name,
              disabled_reason->c_str());
     kRiskError = buf;
     return false;

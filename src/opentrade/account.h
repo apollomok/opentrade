@@ -2,6 +2,7 @@
 #define OPENTRADE_ACCOUNT_H_
 
 #include <tbb/concurrent_unordered_map.h>
+#include <boost/make_shared.hpp>
 #include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_map>
@@ -39,10 +40,12 @@ struct BrokerAccount : public AccountBase, public ParamsBase {
 struct SubAccount : public AccountBase {
   typedef std::unordered_map<Exchange::IdType, const BrokerAccount*>
       BrokerAccountMap;
-  typedef std::shared_ptr<const BrokerAccountMap> BrokerAccountMapPtr;
-  BrokerAccountMapPtr broker_accounts() const { return broker_accounts_; }
+  typedef boost::shared_ptr<const BrokerAccountMap> BrokerAccountMapPtr;
+  BrokerAccountMapPtr broker_accounts() const {
+    return broker_accounts_.load();
+  }
   void set_broker_accounts(BrokerAccountMapPtr accs) {
-    broker_accounts_ = accs;
+    broker_accounts_.store(accs);
   }
   const BrokerAccount* GetBrokerAccount(Exchange::IdType id) const {
     assert(id);
@@ -52,7 +55,8 @@ struct SubAccount : public AccountBase {
   }
 
  private:
-  BrokerAccountMapPtr broker_accounts_ = std::make_shared<BrokerAccountMap>();
+  boost::atomic_shared_ptr<const BrokerAccountMap> broker_accounts_ =
+      BrokerAccountMapPtr(new BrokerAccountMap);
 };
 
 struct User : public AccountBase {
@@ -60,15 +64,16 @@ struct User : public AccountBase {
   bool is_admin = false;
   typedef std::unordered_map<SubAccount::IdType, const SubAccount*>
       SubAccountMap;
-  typedef std::shared_ptr<const SubAccountMap> SubAccountMapPtr;
+  typedef boost::shared_ptr<const SubAccountMap> SubAccountMapPtr;
   const SubAccount* GetSubAccount(SubAccount::IdType id) const {
-    return FindInMap(sub_accounts_, id);
+    return FindInMap(sub_accounts(), id);
   }
-  SubAccountMapPtr sub_accounts() const { return sub_accounts_; }
-  void set_sub_accounts(SubAccountMapPtr accs) { sub_accounts_ = accs; }
+  SubAccountMapPtr sub_accounts() const { return sub_accounts_.load(); }
+  void set_sub_accounts(SubAccountMapPtr accs) { sub_accounts_.store(accs); }
 
  private:
-  SubAccountMapPtr sub_accounts_ = std::make_shared<SubAccountMap>();
+  boost::atomic_shared_ptr<const SubAccountMap> sub_accounts_ =
+      SubAccountMapPtr(new SubAccountMap);
 };
 
 inline const User kEmptyUser;
