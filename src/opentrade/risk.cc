@@ -81,6 +81,13 @@ static bool CheckMsgRate(const char* name, const AccountBase& acc,
 static bool Check(const char* name, const Order& ord, const AccountBase& acc,
                   const Position* pos) {
   char buf[256];
+  if (acc.is_disabled) {
+    char buf[256];
+    snprintf(buf, sizeof(buf), "%s %s is disabled", name, acc.name);
+    kRiskError = buf;
+    return false;
+  }
+
   auto disabled_reason = acc.disabled_reason.load();
   if (disabled_reason) {
     snprintf(buf, sizeof(buf), "%s %s is disabled by %s", name, acc.name,
@@ -263,13 +270,6 @@ bool RiskManager::Check(const Order& ord) {
           "broker_account", ord, *ord.broker_account,
           &PositionManager::Instance().Get(*ord.broker_account, *ord.sec)))
     return false;
-
-  if (ord.user->is_disabled) {
-    char buf[256];
-    snprintf(buf, sizeof(buf), "user %s is disabled", ord.user->name);
-    kRiskError = buf;
-    return false;
-  }
 
   if (!opentrade::Check("user", ord, *ord.user,
                         &PositionManager::Instance().Get(*ord.user, *ord.sec)))

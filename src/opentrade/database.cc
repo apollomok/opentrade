@@ -118,6 +118,7 @@ static const char create_tables_sql[] = R"(
   create table if not exists sub_account(
     id int2 primary key default nextval('sub_account_id_seq') not null,
     "name" varchar(50) not null,
+    is_disabled boolean,
     limits varchar(1000)
   );
   create unique index if not exists sub_account_name_index on sub_account("name");
@@ -134,6 +135,7 @@ static const char create_tables_sql[] = R"(
     "name" varchar(50) not null,
     adapter varchar(50) not null,
     params varchar(1000),
+    is_disabled boolean,
     limits varchar(1000)
   );
   create unique index if not exists broker_account_name_index on broker_account("name");
@@ -251,6 +253,13 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
               "position(sub_account_id, security_id, tm desc);";
     } catch (...) {
     }
+  }
+
+  try {
+    *Session() << "select is_disabled from sub_account limit 1";
+  } catch (const soci::soci_error& e) {
+    *Session() << "alter table sub_account add column is_disabled boolean;";
+    *Session() << "alter table broker_account add column is_disabled boolean;";
   }
 }
 

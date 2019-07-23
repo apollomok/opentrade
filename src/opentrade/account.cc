@@ -31,7 +31,7 @@ void AccountManager::Initialize() {
   }
 
   query = R"(
-    select id, "name", limits from sub_account 
+    select id, "name", is_disabled, limits from sub_account 
   )";
   st = sql->prepare << query;
   for (auto it = st.begin(); it != st.end(); ++it) {
@@ -39,13 +39,14 @@ void AccountManager::Initialize() {
     auto i = 0;
     s->id = Database::GetValue(*it, i++, 0);
     s->name = Database::GetValue(*it, i++, "");
+    s->is_disabled = Database::GetValue(*it, i++, 0);
     s->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));
     self.sub_accounts_.emplace(s->id, s);
     self.sub_account_of_name_.emplace(s->name, s);
   }
 
   query = R"(
-    select id, "name", adapter, params, limits from broker_account 
+    select id, "name", adapter, params, is_disabled, limits from broker_account 
   )";
   st = sql->prepare << query;
   for (auto it = st.begin(); it != st.end(); ++it) {
@@ -56,6 +57,7 @@ void AccountManager::Initialize() {
     b->adapter_name = Database::GetValue(*it, i++, "");
     b->adapter = ExchangeConnectivityManager::Instance().Get(b->adapter_name);
     b->set_params(Database::GetValue(*it, i++, kEmptyStr));
+    b->is_disabled = Database::GetValue(*it, i++, 0);
     b->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));
     self.broker_accounts_.emplace(b->id, b);
     self.broker_account_of_name_.emplace(b->name, b);
