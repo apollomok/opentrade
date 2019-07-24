@@ -33,6 +33,8 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
 
 [![Algo Editor](https://github.com/opentradesolutions/opentrade/blob/master/imgs/algo-editor.png)](https://raw.githubusercontent.com/opentradesolutions/opentrade/master/imgs/algo-editor.png)
 
+[![OpenRisk](https://github.com/opentradesolutions/openrisk/blob/master/image.png)](https://raw.githubusercontent.com/opentradesolutions/openrisk/master/image.png)
+
 ---
 
 # Steps to run on Ubuntu 18.04 or later
