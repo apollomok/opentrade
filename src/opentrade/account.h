@@ -2,7 +2,6 @@
 #define OPENTRADE_ACCOUNT_H_
 
 #include <tbb/concurrent_unordered_map.h>
-#include <boost/make_shared.hpp>
 #include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_map>

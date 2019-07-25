@@ -1,5 +1,6 @@
 #include "security.h"
 
+#include <boost/make_shared.hpp>
 #include <cstring>
 #include <unordered_map>
 
@@ -11,7 +12,7 @@ namespace opentrade {
 
 std::string Exchange::ParseTickSizeTable(const std::string& str) {
   if (str.size()) {
-    auto tmp = std::make_shared<TickSizeTable>();
+    auto tmp = boost::make_shared<TickSizeTable>();
     for (auto& str : Split(str, ",;\n")) {
       double low, up, value;
       if (sscanf(str.c_str(), "%lf %lf %lf", &low, &up, &value) == 3) {
@@ -24,8 +25,7 @@ std::string Exchange::ParseTickSizeTable(const std::string& str) {
     if (!tmp->empty()) {
       tmp->shrink_to_fit();
       std::sort(tmp->begin(), tmp->end());
-      std::atomic_thread_fence(std::memory_order_release);
-      tick_size_table_ = tmp;
+      tick_size_table_.store(tmp);
     }
   }
   return {};
@@ -110,7 +110,7 @@ std::string Exchange::GetTickSizeTableString() const {
 
 std::string Exchange::ParseHalfDays(const std::string& str) {
   if (str.size()) {
-    auto tmp = std::make_shared<HalfDays>();
+    auto tmp = boost::make_shared<HalfDays>();
     for (auto& f : Split(str, ",;\n")) {
       auto i = atoi(f.c_str());
       if (i > 0) {
@@ -120,8 +120,7 @@ std::string Exchange::ParseHalfDays(const std::string& str) {
     if (tmp->empty()) {
       return "Invalid half days format, expect '<YYYmmdd>[,;\n]...'";
     }
-    std::atomic_thread_fence(std::memory_order_release);
-    half_days_ = tmp;
+    half_days_.store(tmp);
   }
   return {};
 }

@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <boost/filesystem.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -1368,7 +1369,6 @@ void Connection::OnAdmin(const json& j) {
     if (action == "add") {
       auto tmp = boost::make_shared<User::SubAccountMap>(*accs);
       tmp->emplace(sub->id, sub);
-      std::atomic_thread_fence(std::memory_order_release);
       user->set_sub_accounts(tmp);
     } else if (action == "delete") {
       auto tmp = boost::make_shared<User::SubAccountMap>();
@@ -1376,7 +1376,6 @@ void Connection::OnAdmin(const json& j) {
         if (pair.first == sub_id) continue;
         tmp->emplace(pair.first, pair.second);
       }
-      std::atomic_thread_fence(std::memory_order_release);
       user->set_sub_accounts(tmp);
     }
     Send(json{"admin", name, action});
@@ -1467,7 +1466,6 @@ void Connection::OnAdmin(const json& j) {
     if (action == "add") {
       auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>(*accs);
       tmp->emplace(exch->id, broker);
-      std::atomic_thread_fence(std::memory_order_release);
       sub->set_broker_accounts(tmp);
     } else if (action == "delete") {
       auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>();
@@ -1475,7 +1473,6 @@ void Connection::OnAdmin(const json& j) {
         if (pair.first == exch_id) continue;
         tmp->emplace(pair.first, pair.second);
       }
-      std::atomic_thread_fence(std::memory_order_release);
       sub->set_broker_accounts(tmp);
     }
     Send(json{"admin", name, action});

@@ -186,7 +186,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("id", &SubAccount::id)
       .def_readonly("name", &SubAccount::name);
 
-  bp::class_<Exchange>("Exchange", bp::no_init)
+  bp::class_<Exchange, boost::noncopyable>("Exchange", bp::no_init)
       .def("__str__", +[](const Exchange &ex) { return std::string(ex.name); })
       .def_readonly("name", &Exchange::name)
       .def_readonly("mic", &Exchange::mic)
