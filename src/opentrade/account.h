@@ -2,6 +2,7 @@
 #define OPENTRADE_ACCOUNT_H_
 
 #include <tbb/concurrent_unordered_map.h>
+#include <boost/atomic.hpp>
 #include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_map>
@@ -41,10 +42,10 @@ struct SubAccount : public AccountBase {
       BrokerAccountMap;
   typedef boost::shared_ptr<const BrokerAccountMap> BrokerAccountMapPtr;
   BrokerAccountMapPtr broker_accounts() const {
-    return broker_accounts_.load();
+    return broker_accounts_.load(boost::memory_order_relaxed);
   }
   void set_broker_accounts(BrokerAccountMapPtr accs) {
-    broker_accounts_.store(accs);
+    broker_accounts_.store(accs, boost::memory_order_release);
   }
   const BrokerAccount* GetBrokerAccount(Exchange::IdType id) const {
     assert(id);
@@ -67,8 +68,12 @@ struct User : public AccountBase {
   const SubAccount* GetSubAccount(SubAccount::IdType id) const {
     return FindInMap(sub_accounts(), id);
   }
-  SubAccountMapPtr sub_accounts() const { return sub_accounts_.load(); }
-  void set_sub_accounts(SubAccountMapPtr accs) { sub_accounts_.store(accs); }
+  SubAccountMapPtr sub_accounts() const {
+    return sub_accounts_.load(boost::memory_order_relaxed);
+  }
+  void set_sub_accounts(SubAccountMapPtr accs) {
+    sub_accounts_.store(accs, boost::memory_order_release);
+  }
 
  private:
   boost::atomic_shared_ptr<const SubAccountMap> sub_accounts_ =

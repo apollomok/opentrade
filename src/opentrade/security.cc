@@ -25,7 +25,7 @@ std::string Exchange::ParseTickSizeTable(const std::string& str) {
     if (!tmp->empty()) {
       tmp->shrink_to_fit();
       std::sort(tmp->begin(), tmp->end());
-      tick_size_table_.store(tmp);
+      tick_size_table_.store(tmp, boost::memory_order_release);
     }
   }
   return {};
@@ -120,7 +120,7 @@ std::string Exchange::ParseHalfDays(const std::string& str) {
     if (tmp->empty()) {
       return "Invalid half days format, expect '<YYYmmdd>[,;\n]...'";
     }
-    half_days_.store(tmp);
+    half_days_.store(tmp, boost::memory_order_release);
   }
   return {};
 }

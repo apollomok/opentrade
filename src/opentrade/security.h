@@ -2,6 +2,7 @@
 #define OPENTRADE_SECURITY_H_
 
 #include <tbb/concurrent_unordered_map.h>
+#include <boost/atomic.hpp>
 #include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_set>
@@ -34,7 +35,9 @@ struct Exchange : public ParamsBase {
   };
   typedef std::vector<TickSizeTuple> TickSizeTable;
   typedef boost::shared_ptr<const TickSizeTable> TickSizeTablePtr;
-  TickSizeTablePtr tick_size_table() const { return tick_size_table_.load(); }
+  TickSizeTablePtr tick_size_table() const {
+    return tick_size_table_.load(boost::memory_order_relaxed);
+  }
   double GetTickSize(double ref) const;
   int trade_start = 0;  // seconds since midnight
   int break_start = 0;
@@ -42,7 +45,9 @@ struct Exchange : public ParamsBase {
   int half_day = 0;
   typedef std::unordered_set<int> HalfDays;
   typedef boost::shared_ptr<const HalfDays> HalfDaysPtr;
-  HalfDaysPtr half_days() const { return half_days_.load(); }
+  HalfDaysPtr half_days() const {
+    return half_days_.load(boost::memory_order_relaxed);
+  }
 
   int GetSeconds() const {  // seconds since midnight in exchange time zone
     return opentrade::GetSeconds(utc_time_offset);
