@@ -61,8 +61,8 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
     });
   }
 
-  void OnTrade(Security::IdType id, const MarketData* md, time_t tm, double px,
-               double qty) noexcept override {
+  void OnTrade(DataSrc::IdType src, Security::IdType id, const MarketData* md,
+               time_t tm, double px, double qty) noexcept override {
     auto bar = const_cast<Ind*>(md->Get<Ind>());
     if (!bar) return;
     bar->Update(px, qty);

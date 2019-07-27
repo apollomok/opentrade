@@ -113,7 +113,7 @@ static inline void UpdateTrade(MarketData* md, DataSrc::IdType src,
   auto& t = md->trade;
   if (last_price > 0) t.UpdatePx(last_price);
   if (last_qty > 0) t.UpdateVolume(last_qty);
-  md->CheckTradeHook(id);
+  md->CheckTradeHook(src, id);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src, id)) return;
   x.Update(src, id);
@@ -201,7 +201,7 @@ void MarketDataAdapter::UpdateLastSize(Security::IdType id, double v,
   auto& md = (*md_)[id];
   md.trade.tm = md.tm = tm ? tm : GetTime();
   md.trade.UpdateVolume(v);
-  md.CheckTradeHook(id);
+  md.CheckTradeHook(src(), id);
   auto& x = AlgoManager::Instance();
   if (!x.IsSubscribed(src_, id)) return;
   x.Update(src_, id);
@@ -215,7 +215,7 @@ void MarketDataAdapter::UpdateMidAsLastPrice(Security::IdType id, time_t tm) {
     auto px = (q.ask_price + q.bid_price) / 2;
     md.trade.tm = md.tm = tm ? tm : GetTime();
     t.UpdatePx(px);
-    md.CheckTradeHook(id);
+    md.CheckTradeHook(src(), id);
     auto& x = AlgoManager::Instance();
     if (!x.IsSubscribed(src_, id)) return;
     x.Update(src_, id);

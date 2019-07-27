@@ -15,11 +15,49 @@
 
 namespace opentrade {
 
+struct DataSrc {
+  typedef uint32_t IdType;
+
+  IdType value = 0;
+  DataSrc() : value(0) {}
+  explicit DataSrc(IdType v) : value(v) {}
+  explicit DataSrc(const std::string& src) : value(GetId(src.c_str())) {}
+  operator IdType() const { return value; }
+  const char* str() const { return GetStr(value); }
+  const IdType operator()() { return value; }
+  operator IdType() { return value; }
+  DataSrc& operator=(IdType v) {
+    value = v;
+    return *this;
+  }
+  DataSrc& operator=(const std::string& v) {
+    value = GetId(v.c_str());
+    return *this;
+  }
+
+  static constexpr IdType GetId(const char* src) {
+    if (!src || !*src) return 0;
+    return strlen(src) == 1 ? *src : (GetId(src + 1) << 8) + *src;
+  }
+
+  static const char* GetStr(IdType id) {
+    static thread_local char str[5];
+    auto i = 0u;
+    for (i = 0u; i < 4 && id; ++i) {
+      str[i] = id & 0xFF;
+      id >>= 8;
+    }
+    str[i] = 0;
+    return str;
+  }
+};
+
 struct MarketData;
 struct TradeTickHook {
   // OnTrade is not ensured to be called in the same thread of its algo
-  virtual void OnTrade(Security::IdType id, const MarketData* md, time_t tm,
-                       double px, double qty) noexcept = 0;
+  virtual void OnTrade(DataSrc::IdType src, Security::IdType id,
+                       const MarketData* md, time_t tm, double px,
+                       double qty) noexcept = 0;
 };
 
 class Instrument;
@@ -153,13 +191,13 @@ struct MarketData {
         mngr_->trade_tick_hooks.end());
   }
 
-  void CheckTradeHook(Security::IdType id) {
+  void CheckTradeHook(DataSrc::IdType src, Security::IdType id) {
     if (!mngr_) return;
     if (mngr_->trade_tick_hooks.empty()) return;
     std::shared_lock<std::shared_mutex> lock(mutex_);
     // to-do: make it async without using TaskPool
     for (auto& hook : mngr_->trade_tick_hooks) {
-      hook->OnTrade(id, this, tm, trade.close, trade.qty);
+      hook->OnTrade(src, id, this, tm, trade.close, trade.qty);
     }
   }
 
@@ -175,43 +213,6 @@ struct MarketData {
  private:
   IndicatorManager* mngr_ = nullptr;
   static inline std::shared_mutex mutex_;
-};
-
-struct DataSrc {
-  typedef uint32_t IdType;
-
-  IdType value = 0;
-  DataSrc() : value(0) {}
-  explicit DataSrc(IdType v) : value(v) {}
-  explicit DataSrc(const std::string& src) : value(GetId(src.c_str())) {}
-  operator IdType() const { return value; }
-  const char* str() const { return GetStr(value); }
-  const IdType operator()() { return value; }
-  operator IdType() { return value; }
-  DataSrc& operator=(IdType v) {
-    value = v;
-    return *this;
-  }
-  DataSrc& operator=(const std::string& v) {
-    value = GetId(v.c_str());
-    return *this;
-  }
-
-  static constexpr IdType GetId(const char* src) {
-    if (!src || !*src) return 0;
-    return strlen(src) == 1 ? *src : (GetId(src + 1) << 8) + *src;
-  }
-
-  static const char* GetStr(IdType id) {
-    static thread_local char str[5];
-    auto i = 0u;
-    for (i = 0u; i < 4 && id; ++i) {
-      str[i] = id & 0xFF;
-      id >>= 8;
-    }
-    str[i] = 0;
-    return str;
-  }
 };
 
 class MarketDataAdapter : public virtual NetworkAdapter {
