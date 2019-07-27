@@ -5,6 +5,8 @@
 namespace opentrade {
 struct SimServerLive : public Algo, public TradeTickHook, public SimServer {
   std::string OnStart(const ParamMap& params) noexcept override {
+    latency_ = atoi(config("latency").c_str());
+    LOG_INFO(name() << ": latency=" << latency_ << "us");
     auto n = 0;
     for (auto& m : Split(config("markets"), ",; \n")) {
       auto exch = SecurityManager::Instance().GetExchange(m);
@@ -33,10 +35,14 @@ struct SimServerLive : public Algo, public TradeTickHook, public SimServer {
     auto q0 = md0.quote();
     auto q = md.quote();
     if (q.ask_price != q0.ask_price || q.ask_size != q0.ask_size) {
-      HandleTick(inst.sec().id, 'A', q.ask_price, q.ask_size);
+      auto qty = q.ask_size;
+      if (!qty && inst.sec().type == kForexPair) qty = 1e9;
+      HandleTick(inst.sec().id, 'A', q.ask_price, qty);
     }
     if (q.bid_price != q0.bid_price || q.bid_size != q0.bid_size) {
-      HandleTick(inst.sec().id, 'B', q.bid_price, q.bid_size);
+      auto qty = q.bid_size;
+      if (!qty && inst.sec().type == kForexPair) qty = 1e9;
+      HandleTick(inst.sec().id, 'B', q.bid_price, qty);
     }
   }
 };

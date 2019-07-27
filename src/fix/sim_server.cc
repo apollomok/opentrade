@@ -10,55 +10,59 @@ static thread_local boost::uuids::random_generator kUuidGen;
 void SimServer::HandleTick(Security::IdType sec, char type, double px,
                            double qty) {
   if (px <= 0 || qty <= 0) return;
-  tp_.AddTask([=]() {
-    auto size = qty;
-    auto& actives = active_orders_[sec];
-    if (actives.empty()) return;
-    auto it = actives.begin();
-    while (it != actives.end() && size > 0) {
-      auto& tuple = it->second;
-      bool ok;
-      switch (type) {
-        case 'T':
-          ok = (tuple.is_buy && px <= tuple.px) ||
-               (!tuple.is_buy && px >= tuple.px);
-          break;
-        case 'A':
-          ok = tuple.is_buy && px <= tuple.px;
-          break;
-        case 'B':
-          ok = !tuple.is_buy && px >= tuple.px;
-          break;
-        default:
-          ok = false;
-          break;
-      }
-      if (!ok) {
-        it++;
-        continue;
-      }
-      auto n = std::min(size, tuple.leaves);
-      size -= n;
-      tuple.leaves -= n;
-      assert(size >= 0);
-      assert(tuple.leaves >= 0);
-      auto& resp = tuple.resp;
-      resp.setField(FIX::ExecTransType('0'));
-      resp.setField(FIX::ExecType(
-          tuple.leaves <= 0 ? FIX::ExecType_FILL : FIX::ExecType_PARTIAL_FILL));
-      resp.setField(FIX::OrdStatus(
-          tuple.leaves <= 0 ? FIX::ExecType_FILL : FIX::ExecType_PARTIAL_FILL));
-      resp.setField(FIX::LastShares(n));
-      resp.setField(FIX::LastPx(tuple.px));
-      auto eid = boost::uuids::to_string(kUuidGen());
-      resp.setField(FIX::ExecID(eid));
-      session_->send(resp);
-      if (tuple.leaves <= 0)
-        it = actives.erase(it);
-      else
-        it++;
-    }
-  });
+  tp_.AddTask(
+      [=]() {
+        auto size = qty;
+        auto& actives = active_orders_[sec];
+        if (actives.empty()) return;
+        auto it = actives.begin();
+        while (it != actives.end() && size > 0) {
+          auto& tuple = it->second;
+          bool ok;
+          switch (type) {
+            case 'T':
+              ok = (tuple.is_buy && px <= tuple.px) ||
+                   (!tuple.is_buy && px >= tuple.px);
+              break;
+            case 'A':
+              ok = tuple.is_buy && px <= tuple.px;
+              break;
+            case 'B':
+              ok = !tuple.is_buy && px >= tuple.px;
+              break;
+            default:
+              ok = false;
+              break;
+          }
+          if (!ok) {
+            it++;
+            continue;
+          }
+          auto n = std::min(size, tuple.leaves);
+          size -= n;
+          tuple.leaves -= n;
+          assert(size >= 0);
+          assert(tuple.leaves >= 0);
+          auto& resp = tuple.resp;
+          resp.setField(FIX::ExecTransType('0'));
+          resp.setField(FIX::ExecType(tuple.leaves <= 0
+                                          ? FIX::ExecType_FILL
+                                          : FIX::ExecType_PARTIAL_FILL));
+          resp.setField(FIX::OrdStatus(tuple.leaves <= 0
+                                           ? FIX::ExecType_FILL
+                                           : FIX::ExecType_PARTIAL_FILL));
+          resp.setField(FIX::LastShares(n));
+          resp.setField(FIX::LastPx(tuple.px));
+          auto eid = boost::uuids::to_string(kUuidGen());
+          resp.setField(FIX::ExecID(eid));
+          session_->send(resp);
+          if (tuple.leaves <= 0)
+            it = actives.erase(it);
+          else
+            it++;
+        }
+      },
+      boost::posix_time::microseconds(latency_));
 }
 
 void SimServer::fromApp(const FIX::Message& msg,
@@ -126,105 +130,118 @@ void SimServer::fromApp(const FIX::Message& msg,
     msg.getField(side);
     auto is_buy = side == FIX::Side_BUY;
     if (type == FIX::OrdType_MARKET) {
-      auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
-      auto qty_q = is_buy ? q.ask_size : q.bid_size;
-      auto px_q = is_buy ? q.ask_price : q.bid_price;
-      if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
-      if (qty_q > 0 && px_q > 0) {
-        if (qty_q > qty) qty_q = qty;
-        resp.setField(FIX::ExecTransType('0'));
-        resp.setField(FIX::ExecType(qty_q == qty ? FIX::ExecType_FILL
-                                                 : FIX::ExecType_PARTIAL_FILL));
-        resp.setField(FIX::OrdStatus(
-            qty_q == qty ? FIX::ExecType_FILL : FIX::ExecType_PARTIAL_FILL));
-        resp.setField(FIX::LastShares(qty_q));
-        resp.setField(FIX::LastPx(px_q));
-        auto eid = boost::uuids::to_string(kUuidGen());
-        resp.setField(FIX::ExecID(eid));
-        session_->send(resp);
-        if (qty_q >= qty) return;
-      }
-      resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
-      resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
-      resp.setField(FIX::Text("no quote"));
-      session_->send(resp);
+      tp_.AddTask(
+          [=, &sec]() {
+            auto resp2 = resp;
+            auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
+            auto qty_q = is_buy ? q.ask_size : q.bid_size;
+            auto px_q = is_buy ? q.ask_price : q.bid_price;
+            if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
+            if (qty_q > 0 && px_q > 0) {
+              if (qty_q > qty) qty_q = qty;
+              resp2.setField(FIX::ExecTransType('0'));
+              resp2.setField(FIX::ExecType(qty_q == qty
+                                               ? FIX::ExecType_FILL
+                                               : FIX::ExecType_PARTIAL_FILL));
+              resp2.setField(FIX::OrdStatus(qty_q == qty
+                                                ? FIX::ExecType_FILL
+                                                : FIX::ExecType_PARTIAL_FILL));
+              resp2.setField(FIX::LastShares(qty_q));
+              resp2.setField(FIX::LastPx(px_q));
+              auto eid = boost::uuids::to_string(kUuidGen());
+              resp2.setField(FIX::ExecID(eid));
+              session_->send(resp2);
+              if (qty_q >= qty) return;
+            }
+            resp2.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
+            resp2.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
+            resp2.setField(FIX::Text("no quote"));
+            session_->send(resp2);
+          },
+          boost::posix_time::microseconds(latency_));
       return;
     }
-    tp_.AddTask([=, &sec]() {
-      auto resp = msg;
-      resp.getHeader().setField(FIX::MsgType("8"));
-      resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
-      OrderTuple ord{px, qty, is_buy, resp};
-      auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
-      auto qty_q = is_buy ? q.ask_size : q.bid_size;
-      auto px_q = is_buy ? q.ask_price : q.bid_price;
-      if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
-      if (qty_q > 0 && px_q > 0) {
-        if ((is_buy && px >= px_q) || (!is_buy && px <= px_q)) {
-          if (qty_q > qty) qty_q = qty;
-          resp.setField(FIX::ExecTransType('0'));
-          resp.setField(FIX::ExecType(
-              qty_q == qty ? FIX::ExecType_FILL : FIX::ExecType_PARTIAL_FILL));
-          resp.setField(FIX::OrdStatus(
-              qty_q == qty ? FIX::ExecType_FILL : FIX::ExecType_PARTIAL_FILL));
-          resp.setField(FIX::LastShares(qty_q));
-          resp.setField(FIX::LastPx(px_q));
-          auto eid = boost::uuids::to_string(kUuidGen());
-          resp.setField(FIX::ExecID(eid));
-          session_->send(resp);
-          ord.leaves -= qty_q;
-          assert(ord.leaves >= 0);
-          if (ord.leaves <= 0) return;
-        }
-      }
-      FIX::TimeInForce tif;
-      if (msg.isSetField(FIX::FIELD::TimeInForce)) msg.getField(tif);
-      if (tif == FIX::TimeInForce_IMMEDIATE_OR_CANCEL) {
-        resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
-        resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
-        resp.setField(FIX::Text("no quote"));
-        session_->send(resp);
-        return;
-      }
-      active_orders_[sec.id][clordid] = ord;
-    });
+    tp_.AddTask(
+        [=, &sec]() {
+          auto resp = msg;
+          resp.getHeader().setField(FIX::MsgType("8"));
+          resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
+          OrderTuple ord{px, qty, is_buy, resp};
+          auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
+          auto qty_q = is_buy ? q.ask_size : q.bid_size;
+          auto px_q = is_buy ? q.ask_price : q.bid_price;
+          if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
+          if (qty_q > 0 && px_q > 0) {
+            if ((is_buy && px >= px_q) || (!is_buy && px <= px_q)) {
+              if (qty_q > qty) qty_q = qty;
+              resp.setField(FIX::ExecTransType('0'));
+              resp.setField(FIX::ExecType(qty_q == qty
+                                              ? FIX::ExecType_FILL
+                                              : FIX::ExecType_PARTIAL_FILL));
+              resp.setField(FIX::OrdStatus(qty_q == qty
+                                               ? FIX::ExecType_FILL
+                                               : FIX::ExecType_PARTIAL_FILL));
+              resp.setField(FIX::LastShares(qty_q));
+              resp.setField(FIX::LastPx(px_q));
+              auto eid = boost::uuids::to_string(kUuidGen());
+              resp.setField(FIX::ExecID(eid));
+              session_->send(resp);
+              ord.leaves -= qty_q;
+              assert(ord.leaves >= 0);
+              if (ord.leaves <= 0) return;
+            }
+          }
+          FIX::TimeInForce tif;
+          if (msg.isSetField(FIX::FIELD::TimeInForce)) msg.getField(tif);
+          if (tif == FIX::TimeInForce_IMMEDIATE_OR_CANCEL) {
+            resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
+            resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
+            resp.setField(FIX::Text("no quote"));
+            session_->send(resp);
+            return;
+          }
+          active_orders_[sec.id][clordid] = ord;
+        },
+        boost::posix_time::microseconds(latency_));
   } else if (msgType == "F") {
-    tp_.AddTask([=]() {
-      auto resp = msg;
-      resp.getHeader().setField(FIX::MsgType("9"));
-      resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
-      resp.setField(
-          FIX::CxlRejResponseTo(FIX::CxlRejResponseTo_ORDER_CANCEL_REQUEST));
-      auto symbol = msg.getField(FIX::FIELD::Symbol);
-      auto exchange = msg.getField(FIX::FIELD::ExDestination);
-      auto it0 = sec_of_name_.find(std::make_pair(symbol, exchange));
-      if (it0 == sec_of_name_.end()) {
-        resp.setField(FIX::Text("unknown security"));
-        session_->send(resp);
-        return;
-      }
-      auto& actives = active_orders_[it0->second->id];
-      auto clordid = msg.getField(FIX::FIELD::ClOrdID);
-      if (used_ids_.find(clordid) != used_ids_.end()) {
-        resp.setField(FIX::Text("duplicate ClOrdID"));
-        session_->send(resp);
-        return;
-      }
-      used_ids_.insert(clordid);
-      auto orig = msg.getField(FIX::FIELD::OrigClOrdID);
-      auto it = actives.find(orig);
-      if (it == actives.end()) {
-        resp.setField(FIX::Text("inactive"));
-        session_->send(resp);
-        return;
-      }
-      resp = msg;
-      resp.getHeader().setField(FIX::MsgType("8"));
-      resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
-      resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
-      resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
-      session_->send(resp);
-      actives.erase(it);
-    });
+    tp_.AddTask(
+        [=]() {
+          auto resp = msg;
+          resp.getHeader().setField(FIX::MsgType("9"));
+          resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
+          resp.setField(FIX::CxlRejResponseTo(
+              FIX::CxlRejResponseTo_ORDER_CANCEL_REQUEST));
+          auto symbol = msg.getField(FIX::FIELD::Symbol);
+          auto exchange = msg.getField(FIX::FIELD::ExDestination);
+          auto it0 = sec_of_name_.find(std::make_pair(symbol, exchange));
+          if (it0 == sec_of_name_.end()) {
+            resp.setField(FIX::Text("unknown security"));
+            session_->send(resp);
+            return;
+          }
+          auto& actives = active_orders_[it0->second->id];
+          auto clordid = msg.getField(FIX::FIELD::ClOrdID);
+          if (used_ids_.find(clordid) != used_ids_.end()) {
+            resp.setField(FIX::Text("duplicate ClOrdID"));
+            session_->send(resp);
+            return;
+          }
+          used_ids_.insert(clordid);
+          auto orig = msg.getField(FIX::FIELD::OrigClOrdID);
+          auto it = actives.find(orig);
+          if (it == actives.end()) {
+            resp.setField(FIX::Text("inactive"));
+            session_->send(resp);
+            return;
+          }
+          resp = msg;
+          resp.getHeader().setField(FIX::MsgType("8"));
+          resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
+          resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
+          resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
+          session_->send(resp);
+          actives.erase(it);
+        },
+        boost::posix_time::microseconds(latency_));
   }
 }

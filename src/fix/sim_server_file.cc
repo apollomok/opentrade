@@ -2,13 +2,15 @@
 
 #include "opentrade/market_data.h"
 
-struct SimServerMd : public opentrade::MarketDataAdapter, public SimServer {
+struct SimServerFile : public opentrade::MarketDataAdapter, public SimServer {
   void Start() noexcept override;
   void Stop() noexcept override {}
   void SubscribeSync(const Security& sec) noexcept override {}
 };
 
-void SimServerMd::Start() noexcept {
+void SimServerFile::Start() noexcept {
+  latency_ = atoi(config("latency").c_str());
+  LOG_INFO(name() << ": latency=" << latency_ << "us");
   auto bbgid_file = config("bbgid_file");
   if (bbgid_file.empty()) {
     LOG_FATAL(name() << ": bbgid_file not given");
@@ -124,5 +126,5 @@ void SimServerMd::Start() noexcept {
 }
 
 extern "C" {
-opentrade::Adapter* create() { return new SimServerMd{}; }
+opentrade::Adapter* create() { return new SimServerFile{}; }
 }

@@ -55,6 +55,7 @@ class SimServer : public FIX::Application {
       sec_of_name_;
   tbb::concurrent_unordered_set<std::string> used_ids_;
   opentrade::TaskPool tp_;
+  int latency_ = 0;  // in microseconds
 };
 
 #endif  // FIX_SIM_SERVER_H_
