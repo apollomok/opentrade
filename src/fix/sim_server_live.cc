@@ -5,8 +5,7 @@
 namespace opentrade {
 struct SimServerLive : public Algo, public TradeTickHook, public SimServer {
   std::string OnStart(const ParamMap& params) noexcept override {
-    latency_ = atoi(config("latency").c_str());
-    LOG_INFO(name() << ": latency=" << latency_ << "us");
+    StartFix(*this);
     auto n = 0;
     for (auto& m : Split(config("markets"), ",; \n")) {
       auto exch = SecurityManager::Instance().GetExchange(m);

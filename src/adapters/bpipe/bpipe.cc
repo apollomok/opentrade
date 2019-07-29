@@ -14,8 +14,7 @@ static const bbg::Name kBid("BID");
 static const bbg::Name kAsk("ASK");
 static const bbg::Name kAskSize("ASK_SIZE");
 static const bbg::Name kBidSize("BID_SIZE");
-static const bbg::Name kPxLast("PX_LAST");
-static const bbg::Name kLastTrade("LAST_TRADE");
+static const bbg::Name kLastPrice("LAST_PRICE");
 static const bbg::Name kSizeLastTrade("SIZE_LAST_TRADE");
 static const bbg::Name kBestAsks[] = {
     bbg::Name{"BEST_ASK1"}, bbg::Name{"BEST_ASK2"}, bbg::Name{"BEST_ASK3"},
@@ -135,7 +134,7 @@ void BPIPE::SubscribeSync(const opentrade::Security& sec) noexcept {
   bbg::SubscriptionList sub;
   std::string symbol("//blp/mktdata/bbgid/");
   symbol += sec.bbgid;
-  std::string fields = "LAST_TRADE,SIZE_LAST_TRADE,BID,BID_SIZE,ASK,ASK_SIZE,";
+  std::string fields = "LAST_PRICE,SIZE_LAST_TRADE,BID,BID_SIZE,ASK,ASK_SIZE,";
   auto depth =
       "BEST_BID1,BEST_BID2,BEST_BID3,BEST_BID4,BEST_BID5,"
       "BEST_BID1_SZ,BEST_BID2_SZ,BEST_BID3_SZ,BEST_BID4_SZ,BEST_BID5_SZ,"
@@ -272,8 +271,8 @@ void BPIPE::ProcessSubscriptionData(const bbg::Event& evt) {
     if (!sec) continue;
     auto px = 0.;
     auto sz = 0.;
-    if (msg.hasElement(kLastTrade, true)) {
-      px = msg.getElementAsFloat64(kLastTrade);
+    if (msg.hasElement(kLastPrice, true)) {
+      px = msg.getElementAsFloat64(kLastPrice);
       if (msg.hasElement(kSizeLastTrade, true))
         sz = msg.getElementAsInt64(kSizeLastTrade);
     }

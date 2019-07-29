@@ -69,7 +69,7 @@ struct Exchange : public ParamsBase {
            (trade_start <= 0 || (t > trade_start && t < trade_end()));
   }
 
-  Security* Get(const std::string& name) {
+  Security* Get(const std::string& name) const {
     return FindInMap(security_of_name, name);
   }
 
@@ -158,14 +158,19 @@ class SecurityManager : public Singleton<SecurityManager> {
  public:
   static void Initialize();
   const char* check_sum() const { return check_sum_; }
-  const Security* Get(Security::IdType id) {
+  const Security* Get(Security::IdType id) const {
     return FindInMap(securities_, id);
   }
-  const Exchange* GetExchange(Exchange::IdType id) {
+  const Exchange* GetExchange(Exchange::IdType id) const {
     return FindInMap(exchanges_, id);
   }
-  const Exchange* GetExchange(const std::string& name) {
+  const Exchange* GetExchange(const std::string& name) const {
     return FindInMap(exchange_of_name_, name);
+  }
+  const Security* Get(const std::string& exch_name,
+                      const std::string& sec_name) const {
+    auto exch = GetExchange(exch_name);
+    return exch ? exch->Get(sec_name) : nullptr;
   }
 
   typedef tbb::concurrent_unordered_map<Security::IdType, Security*>

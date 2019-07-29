@@ -73,16 +73,16 @@ void SimServer::fromApp(const FIX::Message& msg,
           resp.getHeader().setField(FIX::MsgType("8"));
           auto symbol = msg.getField(FIX::FIELD::Symbol);
           auto exchange = msg.getField(FIX::FIELD::ExDestination);
-          auto it = sec_of_name_.find(std::make_pair(symbol, exchange));
-          if (it == sec_of_name_.end()) {
+          auto sec =
+              opentrade::SecurityManager::Instance().Get(exchange, symbol);
+          if (!sec) {
             resp.setField(FIX::ExecType(FIX::ExecType_REJECTED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_REJECTED));
             resp.setField(FIX::Text("unknown security"));
             session_->send(resp);
             return;
           }
-          auto& sec = *it->second;
-          if (!sec.IsInTradePeriod()) {
+          if (!sec->IsInTradePeriod()) {
             resp.setField(FIX::ExecType(FIX::ExecType_REJECTED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_REJECTED));
             resp.setField(FIX::Text("Not in trading period"));
@@ -129,10 +129,10 @@ void SimServer::fromApp(const FIX::Message& msg,
           msg.getField(side);
           auto is_buy = side == FIX::Side_BUY;
           if (type == FIX::OrdType_MARKET) {
-            auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
+            auto q = opentrade::MarketDataManager::Instance().Get(*sec).quote();
             auto qty_q = is_buy ? q.ask_size : q.bid_size;
             auto px_q = is_buy ? q.ask_price : q.bid_price;
-            if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
+            if (!qty_q && sec->type == opentrade::kForexPair) qty_q = 1e9;
             if (qty_q > 0 && px_q > 0) {
               if (qty_q > qty) qty_q = qty;
               resp.setField(FIX::ExecTransType('0'));
@@ -156,10 +156,10 @@ void SimServer::fromApp(const FIX::Message& msg,
             return;
           }
           OrderTuple ord{px, qty, is_buy, resp};
-          auto q = opentrade::MarketDataManager::Instance().Get(sec).quote();
+          auto q = opentrade::MarketDataManager::Instance().Get(*sec).quote();
           auto qty_q = is_buy ? q.ask_size : q.bid_size;
           auto px_q = is_buy ? q.ask_price : q.bid_price;
-          if (!qty_q && sec.type == opentrade::kForexPair) qty_q = 1e9;
+          if (!qty_q && sec->type == opentrade::kForexPair) qty_q = 1e9;
           if (qty_q > 0 && px_q > 0) {
             if ((is_buy && px >= px_q) || (!is_buy && px <= px_q)) {
               if (qty_q > qty) qty_q = qty;
@@ -189,20 +189,21 @@ void SimServer::fromApp(const FIX::Message& msg,
             session_->send(resp);
             return;
           }
-          active_orders_[sec.id][clordid] = ord;
+          active_orders_[sec->id][clordid] = ord;
         } else if (msgType == "F") {
           resp.getHeader().setField(FIX::MsgType("9"));
           resp.setField(FIX::CxlRejResponseTo(
               FIX::CxlRejResponseTo_ORDER_CANCEL_REQUEST));
           auto symbol = msg.getField(FIX::FIELD::Symbol);
           auto exchange = msg.getField(FIX::FIELD::ExDestination);
-          auto it0 = sec_of_name_.find(std::make_pair(symbol, exchange));
-          if (it0 == sec_of_name_.end()) {
+          auto sec =
+              opentrade::SecurityManager::Instance().Get(exchange, symbol);
+          if (!sec) {
             resp.setField(FIX::Text("unknown security"));
             session_->send(resp);
             return;
           }
-          auto& actives = active_orders_[it0->second->id];
+          auto& actives = active_orders_[sec->id];
           auto clordid = msg.getField(FIX::FIELD::ClOrdID);
           if (used_ids_.find(clordid) != used_ids_.end()) {
             resp.setField(FIX::Text("duplicate ClOrdID"));
@@ -227,4 +228,27 @@ void SimServer::fromApp(const FIX::Message& msg,
         }
       },
       boost::posix_time::microseconds(latency_));
+}
+
+void SimServer::StartFix(const opentrade::Adapter& adapter) {
+  latency_ = atoi(adapter.config("latency").c_str());
+  LOG_INFO(adapter.name() << ": latency=" << latency_ << "us");
+
+  auto config_file = adapter.config("config_file");
+  if (config_file.empty())
+    LOG_FATAL(adapter.name() << ": config_file not given");
+  if (!std::ifstream(config_file.c_str()).good())
+    LOG_FATAL(adapter.name() << ": Faield to open: " << config_file);
+
+  fix_settings_.reset(new FIX::SessionSettings(config_file));
+  fix_store_factory_.reset(new FIX::NullStoreFactory());
+  fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
+  threaded_socket_acceptor_.reset(new FIX::ThreadedSocketAcceptor(
+      *this, *fix_store_factory_, *fix_settings_, *fix_log_factory_));
+  try {
+    threaded_socket_acceptor_->start();
+  } catch (FIX::RuntimeError& err) {
+    LOG_ERROR("Failed to start simulator: " << err.what());
+    return;
+  }
 }

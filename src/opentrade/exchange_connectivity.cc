@@ -112,6 +112,7 @@ static inline auto CheckAdapter(Order* ord) {
     snprintf(buf, sizeof(buf),
              "Exchange connectivity adapter '%s' is disconnected", name);
     kRiskError = buf;
+    adapter = nullptr;
   }
   if (!kRiskError.empty()) HandleConfirmation(ord, kRiskRejected, kRiskError);
   return adapter;

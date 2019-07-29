@@ -9,8 +9,6 @@ struct SimServerFile : public opentrade::MarketDataAdapter, public SimServer {
 };
 
 void SimServerFile::Start() noexcept {
-  latency_ = atoi(config("latency").c_str());
-  LOG_INFO(name() << ": latency=" << latency_ << "us");
   auto bbgid_file = config("bbgid_file");
   if (bbgid_file.empty()) {
     LOG_FATAL(name() << ": bbgid_file not given");
@@ -24,9 +22,6 @@ void SimServerFile::Start() noexcept {
   std::unordered_map<std::string, const Security*> sec_map;
   for (auto& pair : opentrade::SecurityManager::Instance().securities()) {
     sec_map[pair.second->bbgid] = pair.second;
-    sec_of_name_[std::make_pair(std::string(pair.second->symbol),
-                                std::string(pair.second->exchange->name))] =
-        pair.second;
   }
 
   std::string line;
@@ -47,23 +42,8 @@ void SimServerFile::Start() noexcept {
   if (!std::ifstream(ticks_file.c_str()).good()) {
     LOG_FATAL(name() << ": Can not open " << ticks_file);
   }
-  auto config_file = config("config_file");
-  if (config_file.empty()) LOG_FATAL(name() << ": config_file not given");
-  if (!std::ifstream(config_file.c_str()).good())
-    LOG_FATAL(name() << ": Faield to open: " << config_file);
 
-  fix_settings_.reset(new FIX::SessionSettings(config_file));
-  fix_store_factory_.reset(new FIX::NullStoreFactory());
-  fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
-  threaded_socket_acceptor_.reset(new FIX::ThreadedSocketAcceptor(
-      *this, *fix_store_factory_, *fix_settings_, *fix_log_factory_));
-  try {
-    threaded_socket_acceptor_->start();
-  } catch (FIX::RuntimeError& err) {
-    LOG_ERROR("Failed to start simulator: " << err.what());
-    return;
-  }
-
+  StartFix(*this);
   connected_ = 1;
 
   std::thread thread([=]() {

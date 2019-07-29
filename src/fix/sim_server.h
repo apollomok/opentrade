@@ -17,6 +17,7 @@
 #undef throw
 
 #include "filelog.h"
+#include "opentrade/adapter.h"
 #include "opentrade/logger.h"
 #include "opentrade/security.h"
 
@@ -35,6 +36,7 @@ class SimServer : public FIX::Application {
   void toAdmin(FIX::Message& msg, const FIX::SessionID& id) override {}
   void fromAdmin(const FIX::Message&, const FIX::SessionID&) override {}
   void HandleTick(Security::IdType sec, char type, double px, double qty);
+  void StartFix(const opentrade::Adapter& adapter);
 
  protected:
   std::unique_ptr<FIX::SessionSettings> fix_settings_;
@@ -51,8 +53,6 @@ class SimServer : public FIX::Application {
   std::unordered_map<Security::IdType,
                      std::unordered_map<std::string, OrderTuple>>
       active_orders_;
-  boost::unordered_map<std::pair<std::string, std::string>, const Security*>
-      sec_of_name_;
   tbb::concurrent_unordered_set<std::string> used_ids_;
   opentrade::TaskPool tp_;
   int latency_ = 0;  // in microseconds
