@@ -33,7 +33,7 @@ opentick::ResultSet OpenTick::Request(Security::IdType sec, int interval,
                                       time_t start_time, time_t end_time,
                                       const std::string& tbl,
                                       opentick::Callback callback) {
-  if (!conn_->IsConnected()) {
+  if (!conn_ || !conn_->IsConnected()) {
     if (callback) callback({}, "OpenTick not connected");
     return {};
   }
