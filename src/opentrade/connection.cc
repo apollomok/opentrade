@@ -1096,7 +1096,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
 
 void Connection::OnSecurities(const json& j) {
   LOG_DEBUG(GetAddress() << ": Securities requested");
-  const Exchange* exch;
+  const Exchange* exch = nullptr;
   if (j.size() > 1)
     exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));
   auto& secs = SecurityManager::Instance().securities();
@@ -1111,17 +1111,18 @@ void Connection::OnSecurities(const json& j) {
           s->symbol,
           s->exchange->name,
           s->type,
+          s->lot_size,
           s->multiplier,
-          s->close_price,
           s->rate,
+          s->close_price,
           s->currency,
+          s->local_symbol,
           s->adv20,
           s->market_cap,
           std::to_string(s->sector),
           std::to_string(s->industry_group),
           std::to_string(s->industry),
           std::to_string(s->sub_industry),
-          s->local_symbol,
           s->bbgid,
           s->cusip,
           s->sedol,
