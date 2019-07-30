@@ -1100,7 +1100,7 @@ void Connection::OnSecurities(const json& j) {
   if (j.size() > 1)
     exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));
   auto& secs = SecurityManager::Instance().securities();
-  json out;
+  json out = {"securities"};
   for (auto& pair : secs) {
     auto s = pair.second;
     if (exch && (s->exchange != exch)) continue;
