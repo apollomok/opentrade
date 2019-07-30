@@ -21,6 +21,7 @@ struct Position : public PositionValue {
   double avg_px = 0;
   double unrealized_pnl = 0;
   double realized_pnl = 0;
+  double realized_pnl0 = 0;  // no rate * multiplier
 
   // intraday
   double total_bought_qty = 0;

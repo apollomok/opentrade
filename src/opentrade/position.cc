@@ -17,26 +17,30 @@ namespace opentrade {
 inline void HandlePnl(double qty, double price, double multiplier,
                       Position* p) {
   const auto qty0 = p->qty;
-  auto& realized_pnl = p->realized_pnl;
+  auto pnl_chg = 0;
   auto& avg_px = p->avg_px;
   if ((qty0 > 0) && (qty < 0)) {  // sell trade to cover position
     if (qty0 > -qty) {
-      realized_pnl += (price - avg_px) * -qty * multiplier;
+      pnl_chg = (price - avg_px) * -qty;
     } else {
-      realized_pnl += (price - avg_px) * qty0 * multiplier;
+      pnl_chg = (price - avg_px) * qty0;
       avg_px = price;
     }
   } else if ((qty0 < 0) && (qty > 0)) {  // buy trade to cover position
     if (-qty0 > qty) {
-      realized_pnl += (avg_px - price) * qty * multiplier;
+      pnl_chg = (avg_px - price) * qty;
     } else {
-      realized_pnl += (avg_px - price) * -qty0 * multiplier;
+      pnl_chg = (avg_px - price) * -qty0;
       avg_px = price;
     }
   } else {  // open position
     avg_px = (qty0 * avg_px + qty * price) / (qty0 + qty);
   }
   if (qty0 + qty == 0) avg_px = 0;
+  if (pnl_chg > 0) {
+    p->realized_pnl0 += pnl_chg;
+    p->realized_pnl += pnl_chg * multiplier;
+  }
 }
 
 inline void Position::HandleTrade(bool is_buy, double qty, double price,
@@ -146,7 +150,8 @@ void PositionManager::Initialize() {
     p.qty = Database::GetValue(*it, i++, 0.);
     p.cx_qty = Database::GetValue(*it, i++, 0.);
     p.avg_px = Database::GetValue(*it, i++, 0.);
-    p.realized_pnl = Database::GetValue(*it, i++, 0.);
+    p.realized_pnl0 = Database::GetValue(*it, i++, 0.);
+    p.realized_pnl = p.realized_pnl0 * sec->rate * sec->multiplier;
     Bod bod{};
     bod.qty = p.qty;
     bod.cx_qty = p.cx_qty;
@@ -250,7 +255,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           static double qty;
           static double cx_qty;
           static double avg_px;
-          static double realized_pnl;
+          static double realized_pnl0;
           static std::string info;
           static std::string tm;
           static const char* cmd = R"(
@@ -263,7 +268,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
               (this->sql_->prepare << cmd, soci::use(user_id),
                soci::use(sub_account_id), soci::use(security_id),
                soci::use(broker_account_id), soci::use(qty), soci::use(cx_qty),
-               soci::use(avg_px), soci::use(realized_pnl), soci::use(tm),
+               soci::use(avg_px), soci::use(realized_pnl0), soci::use(tm),
                soci::use(info));
           auto ord = cm->order;
           user_id = ord->user->id;
@@ -273,7 +278,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           qty = pos.qty;
           cx_qty = pos.cx_qty;
           avg_px = pos.avg_px;
-          realized_pnl = pos.realized_pnl;
+          realized_pnl0 = pos.realized_pnl0;
           char side[2];
           side[0] = static_cast<char>(ord->side);
           side[1] = 0;
