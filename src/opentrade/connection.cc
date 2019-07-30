@@ -98,6 +98,24 @@ inline double GetNum(const json& j) {
   return j.get<int64_t>();
 }
 
+static auto GetSecurity(const json& j) {
+  const Security* sec = nullptr;
+  if (j.is_number_integer()) {
+    auto v = Get<int64_t>(j);
+    sec = SecurityManager::Instance().Get(v);
+    if (!sec)
+      throw std::runtime_error("Unknown security id: " + std::to_string(v));
+  } else {
+    auto exch = Get<std::string>(j[0]);
+    auto symbol = Get<std::string>(j[1]);
+    sec = SecurityManager::Instance().Get(exch, symbol);
+    if (!sec)
+      throw std::runtime_error("Unknown security: [" + exch + ", " + symbol +
+                               "]");
+  }
+  return sec;
+}
+
 template <typename T>
 static inline T ParseParamScalar(const json& j) {
   if (j.is_number_float()) return j.get<double>();
@@ -121,10 +139,7 @@ static inline T ParseParamScalar(const json& j) {
       } else if (it.key() == "src") {
         src = Get<std::string>(it.value());
       } else if (it.key() == "sec") {
-        auto v = Get<int64_t>(it.value());
-        sec = SecurityManager::Instance().Get(v);
-        if (!sec)
-          throw std::runtime_error("Unknown security id: " + std::to_string(v));
+        sec = GetSecurity(it.value());
       } else if (it.key() == "acc") {
         if (it.value().is_number_integer()) {
           auto v = Get<int64_t>(it.value());
@@ -853,18 +868,7 @@ void Connection::Send(const Confirmation& cm, bool offline) {
 }
 
 void Connection::OnPosition(const json& j, const std::string& msg) {
-  auto security_id = Get<int64_t>(j[1]);
-  auto sec = SecurityManager::Instance().Get(security_id);
-  if (!sec) {
-    json j = {
-        "error",
-        "position",
-        "invalid security id: " + security_id,
-    };
-    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j);
-    return;
-  }
+  auto sec = GetSecurity(j[1]);
   auto acc_name = Get<std::string>(j[2]);
   auto acc = AccountManager::Instance().GetSubAccount(acc_name);
   if (!acc) {
@@ -951,7 +955,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
     }
     AlgoManager::Instance().Stop(Get<int64_t>(j[2]));
   } else if (action == "cancel_all") {
-    auto sec = Get<int64_t>(j[2]);
+    auto sec = GetSecurity(j[2]);
     auto acc_name = Get<std::string>(j[3]);
     auto acc = AccountManager::Instance().GetSubAccount(acc_name);
     if (!acc) {
@@ -962,7 +966,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
       Send(json{"error", "algo", "no permission of account: " + acc_name});
       return;
     }
-    AlgoManager::Instance().Stop(sec, acc->id);
+    AlgoManager::Instance().Stop(sec->id, acc->id);
   } else if (action == "modify") {
     auto params = ParseParams(j[3]);
     if (j[2].is_string()) {
@@ -995,6 +999,9 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
               throw std::runtime_error("No permission to trade with account: " +
                                        std::string(acc->name));
             }
+            // in case receive [exch, symbol] sec, convert to sec_id before
+            // publish to gui
+            const_cast<json&>(j)[4]["Security"]["sec"] = pval->sec->id;
           }
         }
       } else if (token.size()) {
@@ -1018,7 +1025,6 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
 }
 
 void Connection::OnOrder(const json& j, const std::string& msg) {
-  auto security_id = Get<int64_t>(j[1]);
   auto sub_account = Get<std::string>(j[2]);
   auto acc = AccountManager::Instance().GetSubAccount(sub_account);
   if (!acc) {
@@ -1036,18 +1042,8 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   Contract c;
   c.qty = qty;
   c.price = px;
-  c.sec = SecurityManager::Instance().Get(security_id);
+  c.sec = GetSecurity(j[1]);
   c.stop_price = stop_price;
-  if (!c.sec) {
-    json j = {
-        "error",
-        "order",
-        "invalid security id: " + security_id,
-    };
-    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j);
-    return;
-  }
   c.sub_account = acc;
   if (!GetOrderSide(side_str, &c.side)) {
     json j = {
@@ -1099,11 +1095,24 @@ void Connection::OnSecurities(const json& j) {
   const Exchange* exch = nullptr;
   if (j.size() > 1)
     exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));
+  std::set<std::string_view> symbols;
+  std::vector<std::string> symbols_c;  // to retain memory for std::string_view
+  if (j.size() > 2) {
+    auto n = j[2].size();
+    symbols_c.resize(n);
+    for (auto k = 0u; k < n; ++k) {
+      symbols_c[k] = Get<std::string>(j[2][k]);
+      symbols.insert(std::string_view(symbols_c[k]));
+    }
+  }
   auto& secs = SecurityManager::Instance().securities();
   json out = {"securities"};
   for (auto& pair : secs) {
     auto s = pair.second;
     if (exch && (s->exchange != exch)) continue;
+    if (!symbols.empty() &&
+        symbols.find(std::string_view(s->symbol)) == symbols.end())
+      continue;
     if (user_->is_admin) {
       json j = {
           "security",

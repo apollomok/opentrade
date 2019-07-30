@@ -35,7 +35,8 @@ class TWAP : public Algo {
   double price_ = 0;
   time_t begin_time_ = 0;
   time_t end_time_ = 0;
-  double min_size_ = 0;
+  int min_size_ = 0;
+  int max_floor_ = 0;
   double max_pov_ = 0;
   double initial_volume_ = 0;
   Aggression agg_ = kAggLow;

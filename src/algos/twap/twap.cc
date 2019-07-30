@@ -30,6 +30,8 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
   if (min_size_ > 0 && sec->lot_size > 0) {
     min_size_ = std::round(min_size_ / sec->lot_size) * sec->lot_size;
   }
+  max_floor_ = GetParam(params, "MaxFloor", 0);
+  if (min_size_ > 0 && max_floor_ < min_size_) max_floor_ = 0;
   max_pov_ = GetParam(params, "MaxPov", 0.0);
   if (max_pov_ > 1) max_pov_ = 1;
   auto agg = GetParam(params, "Aggression", kEmptyStr);
@@ -84,6 +86,7 @@ const ParamDefs& TWAP::GetParamDefs() noexcept {
       {"Price", 0.0, false, 0, 10000000, 7},
       {"ValidSeconds", 300, true, 60},
       {"MinSize", 0, false, 0, 10000000},
+      {"MaxFloor", 0, false, 0, 10000000},
       {"MaxPov", 0.0, false, 0, 1, 2},
       {"Aggression", ParamDef::ValueVector{"Low", "Medium", "High", "Highest"},
        true},
@@ -143,14 +146,16 @@ void TWAP::Timer() {
   auto leaves = expect - inst_->total_exposure();
   if (leaves <= 0) return;
   auto total_leaves = st_.qty - inst_->total_exposure();
-  auto lot_size = std::max(1, inst_->sec().lot_size);
-  auto max_qty = inst_->sec().exchange->odd_lot_allowed
-                     ? total_leaves
-                     : std::floor(total_leaves / lot_size) * lot_size;
+  auto lot_size = inst_->sec().lot_size;
+  auto odd_ok = inst_->sec().exchange->odd_lot_allowed || (lot_size <= 0);
+  if (lot_size <= 0) lot_size = std::max(1, min_size_);
+  auto max_qty =
+      odd_ok ? total_leaves : std::floor(total_leaves / lot_size) * lot_size;
   if (max_qty <= 0) return;
   auto would_qty = std::ceil(leaves / lot_size) * lot_size;
   if (would_qty < min_size_) would_qty = min_size_;
   if (would_qty > max_qty) would_qty = max_qty;
+  if (max_floor_ > 0 && would_qty > max_floor_) would_qty = max_floor_;
   Contract c;
   c.side = st_.side;
   c.qty = would_qty;
