@@ -196,7 +196,10 @@ void BPIPE::ProcessSessionStatus(const bbg::Event& evt) {
     } else if (msg.messageType() == "SessionTerminated" ||
                msg.messageType() == "SessionConnectionDown" ||
                msg.messageType() == "SessionStartupFailure") {
+      if (!connected_) return;
       connected_ = 0;
+      LOG_INFO(name() << ": " << msg << ", will reconnect in "
+                      << reconnect_interval_ << 's');
       tp_.AddTask([this]() { Reconnect(); },
                   boost::posix_time::seconds(reconnect_interval_));
     }
