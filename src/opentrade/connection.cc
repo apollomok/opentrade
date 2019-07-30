@@ -1096,10 +1096,14 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
 
 void Connection::OnSecurities(const json& j) {
   LOG_DEBUG(GetAddress() << ": Securities requested");
+  const Exchange* exch;
+  if (j.size() > 1)
+    exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));
   auto& secs = SecurityManager::Instance().securities();
   json out;
   for (auto& pair : secs) {
     auto s = pair.second;
+    if (exch && (s->exchange != exch)) continue;
     if (user_->is_admin) {
       json j = {
           "security",
@@ -1131,7 +1135,7 @@ void Connection::OnSecurities(const json& j) {
     } else {
       json j = {
           "security", s->id,       s->symbol,     s->exchange->name,
-          s->type,    s->lot_size, s->multiplier,
+          s->type,    s->lot_size, s->multiplier, s->rate,
       };
       if (transport_->stateless) {
         out.push_back(j);
