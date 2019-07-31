@@ -90,7 +90,7 @@ static const char create_tables_sql[] = R"(
     underlying_id int4 references security(id), -- on update cascade on delete cascade,
     params varchar(1000)
   );
-  create unique index if not exists security_symbol_exchange_index on security(symbol, exchange_id);
+  create unique index if not exists security_symbol_exchange_index on security(exchange_id, symbol);
 
   create sequence if not exists user_id_seq start with 100;
   create table if not exists "user"(

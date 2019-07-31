@@ -491,7 +491,9 @@ void Connection::HandleMessageSync(const std::string& msg,
       Send(json{"offline_orders", "complete"});
       Send(json{"offline", "complete"});
     } else if (action == "shutdown") {
-      if (!user_->is_admin) return;
+      if (!user_->is_admin) {
+        throw std::runtime_error("admin required");
+      }
       int seconds = 3;
       double interval = 1;
       if (j.size() > 1) {
