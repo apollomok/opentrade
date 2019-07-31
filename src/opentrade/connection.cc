@@ -1318,6 +1318,11 @@ void Connection::OnAdmin(const json& j) {
     OnAdminSubAccounts(j, name, action);
   } else if (!strcasecmp(name.c_str(), "exchanges")) {
     OnAdminExchanges(j, name, action);
+  } else if (!strcasecmp(name.c_str(), "securities")) {
+    if (action == "reload") {
+      SecurityManager::Instance().LoadFromDatabase();
+      Server::Trigger(json{"securities"}.dump());
+    }
   } else if (!strcasecmp(name.c_str(), "sub accounts of user")) {
     auto& inst = AccountManager::Instance();
     if (action == "ls") {
