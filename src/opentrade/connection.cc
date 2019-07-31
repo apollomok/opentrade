@@ -678,10 +678,10 @@ void Connection::Send(Confirmation::Ptr cm) {
   strand_.post([self, cm]() { self->Send(*cm.get(), false); });
 }
 
-void Connection::Send(const SubAccount& acc, const std::string& msg) {
+void Connection::Send(const std::string& msg, const SubAccount* acc) {
   if (closed_) return;
   if (!user_) return;
-  if (!user_->GetSubAccount(acc.id)) return;
+  if (acc && !user_->GetSubAccount(acc->id)) return;
   auto self = shared_from_this();
   strand_.post([self, msg]() { self->Send(msg); });
 }
@@ -943,7 +943,7 @@ void Connection::OnTarget(const json& j, const std::string& msg) {
   inst.SetTargets(*acc, LoadTargets(j2));
   os << j2;
   Send(json{"target", "done"});
-  Server::Publish(*acc, json{"target", acc->id, acc->name, j[2]}.dump());
+  Server::Publish(json{"target", acc->id, acc->name, j[2]}.dump(), acc);
 }
 
 void Connection::OnAlgo(const json& j, const std::string& msg) {
