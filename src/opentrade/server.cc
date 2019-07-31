@@ -95,6 +95,15 @@ void Server::Publish(const std::string& msg, const SubAccount* acc) {
   });
 }
 
+void Server::Trigger(const std::string& cmd) {
+  kIoService->post([cmd]() {
+    LockGuard lock(kMutex);
+    for (auto& pair : kSocketMap) {
+      pair.second->OnMessageAsync(cmd);
+    }
+  });
+}
+
 void Server::PublishTestMsg(const std::string& token, const std::string& msg,
                             bool stopped) {
   kIoService->post([token, msg, stopped]() {

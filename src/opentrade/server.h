@@ -14,6 +14,7 @@ class Server {
   static void Publish(const std::string& msg, const SubAccount* acc = nullptr);
   static void PublishTestMsg(const std::string& token, const std::string& msg,
                              bool stopped = false);
+  static void Trigger(const std::string& cmd);
   static void Stop();
 };
 
