@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from ws4py.client.threadedclient import WebSocketClient
 import json
