@@ -115,6 +115,7 @@ void BPIPE::Close() {
   if (session_) {
     session_->stop();
     delete session_;  // release fd
+    session_ = nullptr;
   }
 }
 
@@ -124,6 +125,7 @@ void BPIPE::Stop() noexcept {
 
 void BPIPE::Reconnect() noexcept {
   tp_.AddTask([this]() {
+    if (connected_ == -1) return;
     Close();
     connected_ = -1;
     session_ = new bbg::Session(options_, this);
@@ -146,6 +148,8 @@ void BPIPE::SubscribeSync(const opentrade::Security& sec) noexcept {
   auto ticker = ++request_counter_;
   tickers_[ticker] = &sec;
   sub.add(symbol.c_str(), fields.c_str(), "", bbg::CorrelationId(ticker));
+  LOG_INFO(name() << ": subscribe to " << sec.exchange->name << ":"
+                  << sec.symbol << " " << symbol << " " << fields);
   session_->subscribe(sub, identity_);
 }
 
