@@ -125,6 +125,7 @@ void BPIPE::Stop() noexcept {
 void BPIPE::Reconnect() noexcept {
   tp_.AddTask([this]() {
     Close();
+    connected_ = -1;
     session_ = new bbg::Session(options_, this);
     session_->startAsync();
   });
