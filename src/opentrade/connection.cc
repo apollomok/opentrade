@@ -684,7 +684,8 @@ void Connection::HandleMessageSync(const std::string& msg,
 void Connection::Send(Confirmation::Ptr cm) {
   if (closed_) return;
   if (!user_) return;
-  if (!user_->GetSubAccount(cm->order->sub_account->id)) return;
+  if (!user_->is_admin && !user_->GetSubAccount(cm->order->sub_account->id))
+    return;
   auto self = shared_from_this();
   strand_.post([self, cm]() { self->Send(*cm.get(), false); });
 }
