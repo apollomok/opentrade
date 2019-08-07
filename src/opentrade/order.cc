@@ -198,7 +198,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         int64_t tm;
         char id_str[n];
         *id_str = 0;
-        if (sscanf(body, "%u %ld %[^\1]s", &id, &tm, id_str) < 2) {
+        if (sscanf(body, "%u %ld %[^\1]", &id, &tm, id_str) < 2) {
           LOG_ERROR("Failed to parse confirmation line #" << ln);
           continue;
         }
@@ -235,7 +235,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         double last_px;
         char exec_trans_type;
         char exec_id[n];
-        if (sscanf(body, "%u %ld %lf %lf %c %[^\1]s", &id, &tm, &last_shares,
+        if (sscanf(body, "%u %ld %lf %lf %c %[^\1]", &id, &tm, &last_shares,
                    &last_px, &exec_trans_type, exec_id) < 6) {
           LOG_ERROR("Failed to parse confirmation line #" << ln);
           continue;
@@ -292,7 +292,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         int64_t tm;
         char text[n];
         *text = 0;
-        if (sscanf(body, "%u %ld %[^\1]s", &id, &tm, text) < 2) {
+        if (sscanf(body, "%u %ld %[^\1]", &id, &tm, text) < 2) {
           LOG_ERROR("Failed to parse confirmation line #" << ln);
           continue;
         }
@@ -452,7 +452,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         uint32_t id;
         char text[n];
         *text = 0;
-        if (sscanf(body, "%u %[^\1]s", &id, text) < 1) {
+        if (sscanf(body, "%u %[^\1]", &id, text) < 1) {
           LOG_ERROR("Failed to parse confirmation line #" << ln);
           continue;
         }

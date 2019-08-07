@@ -371,7 +371,7 @@ void AlgoManager::LoadStore(uint32_t seq0, Connection* conn) {
     char status[n];
     char body[n];
     *body = 0;
-    if (sscanf(payload, "%d %s %s %[^\1]s", &tm, name, status, body) < 3) {
+    if (sscanf(payload, "%d %s %s %[^\1]", &tm, name, status, body) < 3) {
       LOG_ERROR("Failed to parse algo line #" << ln);
       continue;
     }
