@@ -426,7 +426,7 @@ void PositionManager::UpdatePnl() {
               << std::endl;
   }
 
-  kSharedTaskPool.AddTask([this]() { this->UpdatePnl(); }, pt::seconds(1));
+  kTimerTaskPool.AddTask([this]() { this->UpdatePnl(); }, pt::seconds(1));
 }
 
 }  // namespace opentrade

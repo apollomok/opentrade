@@ -78,7 +78,7 @@ class Singleton {
   static inline V* kInstance = new V{};
 };
 
-inline TaskPool kSharedTaskPool;
+inline TaskPool kTimerTaskPool;
 inline TaskPool kWriteTaskPool;
 inline TaskPool kDatabaseTaskPool;
 }  // namespace opentrade

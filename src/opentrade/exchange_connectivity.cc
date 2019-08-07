@@ -198,7 +198,7 @@ static inline bool Cancel(Order* cancel_order) {
   if (!RiskManager::Instance().CheckMsgRate(*cancel_order)) {
     HandleConfirmation(cancel_order, kRiskRejected, kRiskError);
     static uint32_t seed;
-    kSharedTaskPool.AddTask(
+    kTimerTaskPool.AddTask(
         [cancel_order]() { Cancel(cancel_order); },
         boost::posix_time::milliseconds(1000 + rand_r(&seed) % 1000));
     return false;

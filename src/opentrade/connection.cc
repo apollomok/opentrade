@@ -27,6 +27,7 @@ namespace opentrade {
 static time_t kStartTime = GetTime();
 static thread_local boost::uuids::random_generator kUuidGen;
 static tbb::concurrent_unordered_map<std::string, const User*> kTokens;
+static TaskPool kTaskPool;
 
 std::string sha1(const std::string& str) {
   boost::uuids::detail::sha1 s;
@@ -541,23 +542,27 @@ void Connection::HandleMessageSync(const std::string& msg,
       auto tm0 = 0l;
       if (j.size() >= 2) tm0 = Get<int64_t>(j[1]);
       tm0 = std::max(GetTime() - 24 * 3600, tm0);
+      // not conform to REST rule
       for (auto& pair : PositionManager::Instance().pnls_) {
         auto id = pair.first;
         if (!user_->GetSubAccount(id)) continue;
         auto path = kStorePath / ("pnl-" + std::to_string(id));
-        std::ifstream f(path.c_str());
-        const int LINE_LENGTH = 100;
-        char str[LINE_LENGTH];
-        json j2;
-        while (f.getline(str, LINE_LENGTH)) {
-          int tm;
-          double realized, unrealized;
-          if (3 == sscanf(str, "%d %lf %lf", &tm, &realized, &unrealized)) {
-            if (tm <= tm0) continue;
-            j2.push_back(json{tm, realized, unrealized});
+        auto self = shared_from_this();
+        kTaskPool.AddTask([self, tm0, id, path]() {
+          std::ifstream f(path.c_str());
+          const int LINE_LENGTH = 100;
+          char str[LINE_LENGTH];
+          json j2;
+          while (f.getline(str, LINE_LENGTH)) {
+            int tm;
+            double realized, unrealized;
+            if (3 == sscanf(str, "%d %lf %lf", &tm, &realized, &unrealized)) {
+              if (tm <= tm0) continue;
+              j2.push_back(json{tm, realized, unrealized});
+            }
           }
-        }
-        if (j2.size()) Send(json{"Pnl", id, j2});
+          self->Send(json{"Pnl", id, j2});
+        });
       }
       sub_pnl_ = true;
     } else if (action == "sub") {
@@ -586,17 +591,21 @@ void Connection::HandleMessageSync(const std::string& msg,
     } else if (action == "algoFile") {
       auto fn = Get<std::string>(j[1]);
       auto path = kAlgoPath / fn;
-      json j = {action, fn};
-      std::ifstream is(path.string());
-      if (is.good()) {
-        std::stringstream buffer;
-        buffer << is.rdbuf();
-        j.push_back(buffer.str());
-      } else {
-        j.push_back(nullptr);
-        j.push_back("Not found");
-      }
-      Send(j);
+      auto self = shared_from_this();
+      sent_ = true;
+      kTaskPool.AddTask([self, action, fn, path]() {
+        json j = {action, fn};
+        std::ifstream is(path.string());
+        if (is.good()) {
+          std::stringstream buffer;
+          buffer << is.rdbuf();
+          j.push_back(buffer.str());
+        } else {
+          j.push_back(nullptr);
+          j.push_back("Not found");
+        }
+        self->Send(j);
+      });
     } else if (action == "deleteAlgoFile") {
       auto fn = Get<std::string>(j[1]);
       auto path = kAlgoPath / fn;
