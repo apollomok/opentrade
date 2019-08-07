@@ -17,7 +17,7 @@ namespace opentrade {
 inline void HandlePnl(double qty, double price, double multiplier,
                       Position* p) {
   const auto qty0 = p->qty;
-  auto pnl_chg = 0;
+  auto pnl_chg = 0.;
   auto& avg_px = p->avg_px;
   if ((qty0 > 0) && (qty < 0)) {  // sell trade to cover position
     if (qty0 > -qty) {
@@ -37,7 +37,7 @@ inline void HandlePnl(double qty, double price, double multiplier,
     avg_px = (qty0 * avg_px + qty * price) / (qty0 + qty);
   }
   if (qty0 + qty == 0) avg_px = 0;
-  if (pnl_chg > 0) {
+  if (pnl_chg != 0) {
     p->realized_pnl0 += pnl_chg;
     p->realized_pnl += pnl_chg * multiplier;
   }
