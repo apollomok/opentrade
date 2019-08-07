@@ -95,6 +95,13 @@ const ParamDefs& TWAP::GetParamDefs() noexcept {
   return defs;
 }
 
+double TWAP::GetLeaves() noexcept {
+  auto ratio = std::min(1., (GetTime() - begin_time_ + 1) /
+                                (0.8 * (end_time_ - begin_time_) + 1));
+  auto expect = st_.qty * ratio;
+  return expect - inst_->total_exposure();
+}
+
 void TWAP::Timer() {
   auto now = GetTime();
   if (now > end_time_) {
@@ -139,11 +146,7 @@ void TWAP::Timer() {
   if (volume > 0 && max_pov_ > 0) {
     if (inst_->total_qty() - inst_->total_cx_qty() > max_pov_ * volume) return;
   }
-
-  auto ratio = std::min(
-      1., (now - begin_time_ + 1) / (0.8 * (end_time_ - begin_time_) + 1));
-  auto expect = st_.qty * ratio;
-  auto leaves = expect - inst_->total_exposure();
+  auto leaves = GetLeaves();
   if (leaves <= 0) return;
   auto total_leaves = st_.qty - inst_->total_exposure();
   auto lot_size = inst_->sec().lot_size;
