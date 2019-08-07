@@ -1599,6 +1599,9 @@ static inline json AddAcc(
                        std::string* err)>
         func1 = {},
     std::function<void(T* acc)> func2 = {}) {
+  if (Database::is_sqlite()) {
+    throw std::runtime_error("not supported for sqlite3 database yet");
+  }
   auto values = j[3];
   auto acc = new T;
   std::stringstream ss;
@@ -1947,6 +1950,9 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
     }
     Send(json{"admin", name, action, id});
   } else if (action == "add") {
+    if (Database::is_sqlite()) {
+      throw std::runtime_error("not supported for sqlite3 database yet");
+    }
     auto values = j[3];
     auto exch = new Exchange;
     std::stringstream ss;
