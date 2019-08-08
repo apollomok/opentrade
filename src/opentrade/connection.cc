@@ -1519,7 +1519,7 @@ char* StrDup(const std::string& str) {
   return tmp;
 }
 
-template <typename T>
+template <typename T, bool is_acc = true>
 static inline json UpdateAcc(
     const std::string& name, const std::string& action,
     const std::string& table_name, int64_t id, const json& j, T* acc,
@@ -1574,9 +1574,11 @@ static inline json UpdateAcc(
     auto v = values[i];
     auto key = Get<std::string>(v[0]);
     if (func2 && func2(key, v[1], acc)) continue;
-    if (key == "is_disabled") {
-      acc->is_disabled = v[1].is_null() ? false : Get<bool>(v[1]);
-      continue;
+    if constexpr (is_acc) {
+      if (key == "is_disabled") {
+        acc->is_disabled = v[1].is_null() ? false : Get<bool>(v[1]);
+        continue;
+      }
     }
     auto str = Get<std::string>(v[1]);
     if (key == "name") {
@@ -1584,13 +1586,15 @@ static inline json UpdateAcc(
       std::atomic_thread_fence(std::memory_order_release);
       (*acc_of_name)[acc->name] = acc;
     } else if (key == "limits") {
-      acc->limits.FromString(str);
+      if constexpr (is_acc) {
+        acc->limits.FromString(str);
+      }
     }
   }
   return json{"admin", name, action, id};
 }
 
-template <typename T>
+template <typename T, bool is_acc = true>
 static inline json AddAcc(
     const std::string& name, const std::string& action,
     const std::string& table_name, const json& j,
@@ -1600,9 +1604,6 @@ static inline json AddAcc(
                        std::string* err)>
         func1 = {},
     std::function<void(T* acc)> func2 = {}) {
-  if (Database::is_sqlite()) {
-    throw std::runtime_error("not supported for sqlite3 database yet");
-  }
   auto values = j[3];
   auto acc = new T;
   std::stringstream ss;
@@ -1614,20 +1615,25 @@ static inline json AddAcc(
     ss << '"' << key << '"';
     std::string err;
     if (!func1 || !func1(key, v[1], acc, &err)) {
-      if (key == "is_disabled") {
-        acc->is_disabled = Get<bool>(v[1]);
-        continue;
+      if constexpr (is_acc) {
+        if (key == "is_disabled") {
+          acc->is_disabled = v[1].is_null() ? false : Get<bool>(v[1]);
+          continue;
+        }
       }
       auto str = Get<std::string>(v[1]);
       if (key == "name") {
         acc->name = StrDup(str);
         if (str.empty()) err = "name can not be empty";
       } else if (key == "limits") {
-        err = acc->limits.FromString(str);
+        if constexpr (is_acc) {
+          err = acc->limits.FromString(str);
+        }
       }
     }
     if (err.size()) return json{"admin", name, action, err};
   }
+  if (Database::is_sqlite()) ss << ", id";
   ss << ") values(";
   for (auto i = 0u; i < values.size(); ++i) {
     auto v = values[i];
@@ -1642,10 +1648,20 @@ static inline json AddAcc(
       ss << "'" << str << "'";
     }
   }
-  ss << ") returning id";
+  if (Database::is_sqlite()) {
+    *Database::Session() << "select max(id) from " + table_name,
+        soci::into(acc->id);
+    acc->id += 1;
+    ss << ", " << acc->id;
+  }
+  ss << ")";
+  if (!Database::is_sqlite()) ss << " returning id";
   try {
     auto sql = Database::Session();
-    *sql << ss.str(), soci::into(acc->id);
+    if (Database::is_sqlite())
+      *sql << ss.str();
+    else
+      *sql << ss.str(), soci::into(acc->id);
   } catch (const std::exception& e) {
     if (*acc->name) free(const_cast<char*>(acc->name));
     if (func2) func2(acc);
@@ -1704,7 +1720,7 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
                       [](const std::string& key, const json& v, User* acc,
                          std::string* err) -> bool {
                         if (key == "is_admin") {
-                          acc->is_admin = Get<bool>(v);
+                          acc->is_admin = v.is_null() ? false : Get<bool>(v);
                           return true;
                         } else if (key == "password") {
                           auto str = Get<std::string>(v);
@@ -1744,7 +1760,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         [](const std::string& key, const json& v, std::string* err,
            std::stringstream* ss) -> bool {
           if (key != "params" && key != "adapter") return false;
-          auto str = Get<std::string>(v);
+          auto str = v.is_null() ? "" : Get<std::string>(v);
           if (key == "params") {
             BrokerAccount b;
             *err = b.set_params(str);
@@ -1757,7 +1773,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         },
         [](const std::string& key, const json& v, BrokerAccount* acc) -> bool {
           if (key != "params" && key != "adapter") return false;
-          auto str = Get<std::string>(v);
+          auto str = v.is_null() ? "" : Get<std::string>(v);
           if (key == "params") {
             acc->set_params(str);
           } else {
@@ -1773,7 +1789,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
         [](const std::string& key, const json& v, BrokerAccount* acc,
            std::string* err) -> bool {
           if (key != "params" && key != "adapter") return false;
-          auto str = Get<std::string>(v);
+          auto str = v.is_null() ? "" : Get<std::string>(v);
           if (key == "params") {
             *err = acc->set_params(str);
           } else {
@@ -1854,187 +1870,110 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
   } else if (action == "modify") {
     auto id = GetNum(j[3]);
     auto exch = const_cast<Exchange*>(inst.GetExchange(id));
-    if (!exch) {
-      Send(json{"admin", name, action, id, "Unknown exchange id"});
-      return;
-    }
-    auto values = j[4];
-    for (auto i = 0u; i < values.size(); ++i) {
-      auto v = values[i];
-      auto key = Get<std::string>(v[0]);
-      Exchange e;
-      std::string err;
-      if (!v[1].is_string() && !v[1].is_null()) continue;
-      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
-      if (key == "name") {
-        if (str.empty()) err = "name can not be empty";
-      } else if (key == "tick_size_table") {
-        err = e.ParseTickSizeTable(str);
-      } else if (key == "trade_period") {
-        err = e.ParseTradePeriod(str);
-      } else if (key == "break_period") {
-        err = e.ParseBreakPeriod(str);
-      } else if (key == "half_day") {
-        err = e.ParseHalfDay(str);
-      } else if (key == "half_days") {
-        err = e.ParseHalfDays(str);
-      } else if (key == "params") {
-        err = e.set_params(str);
-      }
-      if (err.size()) {
-        Send(json{"admin", name, action, id, err});
-        return;
-      }
-    }
-    std::stringstream ss;
-    ss << "update \"exchange\" set ";
-    for (auto i = 0u; i < values.size(); ++i) {
-      auto v = values[i];
-      auto key = Get<std::string>(v[0]);
-      if (i) ss << ", ";
-      ss << '"' << key << "\"=";
-      if (v[1].is_number()) {
-        ss << GetNum(v[1]);
-      } else if (v[1].is_boolean()) {
-        ss << Get<bool>(v[1]);
-      } else if (v[1].is_null()) {
-        ss << "null";
-      } else {
-        auto tmp = Get<std::string>(v[1]);
-        ss << "'" << tmp << "'";
-      }
-    }
-    ss << " where id=" << id;
-    try {
-      auto sql = Database::Session();
-      *sql << ss.str();
-    } catch (const std::exception& e) {
-      Send(json{"admin", name, action, id, e.what()});
-      return;
-    }
-    for (auto i = 0u; i < values.size(); ++i) {
-      auto v = values[i];
-      auto key = Get<std::string>(v[0]);
-      if (key == "odd_lot_allowed") {
-        exch->odd_lot_allowed = v[1].is_null() ? false : Get<bool>(v[1]);
-        continue;
-      }
-      auto str = v[1].is_null() ? "" : Get<std::string>(v[1]);
-      if (key == "name") {
-        exch->name = StrDup(str);
-        std::atomic_thread_fence(std::memory_order_release);
-        inst.exchange_of_name_[exch->name] = exch;
-      } else if (key == "tick_size_table") {
-        exch->ParseTickSizeTable(str);
-      } else if (key == "trade_period") {
-        exch->ParseTradePeriod(str);
-      } else if (key == "break_period") {
-        exch->ParseBreakPeriod(str);
-      } else if (key == "half_day") {
-        exch->ParseHalfDay(str);
-      } else if (key == "half_days") {
-        exch->ParseHalfDays(str);
-      } else if (key == "mic") {
-        exch->mic = StrDup(str);
-      } else if (key == "country") {
-        exch->country = StrDup(str);
-      } else if (key == "ib_name") {
-        exch->ib_name = StrDup(str);
-      } else if (key == "bb_name") {
-        exch->bb_name = StrDup(str);
-      } else if (key == "params") {
-        exch->set_params(str);
-      } else if (key == "tz") {
-        exch->tz = StrDup(str);
-        if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
-      }
-    }
-    Send(json{"admin", name, action, id});
+    Send(UpdateAcc<Exchange, false>(
+        name, action, "exchange", id, j, exch, &inst.exchange_of_name_,
+        [](const std::string& key, const json& v, std::string* err,
+           std::stringstream* ss) -> bool {
+          if (key == "odd_lot_allowed") return false;
+          auto str = v.is_null() ? "" : Get<std::string>(v);
+          Exchange e;
+          if (key == "tick_size_table") {
+            *err = e.ParseTickSizeTable(str);
+          } else if (key == "trade_period") {
+            *err = e.ParseTradePeriod(str);
+          } else if (key == "break_period") {
+            *err = e.ParseBreakPeriod(str);
+          } else if (key == "half_day") {
+            *err = e.ParseHalfDay(str);
+          } else if (key == "half_days") {
+            *err = e.ParseHalfDays(str);
+          } else if (key == "params") {
+            *err = e.set_params(str);
+          } else {
+            return false;
+          }
+          (*ss) << "'" << str << "'";
+          return true;
+        },
+        [](const std::string& key, const json& v, Exchange* exch) -> bool {
+          if (key == "odd_lot_allowed") {
+            exch->odd_lot_allowed = v.is_null() ? false : Get<bool>(v);
+            return true;
+          }
+          auto str = v.is_null() ? "" : Get<std::string>(v);
+          if (key == "tick_size_table") {
+            exch->ParseTickSizeTable(str);
+          } else if (key == "trade_period") {
+            exch->ParseTradePeriod(str);
+          } else if (key == "break_period") {
+            exch->ParseBreakPeriod(str);
+          } else if (key == "half_day") {
+            exch->ParseHalfDay(str);
+          } else if (key == "half_days") {
+            exch->ParseHalfDays(str);
+          } else if (key == "mic") {
+            exch->mic = StrDup(str);
+          } else if (key == "country") {
+            exch->country = StrDup(str);
+          } else if (key == "ib_name") {
+            exch->ib_name = StrDup(str);
+          } else if (key == "bb_name") {
+            exch->bb_name = StrDup(str);
+          } else if (key == "params") {
+            exch->set_params(str);
+          } else if (key == "tz") {
+            exch->tz = StrDup(str);
+            if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
+          } else {
+            return false;
+          }
+          return true;
+        }));
   } else if (action == "add") {
-    if (Database::is_sqlite()) {
-      throw std::runtime_error("not supported for sqlite3 database yet");
-    }
-    auto values = j[3];
-    auto exch = new Exchange;
-    std::stringstream ss;
-    ss << "insert into \"exchange\"(";
-    for (auto i = 0u; i < values.size(); ++i) {
-      auto v = values[i];
-      if (i) ss << ",";
-      auto key = Get<std::string>(v[0]);
-      ss << '"' << key << '"';
-      std::string err;
-      if (key == "odd_lot_allowed") {
-        exch->odd_lot_allowed = Get<bool>(v[1]);
-        continue;
-      }
-      auto str = Get<std::string>(v[1]);
-      if (key == "name") {
-        if (str.empty())
-          err = "name can not be empty";
-        else
-          exch->name = StrDup(str);
-      } else if (key == "tick_size_table") {
-        err = exch->ParseTickSizeTable(str);
-      } else if (key == "trade_period") {
-        err = exch->ParseTradePeriod(str);
-      } else if (key == "break_period") {
-        err = exch->ParseBreakPeriod(str);
-      } else if (key == "half_day") {
-        err = exch->ParseHalfDay(str);
-      } else if (key == "half_days") {
-        err = exch->ParseHalfDays(str);
-      } else if (key == "mic") {
-        exch->mic = StrDup(str);
-      } else if (key == "country") {
-        exch->country = StrDup(str);
-      } else if (key == "ib_name") {
-        exch->ib_name = StrDup(str);
-      } else if (key == "bb_name") {
-        exch->bb_name = StrDup(str);
-      } else if (key == "tz") {
-        exch->tz = StrDup(str);
-        if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
-      } else if (key == "params") {
-        exch->set_params(str);
-      }
-      if (err.size()) {
-        Send(json{"admin", name, action, err});
-        return;
-      }
-    }
-    ss << ") values(";
-    for (auto i = 0u; i < values.size(); ++i) {
-      auto v = values[i];
-      if (i) ss << ",";
-      if (v[1].is_number()) {
-        ss << GetNum(v[1]);
-      } else if (v[1].is_boolean()) {
-        ss << Get<bool>(v[1]);
-      } else {
-        auto tmp = Get<std::string>(v[1]);
-        ss << "'" << tmp << "'";
-      }
-    }
-    ss << ") returning id";
-    try {
-      auto sql = Database::Session();
-      *sql << ss.str(), soci::into(exch->id);
-    } catch (const std::exception& e) {
-      Send(json{"admin", name, action, e.what()});
-      if (*exch->name) free(const_cast<char*>(exch->name));
-      if (*exch->mic) free(const_cast<char*>(exch->mic));
-      if (*exch->country) free(const_cast<char*>(exch->country));
-      if (*exch->ib_name) free(const_cast<char*>(exch->ib_name));
-      if (*exch->bb_name) free(const_cast<char*>(exch->bb_name));
-      if (*exch->tz) free(const_cast<char*>(exch->tz));
-      delete exch;
-      return;
-    }
-    std::atomic_thread_fence(std::memory_order_release);
-    inst.exchanges_.emplace(exch->id, exch);
-    inst.exchange_of_name_[exch->name] = exch;
-    Send(json{"admin", name, action, exch->id});
+    Send(AddAcc<Exchange, false>(
+        name, action, "exchange", j, &inst.exchanges_, &inst.exchange_of_name_,
+        [](const std::string& key, const json& v, Exchange* exch,
+           std::string* err) -> bool {
+          if (key == "odd_lot_allowed") {
+            exch->odd_lot_allowed = v.is_null() ? false : Get<bool>(v);
+            return true;
+          }
+          auto str = v.is_null() ? "" : Get<std::string>(v);
+          if (key == "tick_size_table") {
+            *err = exch->ParseTickSizeTable(str);
+          } else if (key == "trade_period") {
+            *err = exch->ParseTradePeriod(str);
+          } else if (key == "break_period") {
+            *err = exch->ParseBreakPeriod(str);
+          } else if (key == "half_day") {
+            *err = exch->ParseHalfDay(str);
+          } else if (key == "half_days") {
+            *err = exch->ParseHalfDays(str);
+          } else if (key == "mic") {
+            exch->mic = StrDup(str);
+          } else if (key == "country") {
+            exch->country = StrDup(str);
+          } else if (key == "ib_name") {
+            exch->ib_name = StrDup(str);
+          } else if (key == "bb_name") {
+            exch->bb_name = StrDup(str);
+          } else if (key == "tz") {
+            exch->tz = StrDup(str);
+            if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
+          } else if (key == "params") {
+            exch->set_params(str);
+          } else {
+            return false;
+          }
+          return true;
+        },
+        [](Exchange* exch) {
+          if (*exch->mic) free(const_cast<char*>(exch->mic));
+          if (*exch->country) free(const_cast<char*>(exch->country));
+          if (*exch->ib_name) free(const_cast<char*>(exch->ib_name));
+          if (*exch->bb_name) free(const_cast<char*>(exch->bb_name));
+          if (*exch->tz) free(const_cast<char*>(exch->tz));
+        }));
   }
 }
 
