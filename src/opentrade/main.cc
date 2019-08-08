@@ -285,9 +285,10 @@ int main(int argc, char *argv[]) {
   }
   // wait for some time to get last price updated
   // to-do: update last price from opentick
+  auto wait = getenv("UPDATE_PNL_WAIT");
   opentrade::kTimerTaskPool.AddTask(
       []() { PositionManager::Instance().UpdatePnl(); },
-      boost::posix_time::seconds(5));
+      boost::posix_time::seconds(wait ? atoi(wait) : 15));
   opentrade::Server::Start(port, io_threads);
 #endif
 
