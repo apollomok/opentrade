@@ -135,7 +135,6 @@ static const char create_tables_sql[] = R"(
     "name" varchar(50) not null,
     adapter varchar(50) not null,
     params varchar(1000),
-    commission_table varchar(5000),
     is_disabled boolean,
     limits varchar(1000)
   );
@@ -269,13 +268,6 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   } catch (const soci::soci_error& e) {
     std::string type(is_sqlite_ ? "real" : "float8");
     *Session() << "alter table position add column commission " + type + ";";
-  }
-
-  try {
-    *Session() << "select commission_table from broker_account limit 1";
-  } catch (const soci::soci_error& e) {
-    *Session() << "alter table broker_account add column commission_table "
-                  "varchar(5000);";
   }
 }
 
