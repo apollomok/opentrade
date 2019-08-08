@@ -260,7 +260,6 @@ static inline void GetMarketData(
       j3[name] = d.bid_size;
     }
   }
-  if (!j3.size()) return;
   if (sec_src.second)
     j->push_back(
         json{json{sec_src.first, DataSrc::GetStr(sec_src.second)}, j3});
