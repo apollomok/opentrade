@@ -215,6 +215,8 @@ void BPIPE::ProcessSessionStatus(const bbg::Event& evt) {
 void BPIPE::OnConnect() {
   if (!session_->openService("//blp/apiauth")) return;
   auth_service_ = session_->getService("//blp/apiauth");
+  if (!session_->openService("//blp/mktdata"))
+    session_->getService("//blp/mktdata");
 
   identity_ = session_->createIdentity();
   LOG_INFO(name() << ": Generate token from session");
