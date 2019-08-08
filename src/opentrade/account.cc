@@ -57,7 +57,7 @@ void AccountManager::Initialize() {
     b->adapter_name = Database::GetValue(*it, i++, "");
     b->adapter =
         ExchangeConnectivityManager::Instance().GetAdapter(b->adapter_name);
-    b->set_params(Database::GetValue(*it, i++, kEmptyStr));
+    b->SetParams(Database::GetValue(*it, i++, kEmptyStr));
     b->is_disabled = Database::GetValue(*it, i++, 0);
     b->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));
     self.broker_accounts_.emplace(b->id, b);
@@ -106,6 +106,10 @@ void AccountManager::Initialize() {
     pair.first->set_broker_accounts(SubAccount::BrokerAccountMapPtr(
         new decltype(pair.second)(std::move(pair.second))));
   }
+}
+
+std::string BrokerAccount::SetParams(const std::string& params) {
+  return ParamsBase::SetParams(params);
 }
 
 }  // namespace opentrade

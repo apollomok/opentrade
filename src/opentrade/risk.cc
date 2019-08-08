@@ -26,7 +26,7 @@ std::string Limits::FromString(const std::string& str) {
     char name[str.size()];
     double value;
     if (sscanf(str.c_str(), "%[^=]=%lf", name, &value) != 2) {
-      return "Invalid limits format, expect <name>=<value>[,;\n]...'";
+      return "Invalid limits format, expect <name>=<value>[,;<new line>]...";
     }
     if (!strcasecmp(name, "msg_rate"))
       l.msg_rate = value;

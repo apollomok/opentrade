@@ -1761,7 +1761,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
           auto str = v.is_null() ? "" : Get<std::string>(v);
           if (key == "params") {
             BrokerAccount b;
-            *err = b.set_params(str);
+            *err = b.SetParams(str);
           } else if (key == "adapter") {
             auto adapter =
                 ExchangeConnectivityManager::Instance().GetAdapter(str);
@@ -1774,7 +1774,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
           if (key != "params" && key != "adapter") return false;
           auto str = v.is_null() ? "" : Get<std::string>(v);
           if (key == "params") {
-            acc->set_params(str);
+            acc->SetParams(str);
           } else {
             acc->adapter_name = StrDup(str);
             acc->adapter =
@@ -1791,7 +1791,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
           if (key != "params" && key != "adapter") return false;
           auto str = v.is_null() ? "" : Get<std::string>(v);
           if (key == "params") {
-            *err = acc->set_params(str);
+            *err = acc->SetParams(str);
           } else {
             auto adapter =
                 ExchangeConnectivityManager::Instance().GetAdapter(str);
@@ -1889,7 +1889,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
           } else if (key == "half_days") {
             *err = e.ParseHalfDays(str);
           } else if (key == "params") {
-            *err = e.set_params(str);
+            *err = e.SetParams(str);
           } else {
             return false;
           }
@@ -1921,7 +1921,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
           } else if (key == "bb_name") {
             exch->bb_name = StrDup(str);
           } else if (key == "params") {
-            exch->set_params(str);
+            exch->SetParams(str);
           } else if (key == "tz") {
             exch->tz = StrDup(str);
             if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
@@ -1962,7 +1962,7 @@ void Connection::OnAdminExchanges(const json& j, const std::string& name,
             exch->tz = StrDup(str);
             if (*exch->tz) exch->utc_time_offset = GetUtcTimeOffset(exch->tz);
           } else if (key == "params") {
-            exch->set_params(str);
+            exch->SetParams(str);
           } else {
             return false;
           }

@@ -28,13 +28,13 @@ struct ParamsBase {
 
   StrMapPtr params() const { return params_.load(boost::memory_order_relaxed); }
 
-  std::string set_params(const std::string& params) {
+  std::string SetParams(const std::string& params) {
     StrMap tmp;
     for (auto& str : Split(params, ",;\n")) {
       char k[str.size()];
       char v[str.size()];
-      if (sscanf(str.c_str(), "%s=%s", k, v) != 2) {
-        return "Invalid params format, expect <name>=<value>[,;\n]...'";
+      if (sscanf(str.c_str(), "%[^=]=%s", k, v) != 2) {
+        return "Invalid params format, expect <name>=<value>[,;<new line>]...";
       }
       tmp.emplace((const char*)k, (const char*)v);
     }

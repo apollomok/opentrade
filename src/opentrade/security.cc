@@ -19,7 +19,7 @@ std::string Exchange::ParseTickSizeTable(const std::string& str) {
         tmp->push_back({low, up, value});
       } else {
         return "Invalid tick size table format, expect '<low_price> <up_price> "
-               "<value>[,;\n]...'";
+               "<value>[,;<new line>]...'";
       }
     }
     if (!tmp->empty()) {
@@ -118,7 +118,7 @@ std::string Exchange::ParseHalfDays(const std::string& str) {
       }
     }
     if (tmp->empty()) {
-      return "Invalid half days format, expect '<YYYmmdd>[,;\n]...'";
+      return "Invalid half days format, expect '<YYYmmdd>[,;<new line>]...'";
     }
     half_days_.store(tmp, boost::memory_order_release);
   }
@@ -185,7 +185,7 @@ void SecurityManager::LoadFromDatabase() {
     e->id = id;
     e->name = Database::GetValue(*it, i++, "");
     e->mic = Database::GetValue(*it, i++, "");
-    e->set_params(Database::GetValue(*it, i++, kEmptyStr));
+    e->SetParams(Database::GetValue(*it, i++, kEmptyStr));
     e->country = Database::GetValue(*it, i++, "");
     e->ib_name = Database::GetValue(*it, i++, "");
     e->bb_name = Database::GetValue(*it, i++, "");
@@ -255,7 +255,7 @@ void SecurityManager::LoadFromDatabase() {
     s->industry_group = Database::GetValue(*it, i++, 0);
     s->industry = Database::GetValue(*it, i++, 0);
     s->sub_industry = Database::GetValue(*it, i++, 0);
-    s->set_params(Database::GetValue(*it, i++, kEmptyStr));
+    s->SetParams(Database::GetValue(*it, i++, kEmptyStr));
     std::atomic_thread_fence(std::memory_order_release);
     securities_.emplace(s->id, s);
   }
