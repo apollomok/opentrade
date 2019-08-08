@@ -55,7 +55,8 @@ void AccountManager::Initialize() {
     b->id = Database::GetValue(*it, i++, 0);
     b->name = Database::GetValue(*it, i++, "");
     b->adapter_name = Database::GetValue(*it, i++, "");
-    b->adapter = ExchangeConnectivityManager::Instance().Get(b->adapter_name);
+    b->adapter =
+        ExchangeConnectivityManager::Instance().GetAdapter(b->adapter_name);
     b->set_params(Database::GetValue(*it, i++, kEmptyStr));
     b->is_disabled = Database::GetValue(*it, i++, 0);
     b->limits.FromString(Database::GetValue(*it, i++, kEmptyStr));

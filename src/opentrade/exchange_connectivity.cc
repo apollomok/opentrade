@@ -101,7 +101,7 @@ static inline auto CheckAdapter(Order* ord) {
   auto name = ord->broker_account->adapter_name;
   if (!ord->destination.empty()) {
     name = ord->destination.c_str();
-    adapter = ExchangeConnectivityManager::Instance().Get(name);
+    adapter = ExchangeConnectivityManager::Instance().GetAdapter(name);
   }
   char buf[256];
   if (!adapter) {

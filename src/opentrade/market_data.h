@@ -260,11 +260,11 @@ class MarketDataAdapter : public virtual NetworkAdapter {
   friend class MarketDataManager;
 };
 
-class MarketDataManager : public AdapterManager<MarketDataAdapter>,
+class MarketDataManager : public AdapterManager<MarketDataAdapter, kMdPrefix>,
                           public Singleton<MarketDataManager> {
  public:
   MarketDataAdapter* Subscribe(const Security& sec, DataSrc::IdType src);
-  void Add(MarketDataAdapter* adapter);
+  void AddAdapter(MarketDataAdapter* adapter);
   const MarketData& Get(const Security& sec, DataSrc::IdType src = 0);
   // Lite version without subscription
   const MarketData& GetLite(Security::IdType id, DataSrc::IdType src = 0);

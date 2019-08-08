@@ -41,8 +41,8 @@ const MarketData& MarketDataManager::GetLite(Security::IdType id,
   return it->second[id];
 }
 
-void MarketDataManager::Add(MarketDataAdapter* adapter) {
-  AdapterManager<MarketDataAdapter>::Add(adapter);
+void MarketDataManager::AddAdapter(MarketDataAdapter* adapter) {
+  AdapterManager<MarketDataAdapter, kMdPrefix>::AddAdapter(adapter);
 
   if (!default_) default_ = adapter;
   auto src = adapter->config("src");

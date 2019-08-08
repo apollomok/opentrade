@@ -1763,7 +1763,8 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
             BrokerAccount b;
             *err = b.set_params(str);
           } else if (key == "adapter") {
-            auto adapter = ExchangeConnectivityManager::Instance().Get(str);
+            auto adapter =
+                ExchangeConnectivityManager::Instance().GetAdapter(str);
             if (!adapter) *err = "Unknown adapter name";
           }
           (*ss) << "'" << str << "'";
@@ -1776,7 +1777,8 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
             acc->set_params(str);
           } else {
             acc->adapter_name = StrDup(str);
-            acc->adapter = ExchangeConnectivityManager::Instance().Get(str);
+            acc->adapter =
+                ExchangeConnectivityManager::Instance().GetAdapter(str);
           }
           return true;
         }));
@@ -1791,7 +1793,8 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
           if (key == "params") {
             *err = acc->set_params(str);
           } else {
-            auto adapter = ExchangeConnectivityManager::Instance().Get(str);
+            auto adapter =
+                ExchangeConnectivityManager::Instance().GetAdapter(str);
             if (!adapter) {
               *err = "Unknown adapter name";
             } else {

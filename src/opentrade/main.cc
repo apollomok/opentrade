@@ -10,6 +10,7 @@
 #include "algo.h"
 #include "backtest.h"
 #include "bar_handler.h"
+#include "commission.h"
 #include "consolidation.h"
 #include "database.h"
 #include "exchange_connectivity.h"
@@ -26,6 +27,7 @@ namespace bpo = boost::program_options;
 namespace fs = boost::filesystem;
 using opentrade::AlgoManager;
 using opentrade::ExchangeConnectivityManager;
+using opentrade::kAdapterPrefixes;
 using opentrade::kAlgoPath;
 using opentrade::kStorePath;
 using opentrade::MarketDataManager;
@@ -187,20 +189,24 @@ int main(int argc, char *argv[]) {
                 << opentrade::kApiVersion);
       continue;
     }
-    if (section_name.find("md_") == 0) {
+    if (section_name.find(kAdapterPrefixes[opentrade::kMdPrefix]) == 0) {
       auto md = dynamic_cast<opentrade::MarketDataAdapter *>(adapter);
       if (!md) LOG_FATAL("Failed to load MarketDataAdapter " << section_name);
-      MarketDataManager::Instance().Add(md);
-    } else if (section_name.find("ec_") == 0) {
+      MarketDataManager::Instance().AddAdapter(md);
+    } else if (section_name.find(kAdapterPrefixes[opentrade::kEcPrefix]) == 0) {
       auto ec = dynamic_cast<opentrade::ExchangeConnectivityAdapter *>(adapter);
       if (!ec)
         LOG_FATAL("Failed to load ExchangeConnectivityAdapter "
                   << section_name);
-      ExchangeConnectivityManager::Instance().Add(ec);
+      ExchangeConnectivityManager::Instance().AddAdapter(ec);
+    } else if (section_name.find(kAdapterPrefixes[opentrade::kCmPrefix]) == 0) {
+      auto cm = dynamic_cast<opentrade::CommissionAdapter *>(adapter);
+      if (!cm) LOG_FATAL("Failed to load CommissionAdapter " << section_name);
+      opentrade::CommissionManager::Instance().AddAdapter(cm);
     } else {
       auto algo = dynamic_cast<opentrade::Algo *>(adapter);
       if (!algo) LOG_FATAL("Failed to load Algo " << section_name);
-      AlgoManager::Instance().Add(algo);
+      AlgoManager::Instance().AddAdapter(algo);
     }
   }
 
@@ -241,7 +247,7 @@ int main(int argc, char *argv[]) {
       }
       if (algo) {
         algo->set_name(algoname);
-        AlgoManager::Instance().Add(algo);
+        AlgoManager::Instance().AddAdapter(algo);
       } else {
         LOG_ERROR("Failed to load algo file " << path);
       }
@@ -251,8 +257,8 @@ int main(int argc, char *argv[]) {
   if (opentick_url.size())
     opentrade::OpenTick::Instance().Initialize(opentick_url);
 
-  AlgoManager::Instance().Add(new opentrade::BarHandler<>);
-  AlgoManager::Instance().Add(new opentrade::ConsolidationHandler);
+  AlgoManager::Instance().AddAdapter(new opentrade::BarHandler<>);
+  AlgoManager::Instance().AddAdapter(new opentrade::ConsolidationHandler);
 
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();

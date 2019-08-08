@@ -14,7 +14,7 @@ static const char* kApiVersion =
 #ifdef BACKTEST
     "backtest_"
 #endif
-    "1.3";
+    "1.3.1";
 
 class Adapter {
  public:
@@ -56,12 +56,25 @@ class NetworkAdapter : public Adapter {
   tbb::atomic<int> connected_ = 0;
 };
 
-template <typename T>
+inline const std::string kAdapterPrefixes[] = {"", "ec_", "md_", "cm_"};
+
+enum AdapterPrefix { kEmptyPrefix, kEcPrefix, kMdPrefix, kCmPrefix };
+
+template <typename T, AdapterPrefix prefix = kEmptyPrefix>
 class AdapterManager {
  public:
   typedef std::unordered_map<std::string, T*> AdapterMap;
-  void Add(T* adapter) { adapters_[adapter->name()] = adapter; }
-  T* GetAdapter(const std::string& name) { return FindInMap(adapters_, name); }
+  void AddAdapter(T* adapter) { adapters_[adapter->name()] = adapter; }
+  T* GetAdapter(const std::string& name) {
+    auto out = FindInMap(adapters_, name);
+    if (out) return out;
+    if constexpr (prefix > 0) {
+      auto& p = kAdapterPrefixes[prefix];
+      if (name.find(p) == 0) return {};
+      return FindInMap(adapters_, p + name);
+    }
+    return {};
+  }
   const AdapterMap& adapters() { return adapters_; }
 
  private:

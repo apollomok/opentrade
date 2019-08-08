@@ -67,7 +67,8 @@ inline void ConsolidationBook::Update(double price, const Instrument* inst,
 }
 
 void ConsolidationHandler::Start() noexcept {
-  MarketDataManager::Instance().Add(new DummyFeed(kConsolidationSrc.str()));
+  MarketDataManager::Instance().AddAdapter(
+      new DummyFeed(kConsolidationSrc.str()));
 }
 
 void ConsolidationHandler::Subscribe(Instrument* inst, bool listen) noexcept {
