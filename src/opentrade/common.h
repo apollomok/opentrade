@@ -1,8 +1,10 @@
 #ifndef OPENTRADE_COMMON_H_
 #define OPENTRADE_COMMON_H_
 
+#include <boost/atomic.hpp>
 #include <boost/filesystem.hpp>
-#include <memory>
+#include <boost/make_shared.hpp>
+#include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -18,32 +20,32 @@ static inline const fs::path kStorePath = fs::path(".") / "store";
 
 struct ParamsBase {
   typedef std::unordered_map<std::string, std::string> StrMap;
-  typedef std::shared_ptr<const StrMap> StrMapPtr;
+  typedef boost::shared_ptr<const StrMap> StrMapPtr;
 
   std::string GetParam(const std::string& k) const {
-    return FindInMap(params_, k);
+    return FindInMap(params(), k);
   }
 
-  StrMapPtr params() const { return params_; }
+  StrMapPtr params() const { return params_.load(boost::memory_order_relaxed); }
 
   std::string set_params(const std::string& params) {
-    auto tmp = std::make_shared<StrMap>();
+    StrMap tmp;
     for (auto& str : Split(params, ",;\n")) {
       char k[str.size()];
       char v[str.size()];
       if (sscanf(str.c_str(), "%s=%s", k, v) != 2) {
         return "Invalid params format, expect <name>=<value>[,;\n]...'";
       }
-      tmp->emplace((const char*)k, (const char*)v);
+      tmp.emplace((const char*)k, (const char*)v);
     }
-    std::atomic_thread_fence(std::memory_order_release);
-    params_ = tmp;
+    params_.store(StrMapPtr(new StrMap(std::move(tmp))),
+                  boost::memory_order_release);
     return {};
   }
 
   std::string GetParamsString() const {
     std::string out;
-    for (auto& pair : *params_) {
+    for (auto& pair : *params()) {
       if (!out.empty()) out += "\n";
       out += pair.first + "=" + pair.second;
     }
@@ -51,7 +53,7 @@ struct ParamsBase {
   }
 
  private:
-  StrMapPtr params_ = std::make_shared<const StrMap>();
+  boost::atomic_shared_ptr<const StrMap> params_ = StrMapPtr(new StrMap);
 };
 
 template <typename V>

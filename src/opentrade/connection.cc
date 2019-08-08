@@ -2,7 +2,6 @@
 
 #include <unistd.h>
 #include <boost/filesystem.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>

@@ -2,8 +2,6 @@
 #define OPENTRADE_SECURITY_H_
 
 #include <tbb/concurrent_unordered_map.h>
-#include <boost/atomic.hpp>
-#include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_set>
 

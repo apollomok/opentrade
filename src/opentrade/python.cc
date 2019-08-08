@@ -238,7 +238,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("total_outstanding_sell_qty",
                     &Position::total_outstanding_sell_qty);
 
-  auto cls = bp::class_<Security>("Security", bp::no_init);
+  auto cls = bp::class_<Security, boost::noncopyable>("Security", bp::no_init);
   cls.def_readonly("id", &Security::id)
       .def("__str__",
            +[](const Security &s) {
