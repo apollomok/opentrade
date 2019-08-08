@@ -6,7 +6,7 @@ import time
 
 
 def login(username, password, url):
-  login = ['login', 'test', 'test']
+  login = ['login', username, password]
   res = requests.post(url, data=json.dumps(login))
   res = json.loads(res.text)
   if res[1] == 'ok':

@@ -283,7 +283,11 @@ int main(int argc, char *argv[]) {
     LOG_FATAL("At least one market data adapter required");
     return -1;
   }
-  PositionManager::Instance().UpdatePnl();
+  // wait for some time to get last price updated
+  // to-do: update last price from opentick
+  opentrade::kTimerTaskPool.AddTask(
+      []() { PositionManager::Instance().UpdatePnl(); },
+      boost::posix_time::seconds(5));
   opentrade::Server::Start(port, io_threads);
 #endif
 

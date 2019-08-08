@@ -22,6 +22,8 @@ struct Position : public PositionValue {
   double unrealized_pnl = 0;
   double realized_pnl = 0;
   double realized_pnl0 = 0;  // no rate * multiplier
+  double commission = 0;
+  double commission0 = 0;  // no rate * multiplier
 
   // intraday
   double total_bought_qty = 0;
@@ -41,6 +43,7 @@ struct Bod {
   double cx_qty = 0;
   double avg_px = 0;
   double realized_pnl = 0;
+  double commission = 0;
   time_t tm = 0;
   BrokerAccount::IdType broker_account_id = 0;
 };

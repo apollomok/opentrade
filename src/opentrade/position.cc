@@ -125,16 +125,16 @@ void PositionManager::Initialize() {
   auto query = R"(
     select distinct on (sub_account_id, security_id)
       sub_account_id, broker_account_id, security_id,
-      qty, cx_qty, avg_px, realized_pnl, tm
+      qty, cx_qty, avg_px, realized_pnl, commission, tm
     from position
     where tm < :tm
     order by sub_account_id, security_id, tm desc
   )";
   if (Database::is_sqlite()) {
     query = R"(
-    select A.sub_account_id, broker_account_id, A.security_id, qty, cx_qty, avg_px, realized_pnl, A.tm
+    select A.sub_account_id, broker_account_id, A.security_id, qty, cx_qty, avg_px, realized_pnl, commission, A.tm
       from position as A inner join
-        (select sub_account_id, security_id, max(tm) as tm  from position where tm < :tm group by sub_account_id,security_id) as B
+        (select sub_account_id, security_id, max(tm) as tm from position where tm < :tm group by sub_account_id,security_id) as B
       on A.sub_account_id = B.sub_account_id and A.security_id = B.security_id and A.tm = B.tm
     )";
   }
@@ -152,11 +152,14 @@ void PositionManager::Initialize() {
     p.avg_px = Database::GetValue(*it, i++, 0.);
     p.realized_pnl0 = Database::GetValue(*it, i++, 0.);
     p.realized_pnl = p.realized_pnl0 * sec->rate * sec->multiplier;
+    p.commission0 = Database::GetValue(*it, i++, 0.);
+    p.commission = p.commission0 * sec->rate * sec->multiplier;
     Bod bod{};
     bod.qty = p.qty;
     bod.cx_qty = p.cx_qty;
     bod.avg_px = p.avg_px;
     bod.realized_pnl = p.realized_pnl;
+    bod.commission = p.commission;
     bod.broker_account_id = broker_account_id;
     if (Database::is_sqlite()) {
       tm = Database::GetValue(*it, i++, tm);
@@ -410,6 +413,7 @@ void PositionManager::UpdatePnl() {
   return;
 #endif
 
+  static int n = 0;
   auto tm = GetTime();
   for (auto& pair : pnls) {
     auto& pnl = pnls_[pair.first];
@@ -418,6 +422,7 @@ void PositionManager::UpdatePnl() {
       continue;
     pnl.realized = pair.second.first;
     pnl.unrealized = pair.second.second;
+    if (n % 5) continue;
     if (!pnl.of) {
       auto path = kStorePath / ("pnl-" + std::to_string(pair.first));
       pnl.of = new std::ofstream(path.c_str(), std::ofstream::app);
@@ -425,6 +430,7 @@ void PositionManager::UpdatePnl() {
     (*pnl.of) << tm << ' ' << pnl.realized << ' ' << pnl.unrealized
               << std::endl;
   }
+  ++n;
 
   kTimerTaskPool.AddTask([this]() { this->UpdatePnl(); }, pt::seconds(1));
 }

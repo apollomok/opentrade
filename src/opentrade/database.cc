@@ -159,6 +159,7 @@ static const char create_tables_sql[] = R"(
     cx_qty float8,
     avg_px float8 not null,
     realized_pnl float8 not null,
+    commission float8,
     info json
   );
   create index if not exists position__index_acc_sec_tm on position(sub_account_id, security_id, tm desc);
@@ -260,6 +261,13 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   } catch (const soci::soci_error& e) {
     *Session() << "alter table sub_account add column is_disabled boolean;";
     *Session() << "alter table broker_account add column is_disabled boolean;";
+  }
+
+  try {
+    *Session() << "select commission from position limit 1";
+  } catch (const soci::soci_error& e) {
+    std::string type(is_sqlite_ ? "real" : "float8");
+    *Session() << "alter table position add column commission " + type + ";";
   }
 }
 
