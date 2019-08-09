@@ -111,7 +111,24 @@ void AccountManager::Initialize() {
 std::string BrokerAccount::SetParams(const std::string& params) {
   auto res = ParamsBase::SetParams(params);
   if (!res.empty()) return res;
-  return res;
+  auto cm = GetParam("commission");
+  if (cm.empty()) {
+    this->commission = nullptr;
+    return {};
+  }
+  if (cm.find("=") == std::string::npos) {
+    auto adapter = CommissionManager::Instance().GetAdapter(cm);
+    if (!adapter) return "unknown commission adapter \"" + cm + "\"";
+    this->commission = adapter;
+    return {};
+  }
+  // memory leak here
+  auto adapter = new CommissionAdapter;
+  res = adapter->SetTable(cm);
+  if (!res.empty()) return res;
+  std::atomic_thread_fence(std::memory_order_release);
+  this->commission = adapter;
+  return {};
 }
 
 }  // namespace opentrade

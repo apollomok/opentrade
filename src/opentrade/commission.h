@@ -19,7 +19,9 @@ struct Confirmation;
 
 struct CommissionAdapter : public Adapter {
   typedef std::map<int64_t, Commission> Table;  // <exchange_id, ...>
+  CommissionAdapter() {}
   explicit CommissionAdapter(Table&& other) : table_(std::move(other)) {}
+  void Start() noexcept override {}
   std::string SetTable(const std::string& tbl_str);
   virtual double Compute(const Confirmation& cm) const noexcept;
 

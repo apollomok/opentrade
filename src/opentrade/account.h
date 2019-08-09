@@ -44,16 +44,7 @@ struct BrokerAccount : public AccountBase, public ParamsBase {
   std::string SetParams(const std::string& params);
   const char* adapter_name = "";
   ExchangeConnectivityAdapter* adapter = nullptr;
-
-  boost::shared_ptr<const CommissionAdapter> commission() const {
-    return commission_.load(boost::memory_order_relaxed);
-  }
-  void set_commission(boost::shared_ptr<const CommissionAdapter> v = {}) {
-    commission_.store(v, boost::memory_order_release);
-  }
-
- private:
-  boost::atomic_shared_ptr<const CommissionAdapter> commission_;
+  const CommissionAdapter* commission = nullptr;
 };
 
 struct SubAccount : public AccountBase {
