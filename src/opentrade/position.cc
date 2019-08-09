@@ -234,8 +234,8 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       auto adapter = cm->order->broker_account->commission_adapter;
       auto commission = adapter ? adapter->Compute(*cm) : 0;
       if (commission > 0) {
-        pos.commission0 = commission;
-        pos.commission = commission * multiplier;
+        pos.commission0 += commission;
+        pos.commission += commission * multiplier;
       }
       pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx);
       broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
