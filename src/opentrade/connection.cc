@@ -1177,23 +1177,20 @@ bool Connection::Disable(const json& j, AccountBase* acc) {
     Send(json{"error", "", "Unknown account id"});
     return false;
   }
-  auto old = acc->disabled_reason.load(boost::memory_order_relaxed);
+  auto old = acc->disabled_reason();
   if (j.size() == 4) {  // enable
-    acc->disabled_reason.store(boost::shared_ptr<std::string>{},
-                               boost::memory_order_release);
+    acc->set_disabled_reason();
     return !!old;
   }
-  acc->disabled_reason.store(
-      boost::shared_ptr<std::string>(new std::string(Get<std::string>(j[4]))),
-      boost::memory_order_release);
+  acc->set_disabled_reason(
+      boost::make_shared<std::string>(Get<std::string>(j[4])));
   return !old;
 }
 
 std::string Connection::GetDisabledSubAccounts() {
   json out = {"disabled_sub_accounts"};
   for (auto& pair : AccountManager::Instance().sub_accounts_) {
-    auto reason =
-        pair.second->disabled_reason.load(boost::memory_order_relaxed);
+    auto reason = pair.second->disabled_reason();
     if (reason) {
       out.push_back(json{pair.second->id, *reason});
     }

@@ -88,7 +88,7 @@ static bool Check(const char* name, const Order& ord, const AccountBase& acc,
     return false;
   }
 
-  auto disabled_reason = acc.disabled_reason.load(boost::memory_order_relaxed);
+  auto disabled_reason = acc.disabled_reason();
   if (disabled_reason) {
     snprintf(buf, sizeof(buf), "%s %s is disabled by \"%s\"", name, acc.name,
              disabled_reason->c_str());

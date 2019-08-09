@@ -109,7 +109,9 @@ void AccountManager::Initialize() {
 }
 
 std::string BrokerAccount::SetParams(const std::string& params) {
-  return ParamsBase::SetParams(params);
+  auto res = ParamsBase::SetParams(params);
+  if (!res.empty()) return res;
+  return res;
 }
 
 }  // namespace opentrade

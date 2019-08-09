@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "commission.h"
 #include "position_value.h"
 #include "risk.h"
 #include "security.h"
@@ -24,16 +25,35 @@ struct AccountBase {
   tbb::concurrent_unordered_map<Security::IdType, Throttle>
       throttle_per_security_in_sec;
   PositionValue position_value;
+
+  boost::shared_ptr<const std::string> disabled_reason() const {
+    return disabled_reason_.load(boost::memory_order_relaxed);
+  }
+  void set_disabled_reason(boost::shared_ptr<const std::string> v = {}) {
+    disabled_reason_.store(v, boost::memory_order_release);
+  }
+
+ private:
   // different from is_disabled which is persistent in database,
   // disabled_reason is not persistent and designed for OpenRisk
   // https://stackoverflow.com/questions/40223599/what-is-the-difference-between-stdshared-ptr-and-stdexperimentalatomic-sha
-  boost::atomic_shared_ptr<std::string> disabled_reason;
+  boost::atomic_shared_ptr<const std::string> disabled_reason_;
 };
 
 struct BrokerAccount : public AccountBase, public ParamsBase {
   std::string SetParams(const std::string& params);
   const char* adapter_name = "";
   ExchangeConnectivityAdapter* adapter = nullptr;
+
+  boost::shared_ptr<const CommissionAdapter> commission() const {
+    return commission_.load(boost::memory_order_relaxed);
+  }
+  void set_commission(boost::shared_ptr<const CommissionAdapter> v = {}) {
+    commission_.store(v, boost::memory_order_release);
+  }
+
+ private:
+  boost::atomic_shared_ptr<const CommissionAdapter> commission_;
 };
 
 struct SubAccount : public AccountBase {
@@ -44,6 +64,7 @@ struct SubAccount : public AccountBase {
     return broker_accounts_.load(boost::memory_order_relaxed);
   }
   void set_broker_accounts(BrokerAccountMapPtr accs) {
+    assert(accs);
     broker_accounts_.store(accs, boost::memory_order_release);
   }
   const BrokerAccount* GetBrokerAccount(Exchange::IdType id) const {
@@ -71,6 +92,7 @@ struct User : public AccountBase {
     return sub_accounts_.load(boost::memory_order_relaxed);
   }
   void set_sub_accounts(SubAccountMapPtr accs) {
+    assert(accs);
     sub_accounts_.store(accs, boost::memory_order_release);
   }
 

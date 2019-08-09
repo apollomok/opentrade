@@ -22,8 +22,8 @@ std::string CommissionAdapter::SetTable(const std::string& tbl_str) {
       return "Invalid commission format, expect "
              "<name>=<value>[<space><tab>|]...";
     }
-    bool is_buy = strstr(name, "buy") == name;
-    bool is_sell = is_buy ? false : strstr(name, "sell") == name;
+    bool is_buy = strstr(name, "buy_") == name;
+    bool is_sell = is_buy ? false : strstr(name, "sell_") == name;
     auto p = name + (is_buy ? 4 : (is_sell ? 5 : 0));
     bool per_value = strstr(p, "per_value") == p;
     bool per_share = per_value ? false : strstr(p, "per_share") == p;
