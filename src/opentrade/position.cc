@@ -231,6 +231,12 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       auto px = cm->last_px;
       auto px0 = ord->price;
       auto& pos = sub_positions_[std::make_pair(ord->sub_account->id, sec->id)];
+      auto adapter = cm->order->broker_account->commission_adapter;
+      auto commission = adapter ? adapter->Compute(*cm) : 0;
+      if (commission > 0) {
+        pos.commission0 = commission;
+        pos.commission = commission * multiplier;
+      }
       pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx);
       broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
           .HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc,
@@ -259,20 +265,21 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           static double cx_qty;
           static double avg_px;
           static double realized_pnl0;
+          static double commission0;
           static std::string info;
           static std::string tm;
           static const char* cmd = R"(
             insert into position(user_id, sub_account_id, security_id, 
-            broker_account_id, qty, cx_qty, avg_px, realized_pnl, tm, info) 
+            broker_account_id, qty, cx_qty, avg_px, realized_pnl, commission, tm, info) 
             values(:user_id, :sub_account_id, :security_id, :broker_account_id,
-            :qty, :cx_qty, :avg_px, :realized_pnl, :tm, :info)
+            :qty, :cx_qty, :avg_px, :realized_pnl, :commission, :tm, :info)
         )";
           static soci::statement st =
               (this->sql_->prepare << cmd, soci::use(user_id),
                soci::use(sub_account_id), soci::use(security_id),
                soci::use(broker_account_id), soci::use(qty), soci::use(cx_qty),
-               soci::use(avg_px), soci::use(realized_pnl0), soci::use(tm),
-               soci::use(info));
+               soci::use(avg_px), soci::use(realized_pnl0),
+               soci::use(commission0), soci::use(tm), soci::use(info));
           auto ord = cm->order;
           user_id = ord->user->id;
           sub_account_id = ord->sub_account->id;
@@ -282,6 +289,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           cx_qty = pos.cx_qty;
           avg_px = pos.avg_px;
           realized_pnl0 = pos.realized_pnl0;
+          commission0 = pos.commission0;
           char side[2];
           side[0] = static_cast<char>(ord->side);
           side[1] = 0;

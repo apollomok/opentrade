@@ -44,7 +44,7 @@ struct BrokerAccount : public AccountBase, public ParamsBase {
   std::string SetParams(const std::string& params);
   const char* adapter_name = "";
   ExchangeConnectivityAdapter* adapter = nullptr;
-  const CommissionAdapter* commission = nullptr;
+  const CommissionAdapter* commission_adapter = nullptr;
 };
 
 struct SubAccount : public AccountBase {

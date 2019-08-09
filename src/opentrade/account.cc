@@ -113,13 +113,13 @@ std::string BrokerAccount::SetParams(const std::string& params) {
   if (!res.empty()) return res;
   auto cm = GetParam("commission");
   if (cm.empty()) {
-    this->commission = nullptr;
+    this->commission_adapter = nullptr;
     return {};
   }
   if (cm.find("=") == std::string::npos) {
     auto adapter = CommissionManager::Instance().GetAdapter(cm);
     if (!adapter) return "unknown commission adapter \"" + cm + "\"";
-    this->commission = adapter;
+    this->commission_adapter = adapter;
     return {};
   }
   // memory leak here
@@ -127,7 +127,7 @@ std::string BrokerAccount::SetParams(const std::string& params) {
   res = adapter->SetTable(cm);
   if (!res.empty()) return res;
   std::atomic_thread_fence(std::memory_order_release);
-  this->commission = adapter;
+  this->commission_adapter = adapter;
   return {};
 }
 

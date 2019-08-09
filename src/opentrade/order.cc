@@ -169,6 +169,9 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
 
 void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
   if (!fs::file_size(kPath)) return;
+  if (conn) {
+    LOG_DEBUG("Load offline confirmation starting from " << seq0);
+  }
   boost::iostreams::mapped_file_source m(kPath.string());
   auto p = m.data();
   auto p_end = p + m.size();
@@ -485,6 +488,9 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
   if (!conn && p != p_end) {
     LOG_FATAL("Corrupted confirmation file: " << kPath.c_str()
                                               << ", please fix it first");
+  }
+  if (conn) {
+    LOG_DEBUG("Load offline confirmation done");
   }
 }
 
