@@ -281,8 +281,8 @@ void Backtest::AddSimulator(const std::string& fn_tmpl,
   b->id = acc_mngr.broker_accounts_.size();
   acc_mngr.broker_accounts_.emplace(b->id, b);
   CreateSubAccount(name.empty() ? "test" : name.c_str(), b);
-  MarketDataManager::Instance().Add(sim);
-  ExchangeConnectivityManager::Instance().Add(sim);
+  MarketDataManager::Instance().AddAdapter(sim);
+  ExchangeConnectivityManager::Instance().AddAdapter(sim);
 }
 
 SubAccount* Backtest::CreateSubAccount(const std::string& name,
@@ -290,7 +290,7 @@ SubAccount* Backtest::CreateSubAccount(const std::string& name,
   auto& acc_mngr = AccountManager::Instance();
   auto s = new SubAccount();
   s->name = strdup(name.c_str());
-  auto broker_accs = std::make_shared<SubAccount::BrokerAccountMap>();
+  auto broker_accs = boost::make_shared<SubAccount::BrokerAccountMap>();
   broker_accs->emplace(0, broker ? broker : acc_mngr.GetBrokerAccount(0));
   s->set_broker_accounts(broker_accs);
   s->id = acc_mngr.sub_accounts_.size();
@@ -298,7 +298,7 @@ SubAccount* Backtest::CreateSubAccount(const std::string& name,
   acc_mngr.sub_account_of_name_.emplace(s->name, s);
   auto user = const_cast<User*>(acc_mngr.GetUser(0));
   auto sub_accs =
-      std::make_shared<User::SubAccountMap>(*user->sub_accounts().get());
+      boost::make_shared<User::SubAccountMap>(*user->sub_accounts().get());
   sub_accs->emplace(s->id, s);
   user->set_sub_accounts(sub_accs);
   return s;
