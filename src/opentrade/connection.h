@@ -87,9 +87,9 @@ class Connection : public std::enable_shared_from_this<Connection> {
   boost::asio::deadline_timer timer_;
   std::map<std::string, bool> ecs_;
   std::map<std::string, bool> mds_;
-  std::map<SubAccount::IdType, std::pair<double, double>> pnls_;
+  std::map<SubAccount::IdType, PositionManager::Pnl> pnls_;
   boost::unordered_map<std::pair<SubAccount::IdType, Security::IdType>,
-                       std::pair<double, double>>
+                       PositionManager::Pnl>
       single_pnls_;
   tbb::concurrent_unordered_set<std::string> test_algo_tokens_;
   bool sub_pnl_ = false;

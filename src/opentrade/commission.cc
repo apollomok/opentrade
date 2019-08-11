@@ -5,8 +5,7 @@
 namespace opentrade {
 double CommissionAdapter::Compute(const Confirmation& cm) const noexcept {
   auto it = table_.find(cm.order->sec->exchange->id);
-  if (it == table_.end()) return 0;
-  it = table_.find(0);
+  if (it == table_.end()) it = table_.find(0);
   if (it == table_.end()) return 0;
   auto& f = cm.order->IsBuy() ? it->second.buy : it->second.sell;
   if (f.per_share > 0) return f.per_share * cm.last_shares;

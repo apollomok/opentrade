@@ -45,10 +45,15 @@ inline void HandlePnl(double qty, double price, double multiplier,
 
 inline void Position::HandleTrade(bool is_buy, double qty, double price,
                                   double price0, double multiplier,
-                                  bool is_bust, bool is_otc, bool is_cx) {
+                                  bool is_bust, bool is_otc, bool is_cx,
+                                  double cm) {
   assert(qty > 0);
   PositionValue::HandleTrade(is_buy, qty, price, price0, multiplier, is_bust,
                              is_otc);
+  if (cm != 0.) {
+    commission0 += cm;
+    commission += cm * multiplier;
+  }
   if (!is_buy) qty = -qty;
   if (is_otc) {
     // do nothing
@@ -232,17 +237,15 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       auto px0 = ord->price;
       auto& pos = sub_positions_[std::make_pair(ord->sub_account->id, sec->id)];
       auto adapter = cm->order->broker_account->commission_adapter;
-      auto commission = adapter ? adapter->Compute(*cm) : 0;
-      if (commission > 0) {
-        pos.commission0 += commission;
-        pos.commission += commission * multiplier;
-      }
-      pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx);
+      auto commission = adapter ? adapter->Compute(*cm) : 0.;
+      if (is_bust) commission = -commission;
+      pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx,
+                      commission);
       broker_positions_[std::make_pair(ord->broker_account->id, sec->id)]
-          .HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc,
-                       is_cx);
+          .HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx,
+                       commission);
       user_positions_[std::make_pair(ord->user->id, sec->id)].HandleTrade(
-          is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx);
+          is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx, commission);
       const_cast<SubAccount*>(ord->sub_account)
           ->position_value.HandleTrade(is_buy, qty, px, px0, multiplier,
                                        is_bust, is_otc);
@@ -408,13 +411,14 @@ void PositionManager::UpdatePnl() {
   UpdateBalance(&broker_positions_, &am.broker_accounts_);
   UpdateBalance(&user_positions_, &am.users_);
 
-  std::map<SubAccount::IdType, std::pair<double, double>> pnls;
+  std::map<SubAccount::IdType, Pnl> pnls;
   for (auto& pair : sub_positions_) {
     auto acc = pair.first.first;
     auto& pos = pair.second;
     auto& pnl = pnls[acc];
-    pnl.first += pos.realized_pnl;
-    pnl.second += pos.unrealized_pnl;
+    pnl.unrealized += pos.unrealized_pnl;
+    pnl.commission += pos.commission;
+    pnl.realized += pos.realized_pnl;
   }
 
 #ifdef BACKTEST
@@ -424,19 +428,18 @@ void PositionManager::UpdatePnl() {
   static int n = 0;
   auto tm = GetTime();
   for (auto& pair : pnls) {
-    auto& pnl = pnls_[pair.first];
-    if (std::abs(pnl.realized - pair.second.first) < 1 &&
-        std::abs(pnl.unrealized - pair.second.second) < 1)
-      continue;
-    pnl.realized = pair.second.first;
-    pnl.unrealized = pair.second.second;
-    if (n % 5) continue;
-    if (!pnl.of) {
-      auto path = kStorePath / ("pnl-" + std::to_string(pair.first));
-      pnl.of = new std::ofstream(path.c_str(), std::ofstream::app);
+    auto& pnl0 = pnls_[pair.first];
+    auto& pnl = pair.second;
+    if (std::abs(pnl.unrealized - pnl0.unrealized) < 1) continue;
+    if (n % 15 == 0) {
+      if (!pnl0.of) {
+        auto path = kStorePath / ("pnl-" + std::to_string(pair.first));
+        pnl0.of = new std::ofstream(path.c_str(), std::ofstream::app);
+      }
+      *pnl0.of << tm << ' ' << pnl.unrealized << ' ' << pnl.commission << ' '
+               << pnl.realized << std::endl;
     }
-    (*pnl.of) << tm << ' ' << pnl.realized << ' ' << pnl.unrealized
-              << std::endl;
+    static_cast<Pnl&>(pnl0) = pnl;
   }
   ++n;
 

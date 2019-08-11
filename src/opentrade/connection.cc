@@ -287,21 +287,25 @@ void Connection::PublishMarketdata() {
     if (!self->sub_pnl_) return;
     for (auto& pair : PositionManager::Instance().sub_positions_) {
       auto sub_account_id = pair.first.first;
-      if (!self->user_->GetSubAccount(sub_account_id)) continue;
+      if (!self->user_->is_admin && !self->user_->GetSubAccount(sub_account_id))
+        continue;
       auto sec_id = pair.first.second;
       auto& pnl0 = self->single_pnls_[pair.first];
       auto& pos = pair.second;
-      auto x = pos.realized_pnl != pnl0.first;
-      if (x || pos.unrealized_pnl != pnl0.second) {
-        pnl0.first = pos.realized_pnl;
-        pnl0.second = pos.unrealized_pnl;
+      if (pos.unrealized_pnl != pnl0.unrealized) {
         json j = {
             "pnl",
             sub_account_id,
             sec_id,
-            pnl0.second,
+            pos.unrealized_pnl,
         };
-        if (x) j.push_back(pnl0.first);
+        auto r_changed = pos.realized_pnl != pnl0.realized;
+        if (pos.commission != pnl0.commission || r_changed)
+          j.push_back(pos.commission);
+        if (r_changed) j.push_back(pos.realized_pnl);
+        pnl0.unrealized = pos.unrealized_pnl;
+        pnl0.commission = pos.commission;
+        pnl0.realized = pos.realized_pnl;
         self->Send(j);
       }
     }
@@ -310,10 +314,10 @@ void Connection::PublishMarketdata() {
       if (!self->user_->GetSubAccount(id)) continue;
       auto& pnl0 = self->pnls_[id];
       auto& pnl = pair.second;
-      if (pnl.realized != pnl0.first || pnl.unrealized != pnl0.second) {
-        pnl0.first = pnl.realized;
-        pnl0.second = pnl.unrealized;
-        self->Send(json{"Pnl", id, GetTime(), pnl.realized, pnl.unrealized});
+      if (pnl.unrealized != pnl0.unrealized) {
+        self->Send(json{"Pnl", id, GetTime(), pnl.unrealized, pnl.commission,
+                        pnl.realized});
+        pnl0 = pnl;
       }
     }
   }));
@@ -439,6 +443,7 @@ void Connection::HandleMessageSync(const std::string& msg,
             sec_id,
             pos.qty,
             pos.avg_px,
+            pos.commission,
             pos.realized_pnl,
             pos.broker_account_id,
             pos.tm,
@@ -543,7 +548,7 @@ void Connection::HandleMessageSync(const std::string& msg,
       // not conform to REST rule
       for (auto& pair : PositionManager::Instance().pnls_) {
         auto id = pair.first;
-        if (!user_->GetSubAccount(id)) continue;
+        if (!user_->is_admin && !user_->GetSubAccount(id)) continue;
         auto path = kStorePath / ("pnl-" + std::to_string(id));
         auto self = shared_from_this();
         kTaskPool.AddTask([self, tm0, id, path]() {
@@ -553,11 +558,11 @@ void Connection::HandleMessageSync(const std::string& msg,
           json j2;
           while (f.getline(str, LINE_LENGTH)) {
             int tm;
-            double realized, unrealized;
-            if (3 == sscanf(str, "%d %lf %lf", &tm, &realized, &unrealized)) {
-              if (tm <= tm0) continue;
-              j2.push_back(json{tm, realized, unrealized});
-            }
+            double realized, commission, unrealized;
+            auto n = sscanf(str, "%d %lf %lf %lf", &tm, &unrealized,
+                            &commission, &realized);
+            if (n < 4 || tm <= tm0) continue;
+            j2.push_back(json{tm, unrealized, commission, realized});
           }
           self->Send(json{"Pnl", id, j2});
         });
@@ -908,6 +913,7 @@ void Connection::OnPosition(const json& j, const std::string& msg) {
       {{"qty", p->qty},
        {"avg_px", p->avg_px},
        {"unrealized_pnl", p->unrealized_pnl},
+       {"commission", p->commission},
        {"realized_pnl", p->realized_pnl},
        {"total_bought_qty", p->total_bought_qty},
        {"total_sold_qty", p->total_sold_qty},
