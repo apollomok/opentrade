@@ -292,16 +292,16 @@ void Connection::PublishMarketdata() {
       auto sec_id = pair.first.second;
       auto& pnl0 = self->single_pnls_[pair.first];
       auto& pos = pair.second;
-      if (pos.unrealized_pnl != pnl0.unrealized) {
+      auto c_changed = pos.commission != pnl0.commission;
+      auto r_changed = pos.realized_pnl != pnl0.realized;
+      if (pos.unrealized_pnl != pnl0.unrealized || c_changed || r_changed) {
         json j = {
             "pnl",
             sub_account_id,
             sec_id,
             pos.unrealized_pnl,
         };
-        auto r_changed = pos.realized_pnl != pnl0.realized;
-        if (pos.commission != pnl0.commission || r_changed)
-          j.push_back(pos.commission);
+        if (c_changed || r_changed) j.push_back(pos.commission);
         if (r_changed) j.push_back(pos.realized_pnl);
         pnl0.unrealized = pos.unrealized_pnl;
         pnl0.commission = pos.commission;
@@ -311,7 +311,7 @@ void Connection::PublishMarketdata() {
     }
     for (auto& pair : PositionManager::Instance().pnls_) {
       auto id = pair.first;
-      if (!self->user_->GetSubAccount(id)) continue;
+      if (!self->user_->is_admin && !self->user_->GetSubAccount(id)) continue;
       auto& pnl0 = self->pnls_[id];
       auto& pnl = pair.second;
       if (pnl.unrealized != pnl0.unrealized) {
