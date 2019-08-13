@@ -237,7 +237,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       auto px0 = ord->price;
       auto& pos = sub_positions_[std::make_pair(ord->sub_account->id, sec->id)];
       auto adapter = cm->order->broker_account->commission_adapter;
-      auto commission = adapter ? adapter->Compute(*cm) : 0.;
+      auto commission = adapter && !is_cx ? adapter->Compute(*cm) : 0.;
       if (is_bust) commission = -commission;
       pos.HandleTrade(is_buy, qty, px, px0, multiplier, is_bust, is_otc, is_cx,
                       commission);
