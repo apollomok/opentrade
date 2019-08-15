@@ -236,6 +236,11 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
       auto px = cm->last_px;
       auto px0 = ord->price;
       auto& pos = sub_positions_[std::make_pair(ord->sub_account->id, sec->id)];
+      // should we use volatile variable here for adapter to avoid it optimize
+      // out in -O3 mode? In -O3 mode, below two lines generate the same asm
+      // with one line without intermediate local adapter variable, adapter is
+      // optimized out to be register, so no need to use volatile. In -O0 mode,
+      // with intermediate local adapter variable does differ from without.
       auto adapter = cm->order->broker_account->commission_adapter;
       auto commission = adapter && !is_cx ? adapter->Compute(*cm) : 0.;
       if (is_bust) commission = -commission;
