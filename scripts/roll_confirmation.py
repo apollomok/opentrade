@@ -12,7 +12,7 @@ from parse_confirmation import *
 confirmations = []
 orders = {}
 now = time.time()
-one_day = 24 * 3600
+one_day = 24 * 3600 * 1000
 
 
 def check_confirmation(seq, raw, exec_type, id, *args):
@@ -57,18 +57,16 @@ def main():
   seq = 0
   for id, raw in rolls:
     seq += 1
-    raw = struct.pack('I', seq) + raw[4:]
-    if raw[4] == kUnconfirmedNew:
+    if raw[6] == kUnconfirmedNew:
+      n = struct.unpack('H', raw[4:6])[0]
+      body = raw[9:9 + n]
+      body = body.split(' ')
       # modify qty
       qty = orders[id]
-      a = raw[:7]
-      n = 7
-      while raw[n] != '\0':
-        n += 1
-      b = raw[7:n]
-      b = b.split(' ')
-      b[3] = str(qty)
-      raw = a + ' '.join(b) + '\0\n'
+      body[3] = str(qty)
+      body = ' '.join(body)
+      raw = struct.pack('I', seq) + struct.pack(
+          'H', len(body)) + raw[6:9] + body + '\0\n'
     fh.write(raw)
   fh.close()
 

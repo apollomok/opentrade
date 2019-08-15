@@ -160,35 +160,40 @@ void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
     auto str = ss.str();
     if (str.empty()) return;
     of_.write(reinterpret_cast<const char*>(&cm->seq), sizeof(cm->seq));
+    uint16_t n = str.size();
+    of_.write(reinterpret_cast<const char*>(&n), sizeof(n));
     of_ << static_cast<char>(cm->exec_type);
     of_.write(reinterpret_cast<const char*>(&ord->sub_account->id),
               sizeof(ord->sub_account->id));
+    if (str.size() > n) str = str.substr(0, n);
     of_ << str << '\0' << std::endl;
   });
 }
 
 void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
   if (!fs::file_size(kPath)) return;
-  if (conn) {
-    LOG_DEBUG("Load offline confirmation starting from " << seq0);
-  }
   boost::iostreams::mapped_file_source m(kPath.string());
   auto p = m.data();
   auto p_end = p + m.size();
   auto ln = 0;
-  while (p + 9 < p_end) {
+  while (p + 6 < p_end) {
     ln++;
     auto seq = *reinterpret_cast<const uint32_t*>(p);
     if (!conn) seq_counter_ = seq;
     p += 4;
+    auto n = *reinterpret_cast<const uint16_t*>(p);
+    if (p + 2 + 1 + sizeof(SubAccount::IdType) + n > p_end) break;
+    if (seq <= seq0) {
+      p += 2 + 1 + sizeof(SubAccount::IdType) + n + 2;
+      continue;
+    }
+    p += 2;
     auto exec_type = static_cast<opentrade::OrderStatus>(*p);
     p += 1;
     auto sub_account_id = *reinterpret_cast<const SubAccount::IdType*>(p);
     p += sizeof(SubAccount::IdType);
     auto body = p;
-    auto n = strlen(body);
     p += n + 2;  // body + '\0' + '\n'
-    if (seq <= seq0) continue;
     if (conn) {
       assert(conn->user_);
       if (!conn->user_->is_admin && !conn->user_->GetSubAccount(sub_account_id))
