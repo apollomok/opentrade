@@ -482,18 +482,21 @@ void Connection::HandleMessageSync(const std::string& msg,
         OnTarget(j, msg);
       }
     } else if (action == "offline") {
-      if (j.size() > 2) {
-        auto seq_algo = Get<int64_t>(j[2]);
-        LOG_DEBUG(GetAddress() << ": Offline algos requested: " << seq_algo);
-        AlgoManager::Instance().LoadStore(seq_algo, this);
-        Send(json{"offline_algos", "complete"});
-      }
-      auto seq_confirmation = Get<int64_t>(j[1]);
-      LOG_DEBUG(GetAddress()
-                << ": Offline confirmations requested: " << seq_confirmation);
-      GlobalOrderBook::Instance().LoadStore(seq_confirmation, this);
-      Send(json{"offline_orders", "complete"});
-      Send(json{"offline", "complete"});
+      auto self = shared_from_this();
+      kTaskPool.AddTask([self, j]() {
+        if (j.size() > 2) {
+          auto seq_algo = Get<int64_t>(j[2]);
+          LOG_DEBUG(self->GetAddress() << ": Offline algos requested: " << seq_algo);
+          AlgoManager::Instance().LoadStore(seq_algo, self.get());
+          self->Send(json{"offline_algos", "complete"});
+        }
+        auto seq_confirmation = Get<int64_t>(j[1]);
+        LOG_DEBUG(self->GetAddress()
+                  << ": Offline confirmations requested: " << seq_confirmation);
+        GlobalOrderBook::Instance().LoadStore(seq_confirmation, self.get());
+        self->Send(json{"offline_orders", "complete"});
+        self->Send(json{"offline", "complete"});
+      });
     } else if (action == "shutdown") {
       if (!user_->is_admin) {
         throw std::runtime_error("admin required");
