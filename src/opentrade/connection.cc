@@ -486,7 +486,8 @@ void Connection::HandleMessageSync(const std::string& msg,
       kTaskPool.AddTask([self, j]() {
         if (j.size() > 2) {
           auto seq_algo = Get<int64_t>(j[2]);
-          LOG_DEBUG(self->GetAddress() << ": Offline algos requested: " << seq_algo);
+          LOG_DEBUG(self->GetAddress()
+                    << ": Offline algos requested: " << seq_algo);
           AlgoManager::Instance().LoadStore(seq_algo, self.get());
           self->Send(json{"offline_algos", "complete"});
         }

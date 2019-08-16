@@ -223,6 +223,7 @@ BOOST_PYTHON_MODULE(opentrade) {
                 << ", total_outstanding_sell_qty="
                 << p.total_outstanding_sell_qty
                 << ", unrealized_pnl=" << p.unrealized_pnl
+                << ", commission=" << p.commission
                 << ", realized_pnl=" << p.realized_pnl;
              return ss.str();
            })
@@ -230,6 +231,7 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def_readonly("cx_qty", &Position::cx_qty)
       .def_readonly("avg_px", &Position::avg_px)
       .def_readonly("unrealized_pnl", &Position::unrealized_pnl)
+      .def_readonly("commission", &Position::commission)
       .def_readonly("realized_pnl", &Position::realized_pnl)
       .def_readonly("total_bought_qty", &Position::total_bought_qty)
       .def_readonly("total_sold_qty", &Position::total_sold_qty)
