@@ -60,6 +60,16 @@ class FixAdapter : public FIX::Application,
     if (!std::ifstream(config_file.c_str()).good())
       LOG_FATAL(name() << ": Faield to open: " << config_file);
 
+    auto market_depth = config("market_depth");
+    if (!market_depth.empty()) market_depth_ = atoi(market_depth.c_str());
+    auto md_update_type = config("md_update_type");
+    if (!md_update_type.empty()) md_update_type_ = atoi(md_update_type.c_str());
+
+    auto update_fx_price_ = atoi(config("update_fx_price").c_str());
+    if (update_fx_price_) {
+      LOG_INFO(name() << ": update fx price with mid quote");
+    }
+
     fix_settings_.reset(new FIX::SessionSettings(config_file));
     if (empty_store_)
       fix_store_factory_.reset(new FIX::NullStoreFactory());
@@ -114,6 +124,10 @@ class FixAdapter : public FIX::Application,
   }
 
   void fromAdmin(const FIX::Message&, const FIX::SessionID&) override {}
+  virtual void ToLogon(FIX::Message&, const FIX::SessionID&) noexcept {}
+  virtual void SetSymbol(const Security& sec, FIX::FieldMap* msg) noexcept {
+    msg->setField(FIX::Symbol(sec.symbol));
+  }
 
   void toAdmin(FIX::Message& msg, const FIX::SessionID& id) override {
     FIX::MsgType msg_type;
@@ -131,6 +145,7 @@ class FixAdapter : public FIX::Application,
           msg.getHeader().setField(FIX::Password(password));
       } catch (...) {
       }
+      ToLogon(msg, id);
     }
   }
 
@@ -252,7 +267,10 @@ class FixAdapter : public FIX::Application,
     auto req_id = atoi(msg.getField(FIX::FIELD::MDReqID).c_str());
     auto req = reqs_.find(req_id);
     if (req == reqs_.end()) return;
+    auto md = req->second.first;
+    auto sec = req->second.second->id;
     auto no_md_entries = atoi(msg.getField(FIX::FIELD::NoMDEntries).c_str());
+    bool top_updated = false;
     for (auto i = 1; i <= no_md_entries; i++) {
       MDEntry md_entry;
       msg.getGroup(i, md_entry);
@@ -271,18 +289,19 @@ class FixAdapter : public FIX::Application,
       }
       auto level = GetPriceLevel(md_entry);
       auto type = *msg.getField(FIX::FIELD::MDEntryType).c_str();
-      auto md = req->second.first;
-      auto sec = req->second.second->id;
       if (type == FIX::MDEntryType_BID) {
         md->Update(sec, price, size, true, level);
       } else if (type == FIX::MDEntryType_OFFER) {
         md->Update(sec, price, size, false, level);
       }
+      if (!level) top_updated = true;
+    }
+    if (top_updated && update_fx_price_) {
+      md->UpdateMidAsLastPrice(sec);
     }
   }
 
   virtual int GetPriceLevel(const FIX::Group& msg) noexcept { return 0; }
-  virtual int GetDepth() noexcept { return 0; /* 0 is full depth, 1 is bbo */ }
   virtual void SetRelatedSymbol(const Security& sec, DataSrc src,
                                 FIX::Message* msg) noexcept = 0;
 
@@ -358,7 +377,7 @@ class FixAdapter : public FIX::Application,
       msg->setField(FIX::Product(FIX::Product_CURRENCY));
     }
 
-    msg->setField(FIX::Symbol(ord.sec->symbol));
+    SetSymbol(*ord.sec, msg);
     msg->setField(FIX::ExDestination(ord.sec->exchange->name));
   }
 
@@ -418,6 +437,10 @@ class FixAdapter : public FIX::Application,
   tbb::concurrent_unordered_map<int,
                                 std::pair<MarketDataAdapter*, const Security*>>
       reqs_;
+  FIX::MarketDepth market_depth_ = 1;
+  // 0 for full refresh, 1 for incremental refresh
+  FIX::MDUpdateType md_update_type_ = FIX::MDUpdateType_INCREMENTAL_REFRESH;
+  bool update_fx_price_ = false;
 };
 
 template <typename NewOrderSingle, typename OrderCancelRequest,
@@ -465,7 +488,14 @@ class FixTmpl : public FixAdapter {
   void onMessage(const MarketDataRequestReject& reject,
                  const FIX::SessionID& session) override {
     auto req_id = atoi(reject.getField(FIX::FIELD::MDReqID).c_str());
-    LOG_WARN(name() << ": #" << req_id << " subscription rejected");
+    std::string text;
+    if (reject.isSetField(FIX::FIELD::Text))
+      text = reject.getField(FIX::FIELD::Text);
+    std::string reason;
+    if (reject.isSetField(FIX::FIELD::MDReqRejReason))
+      reason = reject.getField(FIX::FIELD::MDReqRejReason);
+    LOG_WARN(name() << ": #" << req_id << " subscription rejected, " << reason
+                    << ":" << text);
     // to-do
   }
 
@@ -473,11 +503,10 @@ class FixTmpl : public FixAdapter {
     for (auto& src : srcs_) {
       FIX::SubscriptionRequestType sub_type(
           FIX::SubscriptionRequestType_SNAPSHOT_PLUS_UPDATES);
-      FIX::MarketDepth mkt_depth(GetDepth());
       auto n = ++request_counter_;
       FIX::MDReqID md_req_id(std::to_string(n));
-      MarketDataRequest req(md_req_id, sub_type, mkt_depth);
-      req.set(FIX::MDUpdateType(FIX::MDUpdateType_INCREMENTAL_REFRESH));
+      MarketDataRequest req(md_req_id, sub_type, market_depth_);
+      req.set(md_update_type_);
       SetRelatedSymbol(sec, DataSrc(src->src()), &req);
       Send(&req);
       reqs_[n] = std::make_pair(src, &sec);
@@ -486,8 +515,14 @@ class FixTmpl : public FixAdapter {
 
   void SetRelatedSymbol(const Security& sec, DataSrc src,
                         FIX::Message* msg) noexcept override {
+    typename MarketDataRequest::NoMDEntryTypes type_group;
+    type_group.set(FIX::MDEntryType(FIX::MDEntryType_BID));
+    msg->addGroup(type_group);
+    type_group.set(FIX::MDEntryType(FIX::MDEntryType_OFFER));
+    msg->addGroup(type_group);
+
     typename MarketDataRequest::NoRelatedSym symbol_group;
-    symbol_group.set(FIX::Symbol(sec.symbol));
+    SetSymbol(sec, &symbol_group);
     if (src.value) symbol_group.set(FIX::SecurityExchange(src.str()));
     msg->addGroup(symbol_group);
   }
