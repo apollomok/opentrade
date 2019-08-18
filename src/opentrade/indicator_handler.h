@@ -34,8 +34,8 @@ class IndicatorHandlerManager : public Singleton<IndicatorHandlerManager> {
 
  private:
   // Initialized and started at AlgoManager::Run.
-  std::map<size_t, IndicatorHandler*> ihs_;
-  std::map<std::string, Indicator::IdType> name2id_;
+  std::unordered_map<size_t, IndicatorHandler*> ihs_;
+  std::unordered_map<std::string, Indicator::IdType> name2id_;
   friend class Backtest;
 };
 

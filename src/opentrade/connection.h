@@ -3,7 +3,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/unordered_map.hpp>
-#include <map>
 #include <memory>
 #include <unordered_map>
 
@@ -85,9 +84,9 @@ class Connection : public std::enable_shared_from_this<Connection> {
   boost::asio::io_context::strand strand_;
 #endif
   boost::asio::deadline_timer timer_;
-  std::map<std::string, bool> ecs_;
-  std::map<std::string, bool> mds_;
-  std::map<SubAccount::IdType, PositionManager::Pnl> pnls_;
+  std::unordered_map<std::string, bool> ecs_;
+  std::unordered_map<std::string, bool> mds_;
+  std::unordered_map<SubAccount::IdType, PositionManager::Pnl> pnls_;
   boost::unordered_map<std::pair<SubAccount::IdType, Security::IdType>,
                        PositionManager::Pnl>
       single_pnls_;

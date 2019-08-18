@@ -1115,7 +1115,7 @@ void Connection::OnSecurities(const json& j) {
   const Exchange* exch = nullptr;
   if (j.size() > 1)
     exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));
-  std::set<std::string_view> symbols;
+  std::unordered_set<std::string_view> symbols;
   std::vector<std::string> symbols_c;  // to retain memory for std::string_view
   if (j.size() > 2) {
     auto n = j[2].size();

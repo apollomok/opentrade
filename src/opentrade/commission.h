@@ -18,7 +18,7 @@ struct Commission {
 struct Confirmation;
 
 struct CommissionAdapter : public Adapter {
-  typedef std::map<int64_t, Commission> Table;  // <exchange_id, ...>
+  typedef std::unordered_map<int64_t, Commission> Table;  // <exchange_id, ...>
   CommissionAdapter() {}
   explicit CommissionAdapter(Table&& other) : table_(std::move(other)) {}
   void Start() noexcept override {}

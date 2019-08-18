@@ -384,7 +384,7 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
 
 template <typename T1, typename T2>
 void UpdateBalance(T1* positions, T2* accs) {
-  std::map<int64_t, std::pair<double, double>> balances;
+  std::unordered_map<int64_t, std::pair<double, double>> balances;
   auto& sm = SecurityManager::Instance();
   for (auto& pair : *positions) {
     auto acc = pair.first.first;
@@ -416,7 +416,7 @@ void PositionManager::UpdatePnl() {
   UpdateBalance(&broker_positions_, &am.broker_accounts_);
   UpdateBalance(&user_positions_, &am.users_);
 
-  std::map<SubAccount::IdType, Pnl> pnls;
+  std::unordered_map<SubAccount::IdType, Pnl> pnls;
   for (auto& pair : sub_positions_) {
     auto acc = pair.first.first;
     auto& pos = pair.second;

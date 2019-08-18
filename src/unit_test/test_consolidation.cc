@@ -49,13 +49,13 @@ TEST_CASE("ConsolidationHandler", "[ConsolidationHandler]") {
   auto& md_mngr = MarketDataManager::Reset();
   auto& algo_mngr = AlgoManager::Reset<MockAlgoManager>();
   MockConsolidationHandler handler;
-  algo_mngr.Add(&handler);
+  algo_mngr.AddAdapter(&handler);
   handler.Start();
 
-  md_mngr.Add(new DummyFeed("A"));
-  md_mngr.Add(new DummyFeed("B"));
-  md_mngr.Add(new DummyFeed("C"));
-  md_mngr.Add(new DummyFeed("D"));
+  md_mngr.AddAdapter(new DummyFeed("A"));
+  md_mngr.AddAdapter(new DummyFeed("B"));
+  md_mngr.AddAdapter(new DummyFeed("C"));
+  md_mngr.AddAdapter(new DummyFeed("D"));
 
   Security sec;
   sec.exchange = new Exchange;

@@ -5,8 +5,7 @@
 #include <tbb/concurrent_unordered_set.h>
 #include <atomic>
 #include <boost/python.hpp>
-#include <map>
-#include <set>
+#include <boost/unordered_map.hpp>
 #include <shared_mutex>
 #include <string>
 
@@ -280,12 +279,13 @@ class MarketDataManager : public AdapterManager<MarketDataAdapter, kMdPrefix>,
   MarketDataAdapter* GetRoute(const Security& sec, DataSrc::IdType src);
 
  private:
-  std::map<DataSrc::IdType, MarketDataAdapter::MarketDataMap> md_of_src_;
+  std::unordered_map<DataSrc::IdType, MarketDataAdapter::MarketDataMap>
+      md_of_src_;
   MarketDataAdapter* default_;
-  std::map<std::pair<DataSrc::IdType, Exchange::IdType>,
-           std::vector<MarketDataAdapter*>>
+  boost::unordered_map<std::pair<DataSrc::IdType, Exchange::IdType>,
+                       std::vector<MarketDataAdapter*>>
       routes_;
-  std::map<DataSrc::IdType, uint8_t> srcs_;
+  std::unordered_map<DataSrc::IdType, uint8_t> srcs_;
 };
 
 }  // namespace opentrade

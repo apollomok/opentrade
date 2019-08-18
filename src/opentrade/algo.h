@@ -10,10 +10,10 @@
 #include <fstream>
 #include <list>
 #include <mutex>
-#include <set>
 #include <thread>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -108,14 +108,14 @@ class Algo : public Adapter {
   bool is_active_ = true;
   IdType id_ = 0;
   std::string token_;
-  std::set<Instrument*> instruments_;
+  std::unordered_set<Instrument*> instruments_;
   friend class AlgoManager;
   friend class Backtest;
 };
 
 class Instrument {
  public:
-  typedef std::set<Order*> Orders;
+  typedef std::unordered_set<Order*> Orders;
   Instrument(Algo* algo, const Security& sec, DataSrc src)
       : algo_(algo), sec_(sec), src_(src) {}
   Algo& algo() { return *algo_; }

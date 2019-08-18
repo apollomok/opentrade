@@ -6,8 +6,8 @@
 #include <any>
 #include <atomic>
 #include <fstream>
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <variant>
 
@@ -89,8 +89,8 @@ struct Contract {
   // one primary exchange have many venues (ECN or LP), you need to set
   // destination manually.
   std::string destination;
-  std::map<std::string,
-           std::variant<bool, int64_t, double, char, std::string, std::any>>*
+  std::unordered_map<std::string, std::variant<bool, int64_t, double, char,
+                                               std::string, std::any>>*
       optional = nullptr;
   OrderSide side = kBuy;
   OrderType type = kLimit;
@@ -140,7 +140,7 @@ struct Confirmation {
   double last_px = 0;
   int64_t transaction_time = 0;  // utc in microseconds
   uint32_t seq = 0;
-  typedef std::map<std::string, std::string> StrMap;
+  typedef std::unordered_map<std::string, std::string> StrMap;
   typedef std::shared_ptr<StrMap> StrMapPtr;
   StrMapPtr misc;
 };
