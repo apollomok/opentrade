@@ -432,7 +432,7 @@ class FixAdapter : public FIX::Application,
   FIX::Session* session_ = nullptr;
 
   int64_t transact_time_ = 0;
-  bool empty_store_ = true;
+  bool empty_store_ = false;
   std::vector<MarketDataAdapter*> srcs_;
   tbb::concurrent_unordered_map<int,
                                 std::pair<MarketDataAdapter*, const Security*>>
