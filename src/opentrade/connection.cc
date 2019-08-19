@@ -1836,7 +1836,7 @@ void Connection::OnAdminSubAccounts(const json& j, const std::string& name,
     Send(UpdateAcc<SubAccount>(name, action, "sub_account", id, j, sub,
                                &inst.sub_account_of_name_));
   } else if (action == "add") {
-    Send(AddAcc<SubAccount>(name, action, "broker_account", j,
+    Send(AddAcc<SubAccount>(name, action, "sub_account", j,
                             &inst.sub_accounts_, &inst.sub_account_of_name_));
   } else if (action == "disable") {
     auto id = GetNum(j[3]);
