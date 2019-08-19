@@ -275,20 +275,20 @@ class FixAdapter : public FIX::Application,
       MDEntry md_entry;
       msg.getGroup(i, md_entry);
       double price = 0.;
-      if (msg.isSetField(FIX::FIELD::MDEntryPx))
-        price = atof(msg.getField(FIX::FIELD::MDEntryPx).c_str());
+      if (md_entry.isSetField(FIX::FIELD::MDEntryPx))
+        price = atof(md_entry.getField(FIX::FIELD::MDEntryPx).c_str());
       int64_t size = 0;
-      if (msg.isSetField(FIX::FIELD::MDEntrySize))
-        size = atoll(msg.getField(FIX::FIELD::MDEntrySize).c_str());
-      if (msg.isSetField(FIX::FIELD::MDUpdateAction)) {
-        auto action = *msg.getField(FIX::FIELD::MDUpdateAction).c_str();
+      if (md_entry.isSetField(FIX::FIELD::MDEntrySize))
+        size = atoll(md_entry.getField(FIX::FIELD::MDEntrySize).c_str());
+      if (md_entry.isSetField(FIX::FIELD::MDUpdateAction)) {
+        auto action = *md_entry.getField(FIX::FIELD::MDUpdateAction).c_str();
         if (action == FIX::MDUpdateAction_DELETE) {
           price = 0;
           size = 0;
         }
       }
       auto level = GetPriceLevel(md_entry);
-      auto type = *msg.getField(FIX::FIELD::MDEntryType).c_str();
+      auto type = *md_entry.getField(FIX::FIELD::MDEntryType).c_str();
       if (type == FIX::MDEntryType_BID) {
         md->Update(sec, price, size, true, level);
       } else if (type == FIX::MDEntryType_OFFER) {
