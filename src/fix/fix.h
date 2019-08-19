@@ -71,11 +71,16 @@ class FixAdapter : public FIX::Application,
     }
 
     fix_settings_.reset(new FIX::SessionSettings(config_file));
-    if (empty_store_)
-      fix_store_factory_.reset(new FIX::NullStoreFactory());
+    auto file_store_path = fix_settings_->get().getString("FileStorePath");
+    if (empty_store_ || file_store_path.find("/dev/null") == 0)
+      fix_store_factory_.reset(new FIX::NullStoreFactory);
     else
       fix_store_factory_.reset(new FIX::AsyncFileStoreFactory(*fix_settings_));
-    fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
+    auto file_log_path = fix_settings_->get().getString("FileLogPath");
+    if (file_store_path.find("/dev/null") == 0)
+      fix_log_factory_.reset(new FIX::NullLogFactory);
+    else
+      fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
     threaded_socket_initiator_.reset(new FIX::ThreadedSocketInitiator(
         *this, *fix_store_factory_, *fix_settings_, *fix_log_factory_));
     threaded_socket_initiator_->start();
