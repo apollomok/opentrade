@@ -241,8 +241,12 @@ void SimServer::StartFix(const opentrade::Adapter& adapter) {
     LOG_FATAL(adapter.name() << ": Faield to open: " << config_file);
 
   fix_settings_.reset(new FIX::SessionSettings(config_file));
-  fix_store_factory_.reset(new FIX::NullStoreFactory());
-  fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
+  fix_store_factory_.reset(new FIX::NullStoreFactory);
+  auto file_log_path = fix_settings_->get().getString("FileLogPath");
+  if (file_log_path.find("/dev/null") == 0)
+    fix_log_factory_.reset(new FIX::NullLogFactory);
+  else
+    fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
   threaded_socket_acceptor_.reset(new FIX::ThreadedSocketAcceptor(
       *this, *fix_store_factory_, *fix_settings_, *fix_log_factory_));
   try {

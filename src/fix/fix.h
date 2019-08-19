@@ -77,7 +77,7 @@ class FixAdapter : public FIX::Application,
     else
       fix_store_factory_.reset(new FIX::AsyncFileStoreFactory(*fix_settings_));
     auto file_log_path = fix_settings_->get().getString("FileLogPath");
-    if (file_store_path.find("/dev/null") == 0)
+    if (file_log_path.find("/dev/null") == 0)
       fix_log_factory_.reset(new FIX::NullLogFactory);
     else
       fix_log_factory_.reset(new FIX::AsyncFileLogFactory(*fix_settings_));
