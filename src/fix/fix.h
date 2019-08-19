@@ -72,7 +72,7 @@ class FixAdapter : public FIX::Application,
 
     fix_settings_.reset(new FIX::SessionSettings(config_file));
     auto file_store_path = fix_settings_->get().getString("FileStorePath");
-    if (empty_store_ || file_store_path.find("/dev/null") == 0)
+    if (file_store_path.find("/dev/null") == 0)
       fix_store_factory_.reset(new FIX::NullStoreFactory);
     else
       fix_store_factory_.reset(new FIX::AsyncFileStoreFactory(*fix_settings_));
@@ -437,7 +437,6 @@ class FixAdapter : public FIX::Application,
   FIX::Session* session_ = nullptr;
 
   int64_t transact_time_ = 0;
-  bool empty_store_ = false;
   std::vector<MarketDataAdapter*> srcs_;
   tbb::concurrent_unordered_map<int,
                                 std::pair<MarketDataAdapter*, const Security*>>
