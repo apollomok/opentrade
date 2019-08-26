@@ -234,7 +234,9 @@ class FixAdapter : public FIX::Application,
   }
 
   void OnFilled(const FIX::Message& msg, char exec_type, bool is_partial) {
-    char exec_trans_type = msg.getField(FIX::FIELD::ExecTransType)[0];
+    char exec_trans_type = FIX::ExecTransType_NEW;
+    if (msg.isSetField(FIX::FIELD::ExecTransType))
+      exec_trans_type = msg.getField(FIX::FIELD::ExecTransType)[0];
     if (exec_trans_type == FIX::ExecTransType_CORRECT) {
       LOG_WARN(name() << ": Ignoring FIX::ExecTransType_CORRECT");
       return;
