@@ -7,11 +7,15 @@ namespace opentrade {
 
 static const Indicator::IdType kBar = 0;
 
+struct Bar : public MarketData::Trade {
+  time_t tm = 0;
+};
+
 template <int interval = 1, Indicator::IdType ind_id = kBar>
 struct BarIndicator : public Indicator {
   static const Indicator::IdType kId = ind_id;
-  MarketData::Trade current;
-  MarketData::Trade last;
+  Bar current;
+  Bar last;
   bp::object GetPyObject() const override {
     bp::dict out;
     out["last"] = bp::ptr(&last);

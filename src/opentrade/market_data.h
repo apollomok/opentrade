@@ -88,7 +88,6 @@ struct MarketData {
 #endif
   time_t tm = 0;
   struct Trade {
-    time_t tm = 0;
     Qty qty = 0;
     double open = 0;
     double high = 0;
