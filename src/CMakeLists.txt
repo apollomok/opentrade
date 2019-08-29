@@ -31,6 +31,11 @@ if(UNIT_TEST)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUNIT_TEST")
 endif()
 
+if(TEST_LATENCY)
+  message(STATUS "Building test_latency")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTEST_LATENCY")
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 find_path(QUICKFIX_INCLUDE_PATH quickfix/FixFields.h)

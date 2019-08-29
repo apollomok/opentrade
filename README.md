@@ -119,6 +119,10 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    # username/password: test/test
    http://localhost:9111
    ```
+# Internal Latency
+  ```
+  make test-latency
+  ```
    
 # Backtest
   * Only BBO support currently, full orderbook support will come soon

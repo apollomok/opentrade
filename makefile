@@ -24,5 +24,9 @@ lint:
 fmt:
 	clang-format -style=Google -i src/*/*h src/*/*cc src/adapters/*/*h src/adapters/*/*cc src/algos/*/*h src/algos/*/*cc
 
+test-latency:
+	mkdir -p build/test_latency; cd build/test_latency; cmake ../../src -DCMAKE_BUILD_TYPE=Release -DTEST_LATENCY=1; make ${args}; cd -;
+	LD_PRELOAD=libtbbmalloc_proxy.so build/test_latency/opentrade/opentrade -c test_latency.conf
+
 clean:
 	rm -rf build;

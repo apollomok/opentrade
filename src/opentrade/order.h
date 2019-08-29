@@ -75,6 +75,9 @@ static inline bool IsBuy(OrderSide side) { return side == kBuy; }
 static inline bool IsShort(OrderSide side) { return side == kShort; }
 
 struct Contract {
+#ifdef TEST_LATENCY
+  time_t tm_for_test_latency = 0;
+#endif
   double qty = 0;
   double price = 0;
   double stop_price = 0;

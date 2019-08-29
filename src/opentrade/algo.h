@@ -94,6 +94,7 @@ class Algo : public Adapter {
   IdType id() const { return id_; }
   const std::string& token() const { return token_; }
   const User& user() const { return *user_; }
+  void set_user(const User* user) { user_ = user; }
 
  protected:
   Instrument* Subscribe(const Security& sec, DataSrc src = {},

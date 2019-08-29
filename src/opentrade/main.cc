@@ -22,6 +22,7 @@
 #include "risk.h"
 #include "security.h"
 #include "server.h"
+#include "test_latency.h"
 
 namespace bpo = boost::program_options;
 namespace fs = boost::filesystem;
@@ -209,6 +210,13 @@ int main(int argc, char *argv[]) {
       AlgoManager::Instance().AddAdapter(algo);
     }
   }
+
+#ifdef TEST_LATENCY
+  ExchangeConnectivityManager::Instance().AddAdapter(
+      new opentrade::TestLatencyEc);
+  MarketDataManager::Instance().AddAdapter(new opentrade::TestLatencyMd);
+  AlgoManager::Instance().AddAdapter(new opentrade::TestlatencyAlgo);
+#endif
 
   AlgoManager::Initialize();
   opentrade::AccountManager::Initialize();
