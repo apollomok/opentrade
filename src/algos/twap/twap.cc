@@ -157,8 +157,8 @@ void TWAP::Timer() {
   if (max_qty <= 0) return;
   auto would_qty = std::ceil(leaves / lot_size) * lot_size;
   if (would_qty < min_size_) would_qty = min_size_;
-  if (would_qty > max_qty) would_qty = max_qty;
   if (max_floor_ > 0 && would_qty > max_floor_) would_qty = max_floor_;
+  if (would_qty > max_qty) would_qty = max_qty;
   Contract c;
   c.side = st_.side;
   c.qty = would_qty;
