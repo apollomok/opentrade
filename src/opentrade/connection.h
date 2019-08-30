@@ -44,7 +44,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
                           const std::string& action);
   void OnAdminExchanges(const json& j, const std::string& name,
                         const std::string& action);
-  void OnPosition(const json& j, const std::string& msg);
+  void OnPosition(const json& j);
+  void OnTrades(const json& j);
   void OnTarget(const json& j, const std::string& msg);
   void OnLogin(const std::string& action, const json& j);
   void Send(Confirmation::Ptr cm);

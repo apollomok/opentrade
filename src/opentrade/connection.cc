@@ -410,10 +410,7 @@ void Connection::HandleMessageSync(const std::string& msg,
     auto j = json::parse(msg);
     auto action = Get<std::string>(j[0]);
     if (action.empty()) {
-      json j = {"error", "", "empty action"};
-      LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-      Send(j);
-      return;
+      throw std::runtime_error("empty action");
     }
     if (action != "login" && !user_) {
       user_ = FindInMap(kTokens, token);
@@ -471,7 +468,9 @@ void Connection::HandleMessageSync(const std::string& msg,
     } else if (action == "admin") {
       OnAdmin(j);
     } else if (action == "position") {
-      OnPosition(j, msg);
+      OnPosition(j);
+    } else if (action == "trades") {
+      OnTrades(j);
     } else if (action == "target") {
       if (j.size() == 1) {
         for (auto& pair : AccountManager::Instance().sub_accounts_) {
@@ -886,28 +885,53 @@ void Connection::Send(const Confirmation& cm, bool offline) {
   Send(j);
 }
 
-void Connection::OnPosition(const json& j, const std::string& msg) {
-  auto sec = GetSecurity(j[1]);
-  auto acc_name = Get<std::string>(j[2]);
+static inline auto ValidateAcc(const User* user, const std::string& acc_name) {
   auto acc = AccountManager::Instance().GetSubAccount(acc_name);
   if (!acc) {
-    json j = {"error", "position", "invalid account name: " + acc_name};
-    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-    Send(j);
-    return;
+    throw std::runtime_error("invalid account name");
   }
+  if (!user->is_admin && !user->GetSubAccount(acc->id)) {
+    throw std::runtime_error("no permission");
+  }
+  return acc;
+}
 
+void Connection::OnTrades(const json& j) {
+  auto self = shared_from_this();
+  auto sec = GetSecurity(j[1]);
+  auto acc = ValidateAcc(user_, Get<std::string>(j[2]));
+  time_t start_time = GetNum(j[3]);
+  sent_ = true;
+  kTaskPool.AddTask([self, sec, acc, start_time]() {
+    struct tm tm_info;
+    gmtime_r(&start_time, &tm_info);
+    char tm_str[256];
+    strftime(tm_str, sizeof(tm_str), "%Y-%m-%d %H:%M:%S", &tm_info);
+    auto query = R"(
+    select 
+      qty, avg_px, realized_pnl, commission, tm, "desc"
+    from position
+    where sub_account_id = :sub_account_id and security_id = :security_id and tm >= :tm
+  )";
+    auto sql = Database::Session();
+    soci::rowset<soci::row> st =
+        (sql->prepare << query, soci::use(acc->id), soci::use(sec->id),
+         soci::use(std::string(tm_str)));
+    for (auto it = st.begin(); it != st.end(); ++it) {
+    }
+  });
+}
+
+void Connection::OnPosition(const json& j) {
+  auto sec = GetSecurity(j[1]);
+  auto acc = ValidateAcc(user_, Get<std::string>(j[2]));
   const Position* p;
   bool broker = j.size() > 3 && Get<bool>(j[3]);
   if (broker) {
     auto broker_acc = acc->GetBrokerAccount(sec->exchange->id);
-    if (!broker_acc) {
-      json j = {"error", "position",
-                "can not find broker for this account and security pair"};
-      LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
-      Send(j);
-      return;
-    }
+    if (!broker_acc)
+      throw std::runtime_error(
+          "can not find broker for this account and security pair");
     p = &PositionManager::Instance().Get(*broker_acc, *sec);
   } else {
     p = &PositionManager::Instance().Get(*acc, *sec);
