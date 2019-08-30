@@ -29,6 +29,11 @@ inline void AlgoRunner::operator()() {
       LockGuard lock(mutex_);
       if (dirties_.empty()) return;
       auto it = dirties_.begin();
+      static thread_local uint32_t kSeed = time(NULL);
+      if (dirties_.size() > 1) {
+        auto n = rand_r(&kSeed) % std::min(3lu, dirties_.size());
+        if (n > 0) std::advance(it, n);
+      }
       key = *it;
       dirties_.erase(it);
     }
