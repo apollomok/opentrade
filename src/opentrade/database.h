@@ -84,6 +84,8 @@ class Database {
       return default_value;
   }
 
+  static time_t GetTm(soci::row const& row, int index);
+
   static auto is_sqlite() { return is_sqlite_; }
 
  private:

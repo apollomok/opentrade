@@ -7,7 +7,21 @@
 #include "logger.h"
 #include "security.h"
 
+namespace pt = boost::posix_time;
+
 namespace opentrade {
+
+time_t Database::GetTm(soci::row const& row, int index) {
+  if (is_sqlite()) {
+    auto tm = GetValue(row, index, kEmptyStr);
+    static const pt::ptime kEpoch(boost::gregorian::date(1970, 1, 1));
+    return (pt::time_from_string(tm) - kEpoch).total_seconds();
+  } else {
+    std::tm std_tm;
+    std_tm = GetValue(row, index, std_tm);
+    return mktime(&std_tm);
+  }
+}
 
 class SqlLog : public std::ostream, std::streambuf {
  public:

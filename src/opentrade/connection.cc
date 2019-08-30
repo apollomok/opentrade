@@ -908,17 +908,27 @@ void Connection::OnTrades(const json& j) {
     char tm_str[256];
     strftime(tm_str, sizeof(tm_str), "%Y-%m-%d %H:%M:%S", &tm_info);
     auto query = R"(
-    select 
-      qty, avg_px, realized_pnl, commission, tm, "desc"
+    select qty, avg_px, realized_pnl, commission, tm, info
     from position
     where sub_account_id = :sub_account_id and security_id = :security_id and tm >= :tm
-  )";
+    )";
+    json out = {"trades"};
     auto sql = Database::Session();
     soci::rowset<soci::row> st =
         (sql->prepare << query, soci::use(acc->id), soci::use(sec->id),
          soci::use(std::string(tm_str)));
     for (auto it = st.begin(); it != st.end(); ++it) {
+      auto i = 0;
+      auto m = sec->rate * sec->multiplier;
+      auto qty = Database::GetValue(*it, i++, 0.);
+      auto avg_px = Database::GetValue(*it, i++, 0.);
+      auto realized_pnl = Database::GetValue(*it, i++, 0.) * m;
+      auto commission = Database::GetValue(*it, i++, 0.) * m;
+      auto tm = Database::GetTm(*it, i++);
+      auto info = Database::GetValue(*it, i++, kEmptyStr);
+      out.push_back(json{tm, qty, avg_px, realized_pnl, commission, info});
     }
+    self->Send(out);
   });
 }
 
