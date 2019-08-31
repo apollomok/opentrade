@@ -44,6 +44,7 @@ class Adapter {
   std::string name_;
   StrMap config_;
   Func create_func_;
+  friend class Backtest;
 };
 
 class NetworkAdapter : public Adapter {

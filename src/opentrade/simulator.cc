@@ -76,6 +76,7 @@ void Simulator::HandleTick(const Security& sec, char type, double px,
                            double qty, double trade_hit_ratio,
                            Orders* actives_of_sec) {
   if (!qty && sec.type == kForexPair && type != 'T') qty = 1e9;
+  static bool kHasFxTrade;
   switch (type) {
     case 'T': {
       Update(sec.id, px, qty);
@@ -85,14 +86,17 @@ void Simulator::HandleTick(const Security& sec, char type, double px,
         qty = TryFillBuy(px, qty, actives_of_sec);
         TryFillSell(px, qty, actives_of_sec);
       }
+      if (sec.type == kForexPair && !kHasFxTrade) kHasFxTrade = true;
     } break;
     case 'A':
       Update(sec.id, px, qty, false);
       TryFillBuy(px, qty, actives_of_sec);
+      if (sec.type == kForexPair && !kHasFxTrade) UpdateMidAsLastPrice(sec.id);
       break;
     case 'B':
       Update(sec.id, px, qty, true);
       TryFillSell(px, qty, actives_of_sec);
+      if (sec.type == kForexPair && !kHasFxTrade) UpdateMidAsLastPrice(sec.id);
       break;
     default:
       break;

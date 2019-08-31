@@ -235,7 +235,7 @@ void Backtest::Clear() {
   auto& algo_mngr = AlgoManager::Instance();
   for (auto& pair : algo_mngr.algos_) {
     pair.second->Stop();
-    delete pair.second;
+    if (pair.second->create_func_) delete pair.second;
   }
   algo_mngr.runners_[0].dirties_.clear();
   algo_mngr.runners_[0].instruments_.clear();
@@ -251,6 +251,7 @@ void Backtest::Clear() {
   for (auto& pair : simulators_) pair.second->active_orders().clear();
   kTimers.clear();
   IndicatorHandlerManager::Instance().ihs_.clear();
+  IndicatorHandlerManager::Instance().name2id_.clear();
   for (auto& pair : simulators_) {
     pair.second->ResetData();
   }

@@ -112,6 +112,7 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
   }
   algo->user_ = &user;
   algo->token_ = token;
+  algo->is_active_ = true;  // for permanent in backtest
   algos_.emplace(algo->id_, algo);
   if (!token.empty()) algo_of_token_.emplace(token, algo);
   if (params) {
@@ -206,13 +207,13 @@ void AlgoManager::StartPermanents() {
 
   for (auto& pair : algos_) {
     auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
-    if (!ih) return;
+    if (!ih) continue;
     IndicatorHandlerManager::Instance().Register(ih);
   }
 
   for (auto& pair : algos_) {
     auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
-    if (!ih) return;
+    if (!ih) continue;
     ih->Async([ih]() { ih->OnStart(); });
   }
 }
