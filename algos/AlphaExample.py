@@ -10,7 +10,7 @@ def get_param_defs():
 def on_start(self, params):
   self.st = st = params['Security']
   self.inst = self.subscribe(st.sec, st.src)
-  # self.inst.subscribe('bar')
+  # self.inst.subscribe('bar', True)
   self.vwap15 = [[0, 0], [], 15]
   self.vwap30 = [[0, 0], [], 30]
   self.set_timeout(lambda: self.stop(),
