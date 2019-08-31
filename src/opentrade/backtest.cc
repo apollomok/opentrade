@@ -235,7 +235,7 @@ void Backtest::Clear() {
   auto& algo_mngr = AlgoManager::Instance();
   for (auto& pair : algo_mngr.algos_) {
     pair.second->Stop();
-    if (pair.second->create_func_) delete pair.second;
+    if (pair.second->create_func()) delete pair.second;
   }
   algo_mngr.runners_[0].dirties_.clear();
   algo_mngr.runners_[0].instruments_.clear();

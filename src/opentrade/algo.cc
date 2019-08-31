@@ -191,9 +191,13 @@ void AlgoManager::Run(int nthreads) {
 
 void AlgoManager::StartPermanents() {
   for (auto& pair : adapters()) {
-    if (pair.first.at(0) != '_' &&
-        !dynamic_cast<IndicatorHandler*>(pair.second))
-      continue;
+    auto ih = dynamic_cast<IndicatorHandler*>(pair.second);
+    if (pair.first.at(0) != '_' && !ih) continue;
+#ifdef BACKTEST
+    if (ih) {
+      assert(ih->create_func());
+    }
+#endif
     auto user_name = pair.second->config("user");
     auto user = AccountManager::Instance().GetUser(user_name);
     auto algo = Spawn(std::make_shared<Algo::ParamMap>(), pair.first,

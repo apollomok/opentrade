@@ -46,8 +46,6 @@ class BarHandler : public IndicatorHandler, public TradeTickHook {
   explicit BarHandler(const char* name = "bar") {
     set_name(name);
     tm0_ = GetStartOfDayTime() * kMicroInSec;
-    // create_func_ for backtest
-    create_func_ = []() { return new BarHandler<interval, ind_id>; };
   }
 
   void OnStart() noexcept override { StartNext(); }

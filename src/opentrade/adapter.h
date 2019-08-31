@@ -39,12 +39,16 @@ class Adapter {
   }
   static Adapter* Load(const std::string& sofile);
   virtual void Start() noexcept = 0;
+  const auto& create_func() { return create_func_; }
+  void set_create_func(Func f) {
+    assert(!create_func_);
+    create_func_ = f;
+  }
 
  protected:
   std::string name_;
   StrMap config_;
   Func create_func_;
-  friend class Backtest;
 };
 
 class NetworkAdapter : public Adapter {
@@ -66,6 +70,13 @@ class AdapterManager {
  public:
   typedef std::unordered_map<std::string, T*> AdapterMap;
   void AddAdapter(T* adapter) { adapters_[adapter->name()] = adapter; }
+  template <typename B>
+  void AddAdapter() {
+    static_assert(std::is_base_of<T, B>::value);
+    auto adapter = new B;
+    adapter->set_create_func([]() { return new B; });
+    AddAdapter(adapter);
+  }
   T* GetAdapter(const std::string& name) {
     auto out = FindInMap(adapters_, name);
     if (out) return out;

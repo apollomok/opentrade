@@ -214,8 +214,8 @@ int main(int argc, char *argv[]) {
 #ifdef TEST_LATENCY
   ExchangeConnectivityManager::Instance().AddAdapter(
       new opentrade::TestLatencyEc);
-  MarketDataManager::Instance().AddAdapter(new opentrade::TestLatencyMd);
-  AlgoManager::Instance().AddAdapter(new opentrade::TestlatencyAlgo);
+  MarketDataManager::Instance().AddAdapter<opentrade::TestLatencyMd>();
+  AlgoManager::Instance().AddAdapter<opentrade::TestlatencyAlgo>();
 #endif
 
   AlgoManager::Initialize();
@@ -265,8 +265,8 @@ int main(int argc, char *argv[]) {
   if (opentick_url.size())
     opentrade::OpenTick::Instance().Initialize(opentick_url);
 
-  AlgoManager::Instance().AddAdapter(new opentrade::BarHandler<>);
-  AlgoManager::Instance().AddAdapter(new opentrade::ConsolidationHandler);
+  AlgoManager::Instance().AddAdapter<opentrade::BarHandler<>>();
+  AlgoManager::Instance().AddAdapter<opentrade::ConsolidationHandler>();
 
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();
