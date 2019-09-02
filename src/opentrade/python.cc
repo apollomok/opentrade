@@ -587,7 +587,7 @@ BOOST_PYTHON_MODULE(opentrade) {
   bp::class_<Backtest, boost::noncopyable>("Backtest", bp::no_init)
       .def("clear",
            +[](Backtest &) {
-             // clear is called allways, not clearing cause a lot of problems
+             // clear is called always, not clearing cause a lot of problems
              LOG2_WARN("backtest clear is deprecated");
            })
       .def("skip", &Backtest::Skip)

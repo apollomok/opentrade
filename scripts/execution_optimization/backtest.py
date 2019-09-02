@@ -77,4 +77,4 @@ def send_algo(self, st, target):
 
 
 def on_end_of_day(self, date):
-  self.clear()
+  pass

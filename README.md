@@ -138,6 +138,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
   make args=-j backtest-release
   cd scripts/execution_optimization
   wget https://raw.githubusercontent.com/opentradesolutions/data/master/targets.zip; unzip targets.zip;
+  wget https://github.com/opentradesolutions/data/raw/master/test.sqlite3
   ./run
   ./sim_summary.py rpt*
   ```
