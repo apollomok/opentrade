@@ -131,6 +131,9 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
     kError = params ? algo->OnStart(*params.get()) : algo->Test();
     if (!kError.empty()) {
       algo->Stop();
+#ifdef BACKTEST
+      LOG_ERROR(kError);
+#endif
     }
     kError.clear();
   });
