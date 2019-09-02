@@ -529,6 +529,9 @@ BOOST_PYTHON_MODULE(opentrade) {
       .def("stop", &Python::Stop)
       .def("cross", &Python::Cross)
       .def("set_timeout", &Python::SetTimeout)
+      .add_property("user",
+                    bp::make_function(+[](Algo &algo) { return &algo.user(); },
+                                      bp::return_internal_reference<>()))
       .add_property("id", &Algo::id)
       .add_property("name", +[](const Python &algo) { return algo.name(); })
       .add_property("is_active", &Algo::is_active);
