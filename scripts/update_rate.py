@@ -18,7 +18,7 @@ def main():
 
   rates = c.get_rates('USD')
   cmds = [
-      "update security set rate={} where currency='{}'".format(1 / rate, cur)
+      "update security set rate={} where currency='{}';".format(1 / rate, cur)
       for cur, rate in rates.items()
   ]
   if opts.dry_run:
