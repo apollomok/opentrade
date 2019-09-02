@@ -634,6 +634,9 @@ BOOST_PYTHON_MODULE(opentrade) {
              }
              auto algo =
                  AlgoManager::Instance().Spawn(params_ptr, name, *user, "", "");
+             if (!algo) {
+               LOG_ERROR("Unknown algo name: " << name);
+             }
              return algo ? algo->id() : 0;
            }));
 #endif
