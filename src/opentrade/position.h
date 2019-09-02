@@ -67,7 +67,9 @@ class PositionManager : public Singleton<PositionManager> {
   typedef tbb::concurrent_unordered_map<
       std::pair<SubAccount::IdType, Security::IdType>, Position>
       SubPositions;
-  const SubPositions& sub_positions() const { return sub_positions_; }
+  const auto& sub_positions() const { return sub_positions_; }
+  const auto& broker_positions() const { return broker_positions_; }
+  const auto& user_positions() const { return user_positions_; }
   typedef std::unordered_map<Security::IdType, double> Targets;
   typedef std::shared_ptr<const Targets> TargetsPtr;
   void SetTargets(const SubAccount& acc, TargetsPtr targets) {
