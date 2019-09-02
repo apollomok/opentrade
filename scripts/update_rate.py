@@ -13,7 +13,18 @@ def main():
       '-d',
       '--db_url',
       help='sqlite3 file path or postgres url "host,database,user,password"')
+  opts.add_option('', '--dry_run', action='store_true')
   opts = opts.parse_args()[0]
+
+  rates = c.get_rates('USD')
+  cmds = [
+      "update security set rate={} where currency='{}'".format(1 / rate, cur)
+      for cur, rate in rates.items()
+  ]
+  if opts.dry_run:
+    for cmd in cmds:
+      print(cmd)
+    return
 
   if not opts.db_url:
     print('Error: --db_url not give')
@@ -31,10 +42,7 @@ def main():
                           password=password)
 
   cursor = conn.cursor()
-  rates = c.get_rates('USD')
-  for cur, rate in rates.items():
-    cursor.execute("update security set rate={} where currency='{}'".format(
-        1 / rate, cur))
+  [cursor.execute(cmd) for cmd in cmds]
   conn.commit()
 
 
