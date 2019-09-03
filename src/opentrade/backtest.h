@@ -3,6 +3,7 @@
 #ifdef BACKTEST
 
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <cstdlib>
 #include <fstream>
 
 #include "python.h"
@@ -14,7 +15,13 @@ class Simulator;
 
 class Backtest : public Singleton<Backtest> {
  public:
-  Backtest() : of_("trades.txt") {}
+  Backtest() {
+    if (const char* out_file = std::getenv("OT_OUTFILE")) {
+      of_.open(out_file);
+    } else {
+      of_.open("trades.txt");
+    }
+  };
   void Play(const boost::gregorian::date& date);
   void Start(const std::string& py, double latency,
              const std::string& default_tick_file);
