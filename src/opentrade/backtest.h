@@ -15,13 +15,7 @@ class Simulator;
 
 class Backtest : public Singleton<Backtest> {
  public:
-  Backtest() {
-    if (const char* out_file = std::getenv("OT_OUTFILE")) {
-      of_.open(out_file);
-    } else {
-      of_.open("trades.txt");
-    }
-  };
+  Backtest() : of_(PythonOr(std::getenv("TRADES_OUTFILE"), "trades.txt")) {}
   void Play(const boost::gregorian::date& date);
   void Start(const std::string& py, double latency,
              const std::string& default_tick_file);

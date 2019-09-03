@@ -6,7 +6,7 @@ exch = get_exchange(os.environ['MARKET'])
 min_size = int(os.environ['MinSize'])
 period = int(os.environ['ValidSeconds'])
 agg = os.environ.get('Aggression', 'Low')
-fw = open('algos.txt', 'wt')
+fw = open(os.environ.get('ALGOS_OUTFILE') or 'algos.txt', 'wt')
 
 
 def on_start(self):

@@ -194,6 +194,10 @@ static inline decltype(auto) Split(const std::string& str, const char* sep,
   return out;
 }
 
+static inline const char* PythonOr(const char* a, const char* b) {
+  return a && *a ? a : b;
+}
+
 }  // namespace opentrade
 
 #endif  // OPENTRADE_UTILITY_H_
