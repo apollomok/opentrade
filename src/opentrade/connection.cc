@@ -571,7 +571,9 @@ void Connection::HandleMessageSync(const std::string& msg,
         });
       }
       sub_pnl_ = true;
-    } else if (action == "sub") {
+    } else if (action == "sub" ||
+               action == "md") {  // "md" name make more sense for REST api for
+                                  // snapshot
       json jout = {"md"};
       for (auto i = 1u; i < j.size(); ++i) {
         auto sec_src = GetSecSrc(j[i]);
