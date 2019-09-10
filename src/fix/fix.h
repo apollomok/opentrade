@@ -242,7 +242,7 @@ class FixAdapter : public FIX::Application,
       return;
     }
     auto exec_id = msg.getField(FIX::FIELD::ExecID);
-    auto last_shares = atoll(msg.getField(FIX::FIELD::LastShares).c_str());
+    auto last_shares = atof(msg.getField(FIX::FIELD::LastShares).c_str());
     auto last_px = atof(msg.getField(FIX::FIELD::LastPx).c_str());
     auto clordid = atol(msg.getField(FIX::FIELD::ClOrdID).c_str());
     HandleFill(clordid, last_shares, last_px, exec_id, transact_time_,

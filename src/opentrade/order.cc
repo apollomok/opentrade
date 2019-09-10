@@ -421,6 +421,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         ord->user = user;
         ord->sub_account = sub_account;
         ord->broker_account = broker_account;
+        ord->destination = destination;
         ord->tm = tm;
         auto cm = std::make_shared<Confirmation>();
         cm->exec_type = exec_type;

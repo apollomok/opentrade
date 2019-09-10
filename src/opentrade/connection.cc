@@ -104,13 +104,13 @@ static auto GetSecurity(const json& j) {
     auto v = Get<int64_t>(j);
     sec = SecurityManager::Instance().Get(v);
     if (!sec)
-      throw std::runtime_error("Unknown security id: " + std::to_string(v));
+      throw std::runtime_error("unknown security id: " + std::to_string(v));
   } else {
     auto exch = Get<std::string>(j[0]);
     auto symbol = Get<std::string>(j[1]);
     sec = SecurityManager::Instance().Get(exch, symbol);
     if (!sec)
-      throw std::runtime_error("Unknown security: [" + exch + ", " + symbol +
+      throw std::runtime_error("unknown security: [" + exch + ", " + symbol +
                                "]");
   }
   return sec;
@@ -134,7 +134,7 @@ static inline T ParseParamScalar(const json& j) {
       } else if (it.key() == "side") {
         auto side_str = Get<std::string>(it.value());
         if (!GetOrderSide(side_str, &side)) {
-          throw std::runtime_error("Unknown order side: " + side_str);
+          throw std::runtime_error("unknown order side: " + side_str);
         }
       } else if (it.key() == "src") {
         src = Get<std::string>(it.value());
@@ -145,12 +145,12 @@ static inline T ParseParamScalar(const json& j) {
           auto v = Get<int64_t>(it.value());
           acc = AccountManager::Instance().GetSubAccount(v);
           if (!acc)
-            throw std::runtime_error("Unknown account id: " +
+            throw std::runtime_error("unknown account id: " +
                                      std::to_string(v));
         } else if (it.value().is_string()) {
           auto v = Get<std::string>(it.value());
           acc = AccountManager::Instance().GetSubAccount(v);
-          if (!acc) throw std::runtime_error("Unknown account: " + v);
+          if (!acc) throw std::runtime_error("unknown account: " + v);
         }
       }
     }
@@ -1068,7 +1068,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
       if (!AlgoManager::Instance().Spawn(params, algo_name, *user_, ss.str(),
                                          token) &&
           params) {
-        throw std::runtime_error("Unknown algo name: " + algo_name);
+        throw std::runtime_error("unknown algo name: " + algo_name);
       }
       Send(json{"algo", "done"});
     } catch (const std::exception& err) {
@@ -1220,7 +1220,7 @@ void Connection::OnSecurities(const json& j) {
 
 bool Connection::Disable(const json& j, AccountBase* acc) {
   if (!acc) {
-    Send(json{"error", "", "Unknown account id"});
+    Send(json{"error", "", "unknown account id"});
     return false;
   }
   auto old = acc->disabled_reason();
@@ -1411,14 +1411,14 @@ void Connection::OnAdmin(const json& j) {
     auto user = const_cast<User*>(inst.GetUser(user_name));
     if (!user) {
       Send(
-          json{"admin", name, action, "Unknown user name '" + user_name + "'"});
+          json{"admin", name, action, "unknown user name '" + user_name + "'"});
       return;
     }
     auto user_id = user->id;
     auto sub = inst.GetSubAccount(sub_name);
     if (!sub) {
       Send(json{"admin", name, action,
-                "Unknown sub broker name '" + sub_name + "'"});
+                "unknown sub broker name '" + sub_name + "'"});
       return;
     }
     auto sub_id = sub->id;
@@ -1499,21 +1499,21 @@ void Connection::OnAdmin(const json& j) {
     auto sub = const_cast<SubAccount*>(inst.GetSubAccount(sub_name));
     if (!sub) {
       Send(json{"admin", name, action,
-                "Unknown sub broker name '" + sub_name + "'"});
+                "unknown sub broker name '" + sub_name + "'"});
       return;
     }
     auto sub_id = sub->id;
     auto exch = SecurityManager::Instance().GetExchange(exch_name);
     if (!exch) {
       Send(json{"admin", name, action,
-                "Unknown exchange name '" + exch_name + "'"});
+                "unknown exchange name '" + exch_name + "'"});
       return;
     }
     auto exch_id = exch->id;
     auto broker = inst.GetBrokerAccount(broker_name);
     if (!broker) {
       Send(json{"admin", name, action,
-                "Unknown broker account name '" + broker_name + "'"});
+                "unknown broker account name '" + broker_name + "'"});
       return;
     }
     auto broker_id = broker->id;
@@ -1571,7 +1571,7 @@ static inline json UpdateAcc(
     std::function<bool(const std::string& key, const json& v, T* acc)> func2 =
         {}) {
   if (!acc) {
-    return json{"admin", name, action, id, "Unknown " + table_name + " id"};
+    return json{"admin", name, action, id, "unknown " + table_name + " id"};
   }
   auto values = j[4];
   std::stringstream ss;
@@ -1808,7 +1808,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
           } else if (key == "adapter") {
             auto adapter =
                 ExchangeConnectivityManager::Instance().GetAdapter(str);
-            if (!adapter) *err = "Unknown adapter name";
+            if (!adapter) *err = "unknown adapter name";
           }
           (*ss) << "'" << str << "'";
           return true;
@@ -1839,7 +1839,7 @@ void Connection::OnAdminBrokerAccounts(const json& j, const std::string& name,
             auto adapter =
                 ExchangeConnectivityManager::Instance().GetAdapter(str);
             if (!adapter) {
-              *err = "Unknown adapter name";
+              *err = "unknown adapter name";
             } else {
               acc->adapter = adapter;
               acc->adapter_name = StrDup(str);

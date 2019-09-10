@@ -99,7 +99,7 @@ void ExchangeConnectivityManager::HandleFilled(Order* ord, double qty,
 static inline auto CheckAdapter(Order* ord) {
   auto adapter = ord->broker_account->adapter;
   auto name = ord->broker_account->adapter_name;
-  if (!ord->destination.empty()) {
+  if (!adapter && !ord->destination.empty()) {
     name = ord->destination.c_str();
     adapter = ExchangeConnectivityManager::Instance().GetAdapter(name);
   }
@@ -135,17 +135,19 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     HandleConfirmation(ord, kRiskRejected, kRiskError);
     return false;
   }
-  auto exchange = ord->sec->exchange;
-  auto broker = ord->sub_account->GetBrokerAccount(exchange->id);
-  if (!broker) {
-    char buf[256];
-    snprintf(buf, sizeof(buf), "Not permissioned to trade on exchange: %s",
-             exchange->name);
-    kRiskError = buf;
-    HandleConfirmation(ord, kRiskRejected, kRiskError);
-    return false;
+  if (!ord->broker_account) {
+    auto exchange = ord->sec->exchange;
+    auto broker = ord->sub_account->GetBrokerAccount(exchange->id);
+    if (!broker) {
+      char buf[256];
+      snprintf(buf, sizeof(buf), "Not permissioned to trade on exchange: %s",
+               exchange->name);
+      kRiskError = buf;
+      HandleConfirmation(ord, kRiskRejected, kRiskError);
+      return false;
+    }
+    ord->broker_account = broker;
   }
-  ord->broker_account = broker;
   ord->leaves_qty = ord->qty;
   if (ord->type == kOTC) {
     ord->id = GlobalOrderBook::Instance().NewOrderId();
