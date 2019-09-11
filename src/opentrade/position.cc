@@ -285,8 +285,8 @@ void PositionManager::Handle(Confirmation::Ptr cm, bool offline) {
           sub_account_id = ord->sub_account->id;
           security_id = ord->sec->id;
           broker_account_id = ord->broker_account->id;
-          qty = pos.qty;
-          cx_qty = pos.cx_qty;
+          qty = Round6(pos.qty);
+          cx_qty = Round6(pos.cx_qty);
           avg_px = pos.avg_px;
           realized_pnl0 = pos.realized_pnl0;
           commission0 = pos.commission0;

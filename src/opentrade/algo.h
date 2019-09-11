@@ -131,18 +131,18 @@ class Instrument {
   double sold_qty() const { return sold_qty_; }
   double outstanding_buy_qty() const { return outstanding_buy_qty_; }
   double outstanding_sell_qty() const { return outstanding_sell_qty_; }
-  double net_qty() const { return bought_qty_ - sold_qty_; }
-  double net_cx_qty() const { return bought_cx_qty_ - sold_cx_qty_; }
-  double total_qty() const { return bought_qty_ + sold_qty_; }
-  double total_cx_qty() const { return bought_cx_qty_ + sold_cx_qty_; }
+  double net_qty() const { return Round6(bought_qty_ - sold_qty_); }
+  double net_cx_qty() const { return Round6(bought_cx_qty_ - sold_cx_qty_); }
+  double total_qty() const { return Round6(bought_qty_ + sold_qty_); }
+  double total_cx_qty() const { return Round6(bought_cx_qty_ + sold_cx_qty_); }
   double net_outstanding_qty() const {
-    return outstanding_buy_qty_ - outstanding_sell_qty_;
+    return Round6(outstanding_buy_qty_ - outstanding_sell_qty_);
   }
   double total_outstanding_qty() const {
-    return outstanding_buy_qty_ + outstanding_sell_qty_;
+    return Round6(outstanding_buy_qty_ + outstanding_sell_qty_);
   }
   double total_exposure() const {
-    return total_qty() - total_cx_qty() + total_outstanding_qty();
+    return Round6(total_qty() - total_cx_qty() + total_outstanding_qty());
   }
   size_t id() const { return id_; }
 

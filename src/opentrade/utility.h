@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <any>
 #include <boost/algorithm/string.hpp>
+#include <cmath>
 #include <cstring>
 #include <ctime>
 #include <iostream>
@@ -197,6 +198,8 @@ static inline decltype(auto) Split(const std::string& str, const char* sep,
 static inline const char* PythonOr(const char* a, const char* b) {
   return a && *a ? a : b;
 }
+
+static inline auto Round6(double dbl) { return std::round(dbl * 1e6) / 1e6; }
 
 }  // namespace opentrade
 

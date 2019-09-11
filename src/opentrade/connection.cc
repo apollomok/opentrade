@@ -130,7 +130,7 @@ static inline T ParseParamScalar(const json& j) {
     double qty = 0;
     for (auto& it : j.items()) {
       if (it.key() == "qty") {
-        qty = GetNum(it.value());
+        qty = Round6(GetNum(it.value()));
       } else if (it.key() == "side") {
         auto side_str = Get<std::string>(it.value());
         if (!GetOrderSide(side_str, &side)) {
@@ -1092,7 +1092,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   auto side_str = Get<std::string>(j[3]);
   auto type_str = Get<std::string>(j[4]);
   auto tif_str = Get<std::string>(j[5]);
-  auto qty = GetNum(j[6]);
+  auto qty = Round6(GetNum(j[6]));
   auto px = GetNum(j[7]);
   auto stop_price = GetNum(j[8]);
   Contract c;

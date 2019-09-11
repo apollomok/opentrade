@@ -80,8 +80,7 @@ static inline void HandleConfirmation(
   auto cm = std::make_shared<Confirmation>();
   cm->order = ord;
   cm->exec_type = is_partial ? kPartiallyFilled : kFilled;
-  cm->last_shares =
-      std::round(qty * 1e6) / 1e6;  // avoid potentical precision problem
+  cm->last_shares = Round6(qty);
   cm->last_px = price;
   cm->exec_id = exec_id;
   cm->exec_trans_type = exec_trans_type;
@@ -121,6 +120,8 @@ static inline auto CheckAdapter(Order* ord) {
 
 bool ExchangeConnectivityManager::Place(Order* ord) {
   assert(ord->qty > 0);
+  ord->qty = Round6(ord->qty);
+  if (ord->qty <= 0) return false;
   kRiskError.clear();
   assert(ord->sub_account);
   assert(ord->sec);

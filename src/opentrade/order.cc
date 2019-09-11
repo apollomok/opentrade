@@ -59,6 +59,8 @@ inline void GlobalOrderBook::UpdateOrder(Confirmation::Ptr cm) {
             (ord->cum_qty + cm->last_shares);
         ord->cum_qty += cm->last_shares;
         ord->leaves_qty -= cm->last_shares;
+        ord->cum_qty = Round6(ord->cum_qty);
+        ord->leaves_qty = Round6(ord->leaves_qty);
         if (ord->cum_qty >= ord->qty)
           ord->status = kFilled;
         else if (ord->IsLive())
@@ -73,6 +75,7 @@ inline void GlobalOrderBook::UpdateOrder(Confirmation::Ptr cm) {
               (ord->avg_px * ord->cum_qty - cm->last_px * cm->last_shares) /
               (ord->cum_qty - cm->last_shares);
           ord->cum_qty -= cm->last_shares;
+          ord->cum_qty = Round6(ord->cum_qty);
         }
       } else {
         // to-do
