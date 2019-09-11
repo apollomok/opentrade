@@ -511,6 +511,8 @@ void Connection::HandleMessageSync(const std::string& msg,
         auto n = GetNum(j[2]);
         if (n > interval && n < seconds) interval = n;
       }
+      Send(json{"shutdown",
+                "will shutdown in " + std::to_string(seconds) + " seconds"});
       Server::Stop();
       AlgoManager::Instance().Stop();
       LOG_INFO("Shutting down");
