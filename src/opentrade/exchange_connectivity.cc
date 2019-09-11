@@ -80,7 +80,8 @@ static inline void HandleConfirmation(
   auto cm = std::make_shared<Confirmation>();
   cm->order = ord;
   cm->exec_type = is_partial ? kPartiallyFilled : kFilled;
-  cm->last_shares = qty;
+  cm->last_shares =
+      std::round(qty * 1e6) / 1e6;  // avoid potentical precision problem
   cm->last_px = price;
   cm->exec_id = exec_id;
   cm->exec_trans_type = exec_trans_type;
