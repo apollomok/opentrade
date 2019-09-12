@@ -1692,8 +1692,12 @@ static inline json AddAcc(
     }
   }
   if (Database::is_sqlite()) {
-    *Database::Session() << "select max(id) from " + table_name,
-        soci::into(acc->id);
+    try {
+      *Database::Session() << "select max(id) from " + table_name,
+          soci::into(acc->id);
+    } catch (const soci::soci_error& e) {  // in case table is empty
+      acc->id = 0;
+    }
     acc->id += 1;
     ss << ", " << acc->id;
   }

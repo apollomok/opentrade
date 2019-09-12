@@ -112,6 +112,10 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
+    if (!fs::exists(kStorePath)) {
+      fs::create_directory(kStorePath);
+    }
+
     std::ifstream ifs(config_file_path.c_str());
     if (ifs) {
       bpo::store(parse_config_file(ifs, config_file_options, true), vm);
@@ -157,10 +161,6 @@ int main(int argc, char *argv[]) {
     LOG_FATAL("Invalid start_date " << start_date);
   }
 #else
-  if (!fs::exists(kStorePath)) {
-    fs::create_directory(kStorePath);
-  }
-
   if (!fs::exists(kAlgoPath)) {
     fs::create_directory(kAlgoPath);
   }
