@@ -233,6 +233,10 @@ class FixAdapter : public FIX::Application,
     HandlePendingNew(clordid, text, transact_time_);
   }
 
+  virtual double GetLastShares(const FIX::Message& msg) noexcept {
+    return atof(msg.getField(FIX::FIELD::LastShares).c_str());
+  }
+
   void OnFilled(const FIX::Message& msg, char exec_type, bool is_partial) {
     char exec_trans_type = FIX::ExecTransType_NEW;
     if (msg.isSetField(FIX::FIELD::ExecTransType))
@@ -242,7 +246,7 @@ class FixAdapter : public FIX::Application,
       return;
     }
     auto exec_id = msg.getField(FIX::FIELD::ExecID);
-    auto last_shares = atof(msg.getField(FIX::FIELD::LastShares).c_str());
+    auto last_shares = GetLastShares(msg);
     auto last_px = atof(msg.getField(FIX::FIELD::LastPx).c_str());
     auto clordid = atol(msg.getField(FIX::FIELD::ClOrdID).c_str());
     HandleFill(clordid, last_shares, last_px, exec_id, transact_time_,
