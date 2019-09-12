@@ -39,7 +39,7 @@ def check_confirmation(seq, raw, exec_type, acc, id, *args):
       if exec_trans_type == kTransCancel: orders[id] += n
       elif exec_trans_type == kTransNew:
         orders[id] -= n
-        if orders[id] <= 1e-8:
+        if orders[id] <= 1e-6:
           del orders[id]
 
 
