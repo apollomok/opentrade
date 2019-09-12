@@ -8,14 +8,16 @@ import datetime
 import time
 import os
 from parse_confirmation import *
+from collections import defaultdict
 
 confirmations = []
 orders = {}
 now = time.time()
 one_day = 24 * 3600 * 1000
+exec_ids = defaultdict(list)
 
 
-def check_confirmation(seq, raw, exec_type, id, *args):
+def check_confirmation(seq, raw, exec_type, acc, id, *args):
   if exec_type == kUnconfirmedNew:
     tm, algo_id, qty = args[:3]
     x = now - int(tm) / 1e6
@@ -30,7 +32,8 @@ def check_confirmation(seq, raw, exec_type, id, *args):
                      kDoneForDay):
     if id in orders: del orders[id]
   elif exec_type in (kPartiallyFilled, kFilled):
-    tm, last_shares, last_px, exec_trans_type = args[:4]
+    tm, last_shares, last_px, exec_trans_type, exec_id = args[:5]
+    exec_ids[id].append(exec_id)
     n = float(last_shares)
     if id in orders:
       if exec_trans_type == kTransCancel: orders[id] += n
@@ -65,8 +68,17 @@ def main():
       qty = orders[id]
       body[3] = str(qty)
       body = ' '.join(body)
+      exec_type = raw[6]
+      acc = raw[7:9]
       raw = struct.pack('I', seq) + struct.pack(
-          'H', len(body)) + raw[6:9] + body + '\0\n'
+          'H', len(body)) + exec_type + acc + body + '\0\n'
+      for exec_id in exec_ids[id]:
+        body = 'exec_id {} {}'.format(id, exec_id)
+        seq += 1
+        raw += struct.pack('I', seq) + struct.pack(
+            'H', len(body)) + '#' + acc + body + '\0\n'
+    else:
+      raw = struct.pack('I', seq) + raw[4:]
     fh.write(raw)
   fh.close()
 

@@ -91,7 +91,7 @@ def parse(fn, callback):
       offset += 2
       exec_type = mm[offset]
       offset += 1
-      sub_account_id = struct.unpack('H', mm[offset:offset + 2])[0]
+      acc = struct.unpack('H', mm[offset:offset + 2])[0]
       offset += 2
       body = mm[offset:offset + n]
       offset += n + 2  # body + '\0' + '\n'
@@ -99,33 +99,37 @@ def parse(fn, callback):
       raw = mm[offset0:offset]
       if exec_type == kNew:
         id, tm, order_id = fds
-        callback(seq, raw, exec_type, id, tm, order_id)
+        callback(seq, raw, exec_type, acc, id, tm, order_id)
       elif exec_type == kPartiallyFilled or exec_type == kFilled:
         id, tm, last_shares, last_px, exec_trans_type, exec_id = fds
-        callback(seq, raw, exec_type, id, tm, last_shares, last_px,
+        callback(seq, raw, exec_type, acc, id, tm, last_shares, last_px,
                  exec_trans_type, exec_id)
       elif exec_type == kUnconfirmedNew:
         id, tm, algo_id, qty, price, stop_price, side, type, tif, \
             sec_id, user_id, broker_account_id = fds[:12]
         dest = ''
         if len(fds) > 12: dest = fds[12]
-        callback(seq, raw, exec_type, id, tm, algo_id, qty, price, stop_price,
-                 side, type, tif, sec_id, user_id, broker_account_id, dest)
+        callback(seq, raw, exec_type, acc, id, tm, algo_id, qty, price,
+                 stop_price, side, type, tif, sec_id, user_id,
+                 broker_account_id, dest)
       elif exec_type == kUnconfirmedCancel:
         id, tm, orig_id = fds
-        callback(seq, raw, exec_type, id, tm, orig_id)
+        callback(seq, raw, exec_type, acc, id, tm, orig_id)
       elif exec_type == kRiskRejected:
         id = fds[0]
         text = ' '.join(fds[1])
-        callback(seq, raw, exec_type, id, None, text)
+        callback(seq, raw, exec_type, acc, id, None, text)
       else:
         id, tm = fds[:2]
         text = '.'.join(fds[2:])
-        callback(seq, raw, exec_type, id, tm, text)
+        callback(seq, raw, exec_type, acc, id, tm, text)
     assert (offset == len(mm))
 
 
 def print_confirmation(seq, raw, *args):
+  if args[0] == '#':
+    print((seq,) + args)
+    return
   exec_type = kExecTypes[args[0]]
   id = args[1]
   tm = args[2]
