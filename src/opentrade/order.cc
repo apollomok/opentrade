@@ -490,6 +490,18 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         cm->text = text;
         Handle(cm, true);
       } break;
+      case kComment:
+        if (!conn) {
+          uint32_t id;
+          char exec_id[n];
+          *exec_id = 0;
+          if (sscanf(body, "exec_id %u %s", &id, exec_id) != 2) {
+            LOG_ERROR("Failed to parse confirmation line #" << ln);
+            continue;
+          }
+          exec_ids_.emplace(id, std::string(exec_id));
+        }
+        break;
       default:
         break;
     }

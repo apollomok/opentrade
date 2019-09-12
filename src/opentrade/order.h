@@ -52,6 +52,7 @@ enum OrderStatus : char {
   kUnconfirmedCancel = 'c',
   kUnconfirmedReplace = 'd',
   kCancelRejected = 'e',
+  kComment = '#',
 };
 
 enum TimeInForce : char {
