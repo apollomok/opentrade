@@ -65,9 +65,14 @@ class FixAdapter : public FIX::Application,
     auto md_update_type = config("md_update_type");
     if (!md_update_type.empty()) md_update_type_ = atoi(md_update_type.c_str());
 
-    auto update_fx_price_ = atoi(config("update_fx_price").c_str());
+    auto update_fx_price_ = config<bool>("update_fx_price");
     if (update_fx_price_) {
       LOG_INFO(name() << ": update fx price with mid quote");
+    }
+
+    multiplier_ = config<double>("multiplier");
+    if (multiplier_ > 0) {
+      LOG_INFO(name() << ": multiplier=" << multiplier_);
     }
 
     fix_settings_.reset(new FIX::SessionSettings(config_file));
@@ -233,10 +238,6 @@ class FixAdapter : public FIX::Application,
     HandlePendingNew(clordid, text, transact_time_);
   }
 
-  virtual double GetLastShares(const FIX::Message& msg) noexcept {
-    return atof(msg.getField(FIX::FIELD::LastShares).c_str());
-  }
-
   void OnFilled(const FIX::Message& msg, char exec_type, bool is_partial) {
     char exec_trans_type = FIX::ExecTransType_NEW;
     if (msg.isSetField(FIX::FIELD::ExecTransType))
@@ -246,7 +247,8 @@ class FixAdapter : public FIX::Application,
       return;
     }
     auto exec_id = msg.getField(FIX::FIELD::ExecID);
-    auto last_shares = GetLastShares(msg);
+    auto last_shares = atof(msg.getField(FIX::FIELD::LastShares).c_str());
+    if (multiplier_ > 0) last_shares = Round6(last_shares * multiplier_);
     auto last_px = atof(msg.getField(FIX::FIELD::LastPx).c_str());
     auto clordid = atol(msg.getField(FIX::FIELD::ClOrdID).c_str());
     HandleFill(clordid, last_shares, last_px, exec_id, transact_time_,
@@ -289,8 +291,10 @@ class FixAdapter : public FIX::Application,
       if (md_entry.isSetField(FIX::FIELD::MDEntryPx))
         price = atof(md_entry.getField(FIX::FIELD::MDEntryPx).c_str());
       int64_t size = 0;
-      if (md_entry.isSetField(FIX::FIELD::MDEntrySize))
+      if (md_entry.isSetField(FIX::FIELD::MDEntrySize)) {
         size = atoll(md_entry.getField(FIX::FIELD::MDEntrySize).c_str());
+        if (multiplier_ > 0) size = Round6(multiplier_ * size);
+      }
       if (md_entry.isSetField(FIX::FIELD::MDUpdateAction)) {
         auto action = *md_entry.getField(FIX::FIELD::MDUpdateAction).c_str();
         if (action == FIX::MDUpdateAction_DELETE) {
@@ -364,7 +368,8 @@ class FixAdapter : public FIX::Application,
     }
 
     msg->setField(FIX::HandlInst('1'));
-    msg->setField(FIX::OrderQty(ord.qty));
+    msg->setField(FIX::OrderQty(multiplier_ > 0 ? Round6(ord.qty / multiplier_)
+                                                : ord.qty));
     msg->setField(FIX::ClOrdID(std::to_string(ord.id)));
     msg->setField(FIX::Side(ord.side));
     if (ord.side == kShort) msg->setField(FIX::LocateReqd(false));
@@ -451,6 +456,7 @@ class FixAdapter : public FIX::Application,
   // 0 for full refresh, 1 for incremental refresh
   FIX::MDUpdateType md_update_type_ = FIX::MDUpdateType_INCREMENTAL_REFRESH;
   bool update_fx_price_ = false;
+  double multiplier_ = 0;
 };
 
 template <typename NewOrderSingle, typename OrderCancelRequest,
