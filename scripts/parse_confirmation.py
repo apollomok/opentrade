@@ -131,10 +131,9 @@ def print_confirmation(seq, raw, *args):
     print((seq,) + args)
     return
   exec_type = kExecTypes[args[0]]
-  id = args[1]
-  tm = args[2]
+  acc, id, tm = args[1:4]
   tm = datetime.datetime.fromtimestamp(float(tm) / 1e6) if tm else ''
-  args = (seq, exec_type, id, str(tm)) + args[3:]
+  args = (seq, exec_type, acc, id, str(tm)) + args[4:]
   print(args)
 
 
