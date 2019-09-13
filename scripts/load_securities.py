@@ -16,9 +16,10 @@ def main():
       '--db_url',
       help='sqlite3 file path or postgres url "host,database,user,password"')
   opts.add_option('-f', '--file', help='security symbol list file')
+  opts.add_option('', '--dry_run', action='store_true')
   opts = opts.parse_args()[0]
 
-  if not opts.db_url:
+  if not opts.db_url and not opts.dry_run:
     print('Error: --db_url not give')
     return
 

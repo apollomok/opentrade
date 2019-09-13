@@ -2,6 +2,7 @@
 #define OPENTRADE_ADAPTER_H_
 
 #include <tbb/atomic.h>
+#include <boost/lexical_cast.hpp>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -34,8 +35,19 @@ class Adapter {
     return inst;
   }
   const StrMap& config() const { return config_; }
-  std::string config(const std::string& name) const {
-    return FindInMap(config_, name);
+  template <typename T = std::string>
+  T config(const std::string& name, T default_value = {}) const {
+    auto str = FindInMap(config_, name);
+    if (str.empty()) return default_value;
+    if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+      return str;
+    } else {
+      try {
+        return boost::lexical_cast<T>(str);
+      } catch (const std::bad_cast&) {
+        return default_value;
+      }
+    }
   }
   static Adapter* Load(const std::string& sofile);
   virtual void Start() noexcept = 0;
