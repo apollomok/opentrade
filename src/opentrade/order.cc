@@ -47,9 +47,13 @@ void GlobalOrderBook::Initialize() {
 inline void GlobalOrderBook::UpdateOrder(Confirmation::Ptr cm) {
   switch (cm->exec_type) {
     case kUnconfirmedNew:
-    case kUnconfirmedCancel:
-      orders_.emplace(cm->order->id, cm->order);
-      break;
+    case kUnconfirmedCancel: {
+      auto ord = cm->order;
+      if (cm->exec_type == kUnconfirmedNew) ord->leaves_qty = ord->qty;
+      ord->id = NewOrderId();
+      ord->tm = NowUtcInMicro();
+      orders_.emplace(ord->id, ord);
+    } break;
     case kPartiallyFilled:
     case kFilled:
       if (cm->exec_trans_type == kTransNew) {
@@ -414,7 +418,6 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         ord->id = id;
         ord->algo_id = algo_id;
         ord->qty = qty;
-        ord->leaves_qty = qty;
         ord->price = price;
         ord->stop_price = stop_price;
         ord->side = static_cast<opentrade::OrderSide>(side);

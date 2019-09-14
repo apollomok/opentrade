@@ -150,18 +150,15 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     }
     ord->broker_account = broker;
   }
-  ord->leaves_qty = ord->qty;
   if (ord->type == kOTC) {
-    ord->id = GlobalOrderBook::Instance().NewOrderId();
     HandleConfirmation(ord, kUnconfirmedNew);
     HandleConfirmation(ord, ord->qty, ord->price,
                        "OTC-" + std::to_string(ord->id), NowUtcInMicro(), false,
                        kTransNew);
     return true;
   } else if (ord->type == kCX) {
-    ord->id = GlobalOrderBook::Instance().NewOrderId();
-    CrossEngine::Instance().Place(static_cast<CrossOrder*>(ord));
     HandleConfirmation(ord, kUnconfirmedNew);
+    CrossEngine::Instance().Place(static_cast<CrossOrder*>(ord));
     return true;
   }
   auto adapter = CheckAdapter(ord);
@@ -184,8 +181,6 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
     HandleConfirmation(ord, kRiskRejected, kRiskError);
     return false;
   }
-  ord->id = GlobalOrderBook::Instance().NewOrderId();
-  ord->tm = NowUtcInMicro();
   HandleConfirmation(ord, kUnconfirmedNew, "", ord->tm);
   kRiskError = adapter->Place(*ord);
   auto ok = kRiskError.empty();
@@ -198,7 +193,6 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
 
 static inline bool Cancel(Order* cancel_order) {
   kRiskError.clear();
-  cancel_order->tm = NowUtcInMicro();
   if (!RiskManager::Instance().CheckMsgRate(*cancel_order)) {
     HandleConfirmation(cancel_order, kRiskRejected, kRiskError);
     static uint32_t seed;
@@ -210,7 +204,6 @@ static inline bool Cancel(Order* cancel_order) {
   auto adapter = CheckAdapter(cancel_order);
   if (!adapter) return false;
   HandleConfirmation(cancel_order, kUnconfirmedCancel, "", cancel_order->tm);
-  cancel_order->id = GlobalOrderBook::Instance().NewOrderId();
   kRiskError = adapter->Cancel(*cancel_order);
   auto ok = kRiskError.empty();
   if (!ok)
@@ -237,6 +230,7 @@ bool ExchangeConnectivityManager::Cancel(const Order& orig_ord) {
   if (!orig_ord.broker_account) return false;
   auto cancel_order = new Order(orig_ord);
   cancel_order->orig_id = orig_ord.id;
+  cancel_order->id = 0;
   cancel_order->status = kUnconfirmedCancel;
   return opentrade::Cancel(cancel_order);
 }

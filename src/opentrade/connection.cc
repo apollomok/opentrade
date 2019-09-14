@@ -513,25 +513,29 @@ void Connection::HandleMessageSync(const std::string& msg,
       }
       Send(json{"shutdown",
                 "will shutdown in " + std::to_string(seconds) + " seconds"});
-      Server::Stop();
-      AlgoManager::Instance().Stop();
-      LOG_INFO("Shutting down");
-      while (seconds) {
-        LOG_INFO(seconds);
-        seconds -= interval;
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(static_cast<int>(interval * 1000)));
-        GlobalOrderBook::Instance().Cancel();
-      }
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      auto& ecs = ExchangeConnectivityManager::Instance().adapters();
-      for (auto& it : ecs) {
-        it.second->Stop();
-      }
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      kDatabaseTaskPool.Stop();
-      kWriteTaskPool.Stop();
-      if (system(("kill -9 " + std::to_string(getpid())).c_str())) return;
+      kTaskPool.AddTask([seconds, interval]() {
+        usleep(1e5);  // a little time to send response
+        Server::Stop();
+        AlgoManager::Instance().Stop();
+        LOG_INFO("Shutting down");
+        auto left = seconds;
+        while (left) {
+          LOG_INFO("Remaining " << left << " seconds to exit");
+          left -= interval;
+          std::this_thread::sleep_for(
+              std::chrono::milliseconds(static_cast<int>(interval * 1000)));
+          GlobalOrderBook::Instance().Cancel();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        auto& ecs = ExchangeConnectivityManager::Instance().adapters();
+        for (auto& it : ecs) {
+          it.second->Stop();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        kDatabaseTaskPool.Stop();
+        kWriteTaskPool.Stop();
+        if (system(("kill -9 " + std::to_string(getpid())).c_str())) return;
+      });
     } else if (action == "cancel") {
       auto id = Get<int64_t>(j[1]);
       auto ord = GlobalOrderBook::Instance().Get(id);
