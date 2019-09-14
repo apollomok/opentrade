@@ -65,7 +65,7 @@ class FixAdapter : public FIX::Application,
     auto md_update_type = config("md_update_type");
     if (!md_update_type.empty()) md_update_type_ = atoi(md_update_type.c_str());
 
-    auto update_fx_price_ = config<bool>("update_fx_price");
+    update_fx_price_ = config<bool>("update_fx_price");
     if (update_fx_price_) {
       LOG_INFO(name() << ": update fx price with mid quote");
     }
