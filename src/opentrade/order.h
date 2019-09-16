@@ -32,6 +32,7 @@ enum OrderType : char {
 };
 
 enum OrderStatus : char {
+  kOrderStatusUnknown = 0,
   kNew = '0',
   kPartiallyFilled = '1',
   kFilled = '2',
@@ -107,7 +108,7 @@ struct Contract {
 class Instrument;
 
 struct Order : public Contract {
-  OrderStatus status = kUnconfirmedNew;
+  OrderStatus status = kOrderStatusUnknown;
 
   // in case inst of offline order is nullptr, for frontend only
   uint32_t algo_id = 0;
@@ -135,7 +136,7 @@ struct Confirmation {
   std::string exec_id;
   std::string order_id;
   std::string text;
-  OrderStatus exec_type = kUnconfirmedNew;
+  OrderStatus exec_type = kOrderStatusUnknown;
   ExecTransType exec_trans_type = kTransNew;
   union {
     double last_shares = 0;

@@ -50,9 +50,12 @@ inline void GlobalOrderBook::UpdateOrder(Confirmation::Ptr cm) {
     case kUnconfirmedCancel: {
       auto ord = cm->order;
       if (cm->exec_type == kUnconfirmedNew) ord->leaves_qty = ord->qty;
-      ord->id = NewOrderId();
-      ord->tm = NowUtcInMicro();
+      if (!ord->id) {  // if offline, id and tm already assigned
+        ord->id = NewOrderId();
+        ord->tm = NowUtcInMicro();
+      }
       orders_.emplace(ord->id, ord);
+      ord->status = cm->exec_type;
     } break;
     case kPartiallyFilled:
     case kFilled:
@@ -107,7 +110,9 @@ inline void GlobalOrderBook::UpdateOrder(Confirmation::Ptr cm) {
 }
 
 void GlobalOrderBook::Handle(Confirmation::Ptr cm, bool offline) {
-  if (cm->order->id <= 0) {  // risk rejected, not persist
+  // risk rejected not by adapter, not persist
+  if (cm->exec_type == kRiskRejected &&
+      cm->order->status == kOrderStatusUnknown) {
     assert(!offline);
     Server::Publish(cm);
     if (cm->order->inst) AlgoManager::Instance().Handle(cm);
@@ -183,6 +188,7 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
   auto p = m.data();
   auto p_end = p + m.size();
   auto ln = 0;
+  std::unordered_set<Order::IdType> orders_to_ignore;
   while (p + 6 < p_end) {
     ln++;
     auto seq = *reinterpret_cast<const uint32_t*>(p);
@@ -205,6 +211,8 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
       assert(conn->user_);
       if (!conn->user_->is_admin && !conn->user_->GetSubAccount(sub_account_id))
         continue;
+      auto id = atol(body);
+      if (orders_to_ignore.find(id) != orders_to_ignore.end()) continue;
     }
     switch (exec_type) {
       case kNew:
@@ -358,31 +366,16 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
           continue;
         }
         if (conn) {
+          auto ord = Get(id);
+          assert(ord);
+          if (!ord) continue;
+          if (ord->status == kCanceled && ord->cum_qty == 0) {
+            orders_to_ignore.insert(id);
+            continue;
+          }
           Confirmation cm{};
           cm.seq = seq;
-          Order ord{};
-          ord.id = id;
-          ord.algo_id = algo_id;
-          ord.qty = qty;
-          ord.price = price;
-          ord.stop_price = stop_price;
-          ord.side = static_cast<opentrade::OrderSide>(side);
-          ord.type = static_cast<opentrade::OrderType>(type);
-          ord.tif = static_cast<opentrade::TimeInForce>(tif);
-          ord.destination = destination;
-          Security sec{};
-          sec.id = sec_id;
-          ord.sec = &sec;
-          User user;
-          user.id = user_id;
-          ord.user = &user;
-          SubAccount sub_account;
-          sub_account.id = sub_account_id;
-          ord.sub_account = &sub_account;
-          BrokerAccount broker_account;
-          broker_account.id = broker_account_id;
-          ord.broker_account = &broker_account;
-          cm.order = &ord;
+          cm.order = ord;
           cm.exec_type = exec_type;
           cm.transaction_time = tm;
           conn->Send(cm, true);
@@ -454,7 +447,6 @@ void GlobalOrderBook::LoadStore(uint32_t seq0, Connection* conn) {
         auto cancel_order = new Order(*orig_ord);
         cancel_order->id = id;
         cancel_order->orig_id = orig_id;
-        cancel_order->status = kUnconfirmedCancel;
         cancel_order->tm = tm;
         auto cm = std::make_shared<Confirmation>();
         cm->exec_type = exec_type;
