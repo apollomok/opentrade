@@ -116,7 +116,8 @@ void TWAP::Timer() {
   auto& md = this->md();
   auto bid = md.quote().bid_price;
   auto ask = md.quote().ask_price;
-  auto last_px = md.trade.close;
+  // md.trade.close may be not rounded
+  auto last_px = RoundPrice(md.trade.close);
   auto mid_px = 0.;
   if (ask > bid && bid > 0) mid_px = RoundPrice((ask + bid) / 2);
 
