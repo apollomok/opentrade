@@ -553,7 +553,7 @@ void Connection::HandleMessageSync(const std::string& msg,
     } else if (action == "pnl") {
       auto tm0 = 0l;
       if (j.size() >= 2) tm0 = Get<int64_t>(j[1]);
-      tm0 = std::max(GetTime() - 24 * 3600, tm0);
+      if (tm0 > 0) tm0 = std::max(GetTime() - 24 * 3600, tm0);
       // not conform to REST rule
       for (auto& pair : PositionManager::Instance().pnls_) {
         auto id = pair.first;
