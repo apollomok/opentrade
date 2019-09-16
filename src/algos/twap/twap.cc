@@ -22,6 +22,8 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
   if (seconds < 60) return "Too short ValidSeconds, must be >= 60";
   begin_time_ = GetTime();
   price_ = GetParam(params, "Price", 0.);
+  if (price_ > 0) price_ = RoundPrice(price_);
+
   end_time_ = begin_time_ + seconds;
   min_size_ = GetParam(params, "MinSize", 0);
   if (min_size_ <= 0 && sec->lot_size <= 0) {
@@ -116,25 +118,17 @@ void TWAP::Timer() {
   auto ask = md.quote().ask_price;
   auto last_px = md.trade.close;
   auto mid_px = 0.;
-  if (ask > bid && bid > 0) {
-    mid_px = (ask + bid) / 2;
-    auto tick_size = inst_->sec().GetTickSize(mid_px);
-    if (tick_size > 0) {
-      if (IsBuy(st_.side))
-        mid_px = std::ceil(mid_px / tick_size) * tick_size;
-      else
-        mid_px = std::floor(mid_px / tick_size) * tick_size;
-    }
-  }
+  if (ask > bid && bid > 0) mid_px = RoundPrice((ask + bid) / 2);
 
   if (!inst_->active_orders().empty()) {
     for (auto ord : inst_->active_orders()) {
       if (IsBuy(st_.side)) {
-        if (ord->price < bid) {
+        if (ord->price < bid && (price_ <= 0 || ord->price < price_)) {
           Cancel(*ord);
         }
       } else {
-        if (ask > 0 && ord->price > ask) {
+        if (ask > 0 && ord->price > ask &&
+            (price_ <= 0 || ord->price > price_)) {
           Cancel(*ord);
         }
       }
@@ -204,8 +198,9 @@ void TWAP::Timer() {
       break;
   }
   if (price_ > 0 && ((IsBuy(st_.side) && c.price > price_) ||
-                     (!IsBuy(st_.side) && c.price < price_)))
-    return;
+                     (!IsBuy(st_.side) && c.price < price_))) {
+    c.price = price_;
+  }
   Place(&c);
 }
 
