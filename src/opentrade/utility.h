@@ -200,6 +200,7 @@ static inline const char* PythonOr(const char* a, const char* b) {
 }
 
 static inline auto Round6(double dbl) { return std::round(dbl * 1e6) / 1e6; }
+static inline auto Round8(double dbl) { return std::round(dbl * 1e8) / 1e8; }
 
 }  // namespace opentrade
 

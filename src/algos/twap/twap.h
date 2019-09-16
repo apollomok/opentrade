@@ -37,6 +37,11 @@ class TWAP : public Algo {
       else
         px = std::ceil(px / tick_size) * tick_size;
     }
+    if (px > 100) {
+      px = Round6(px);
+    } else {
+      px = Round8(px);
+    }
     return px;
   }
 
