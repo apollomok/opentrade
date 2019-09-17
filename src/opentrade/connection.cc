@@ -571,9 +571,11 @@ void Connection::HandleMessageSync(const std::string& msg,
     } else if (action == "algo") {
       OnAlgo(j, msg);
     } else if (action == "pnl") {
-      auto tm0 = 0l;
-      if (j.size() >= 2) tm0 = Get<int64_t>(j[1]);
-      if (tm0 > 0) tm0 = std::max(GetTime() - 24 * 3600, tm0);
+      auto tm0 = GetTime() - 7 * 24 * 3600;
+      if (j.size() >= 2) {
+        auto n = Get<int64_t>(j[1]);
+        if (n > tm0) tm0 = n;
+      }
       // not conform to REST rule
       for (auto& pair : PositionManager::Instance().pnls_) {
         auto id = pair.first;
@@ -581,19 +583,30 @@ void Connection::HandleMessageSync(const std::string& msg,
         auto path = kStorePath / ("pnl-" + std::to_string(id));
         auto self = shared_from_this();
         kTaskPool.AddTask([self, tm0, id, path]() {
+          auto now = time(NULL);
+          LOG_DEBUG("Reading historical pnl");
           std::ifstream f(path.c_str());
           const int LINE_LENGTH = 100;
           char str[LINE_LENGTH];
           json j2;
+          auto expect_tm = tm0;
           while (f.getline(str, LINE_LENGTH)) {
-            int tm;
             double realized, commission, unrealized;
-            auto n = sscanf(str, "%d %lf %lf %lf", &tm, &unrealized,
-                            &commission, &realized);
-            if (n < 4 || tm <= tm0) continue;
+            auto tm = atol(str);
+            if (tm < expect_tm) continue;
+            auto n = sscanf(str, "%*d %lf %lf %lf", &unrealized, &commission,
+                            &realized);
+            if (n < 3) continue;
             j2.push_back(json{tm, unrealized, commission, realized});
+            auto d = now - tm;
+            if (d > 3200 * 24)
+              d = 5 * 60;
+            else
+              d = 60;
+            expect_tm = tm + d;
           }
           self->Send(json{"Pnl", id, j2});
+          LOG_DEBUG("Done");
         });
       }
       sub_pnl_ = true;
