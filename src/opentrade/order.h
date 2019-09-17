@@ -167,6 +167,13 @@ class GlobalOrderBook : public Singleton<GlobalOrderBook> {
   void Handle(Confirmation::Ptr cm, bool offline = false);
   void LoadStore(uint32_t seq0 = 0, Connection* conn = nullptr);
   void ReadPreviousDayExecIds();
+  auto GetOrders(OrderStatus status) {
+    std::vector<Order*> out;
+    for (auto& pair : orders_) {
+      if (pair.second->status == status) out.push_back(pair.second);
+    }
+    return out;
+  }
 
  private:
   void UpdateOrder(Confirmation::Ptr cm);

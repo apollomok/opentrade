@@ -309,4 +309,10 @@ void ExchangeConnectivityAdapter::HandleOthers(Order::IdType id,
   Handle(name(), id, exec_type, exec_type, text, transaction_time);
 }
 
+void ExchangeConnectivityManager::ClearUnformed(int offset) {
+  for (auto& ord : GlobalOrderBook::Instance().GetOrders(kUnconfirmedNew)) {
+    if (ord->tm > offset) HandleConfirmation(ord, kDoneForDay);
+  }
+}
+
 }  // namespace opentrade

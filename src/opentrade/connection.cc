@@ -502,6 +502,16 @@ void Connection::HandleMessageSync(const std::string& msg,
         self->Send(json{"offline_orders", "complete"});
         self->Send(json{"offline", "complete"});
       });
+    } else if (action == "clear_unconfirmed") {
+      if (!user_->is_admin) {
+        throw std::runtime_error("admin required");
+      }
+      int offset = 3;
+      if (j.size() > 1) {
+        auto n = GetNum(j[1]);
+        if (n >= 0) offset = n;
+      }
+      ExchangeConnectivityManager::Instance().ClearUnformed(offset);
     } else if (action == "shutdown") {
       if (!user_->is_admin) {
         throw std::runtime_error("admin required");
@@ -845,6 +855,14 @@ void Connection::Send(const Confirmation& cm, bool offline) {
       if (!status) status = "new";
     case kSuspended:
       if (!status) status = "suspended";
+    case kDoneForDay:
+      if (!status) status = "done_for_day";
+    case kStopped:
+      if (!status) status = "stopped";
+    case kExpired:
+      if (!status) status = "expired";
+    case kCalculated:
+      if (!status) status = "calculated";
     case kCanceled:
       if (!status) status = "cancelled";
       j.push_back(status);

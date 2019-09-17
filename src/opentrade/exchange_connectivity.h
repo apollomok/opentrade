@@ -40,6 +40,7 @@ struct ExchangeConnectivityManager
   bool Cancel(const Order& orig_ord);
   void HandleFilled(Order* ord, double qty, double price,
                     const std::string& exec_id);
+  void ClearUnformed(int offset);
 };
 
 }  // namespace opentrade
