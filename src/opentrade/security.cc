@@ -31,49 +31,27 @@ std::string Exchange::ParseTickSizeTable(const std::string& str) {
   return {};
 }
 
-std::string Exchange::ParseTradePeriod(const std::string& str) {
+std::string Exchange::ParsePeriod(const std::string& str, int* start,
+                                  int* end) {
   if (str.empty()) {
-    trade_start = 0;
-    trade_end_ = 0;
+    if (start) *start = 0;
+    if (end) *end = 0;
     return {};
   }
   if (atoi(str.c_str()) > 10000) {  // for back-compactible, will remove
-    auto trade_period = atoi(str.c_str());
-    auto start = trade_period / 10000;
-    auto end = trade_period % 10000;
-    trade_start = (start / 100) * 3600 + (start % 100) * 60;
-    trade_end_ = ((end / 100) * 3600 + (end % 100) * 60);
+    auto period = atoi(str.c_str());
+    auto a = period / 10000;
+    auto b = period % 10000;
+    if (start) *start = (a / 100) * 3600 + (a % 100) * 60;
+    if (end) *end = ((b / 100) * 3600 + (b % 100) * 60);
     return {};
   }
   int a, b, c, d;
   if (sscanf(str.c_str(), "%d:%d-%d:%d", &a, &b, &c, &d) != 4) {
     return "Invalid trade period, expect 'HH:MM-HH:MM'";
   }
-  trade_start = a * 3600 + b * 60;
-  trade_end_ = c * 3600 + d * 60;
-  return {};
-}
-
-std::string Exchange::ParseBreakPeriod(const std::string& str) {
-  if (str.empty()) {
-    break_start = 0;
-    break_end = 0;
-    return {};
-  }
-  if (atoi(str.c_str()) > 10000) {  // for back-compactible, will remove
-    auto break_period = atoi(str.c_str());
-    auto start = break_period / 10000;
-    auto end = break_period % 10000;
-    break_start = (start / 100) * 3600 + (start % 100) * 60;
-    break_end = ((end / 100) * 3600 + (end % 100) * 60);
-    return {};
-  }
-  int a, b, c, d;
-  if (sscanf(str.c_str(), "%d:%d-%d:%d", &a, &b, &c, &d) != 4) {
-    return "Invalid break period, expect 'HH:MM-HH:MM'";
-  }
-  break_start = a * 3600 + b * 60;
-  break_end = c * 3600 + d * 60;
+  if (start) *start = a * 3600 + b * 60;
+  if (end) *end = c * 3600 + d * 60;
   return {};
 }
 

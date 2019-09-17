@@ -75,8 +75,14 @@ struct Exchange : public ParamsBase {
 
   std::string ParseTickSizeTable(const std::string& str);
   std::string ParseHalfDays(const std::string& str);
-  std::string ParseTradePeriod(const std::string& str);
-  std::string ParseBreakPeriod(const std::string& str);
+  std::string ParsePeriod(const std::string& str, int* start = nullptr,
+                          int* end = nullptr);
+  std::string ParseTradePeriod(const std::string& str) {
+    return ParsePeriod(str, &trade_start, &trade_end_);
+  }
+  std::string ParseBreakPeriod(const std::string& str) {
+    return ParsePeriod(str, &break_start, &break_end);
+  }
   std::string ParseHalfDay(const std::string& str);
   std::string GetTickSizeTableString() const;
   std::string GetHalfDaysString() const;

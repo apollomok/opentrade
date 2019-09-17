@@ -864,7 +864,7 @@ void Connection::Send(const Confirmation& cm, bool offline) {
     case kCalculated:
       if (!status) status = "calculated";
     case kCanceled:
-      if (!status) status = "canceled";
+      if (!status) status = "cancelled";
       j.push_back(status);
       if (cm.exec_type == kNew) {
         j.push_back(cm.order_id);
