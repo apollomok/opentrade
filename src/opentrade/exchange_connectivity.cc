@@ -231,6 +231,7 @@ bool ExchangeConnectivityManager::Cancel(const Order& orig_ord) {
   auto cancel_order = new Order(orig_ord);
   cancel_order->orig_id = orig_ord.id;
   cancel_order->id = 0;
+  cancel_order->status = kOrderStatusUnknown;
   return opentrade::Cancel(cancel_order);
 }
 

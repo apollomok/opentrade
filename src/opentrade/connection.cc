@@ -27,6 +27,7 @@ static time_t kStartTime = GetTime();
 static thread_local boost::uuids::random_generator kUuidGen;
 static tbb::concurrent_unordered_map<std::string, const User*> kTokens;
 static TaskPool kTaskPool;
+static bool kStopListen = false;
 
 std::string sha1(const std::string& str) {
   boost::uuids::detail::sha1 s;
@@ -394,6 +395,7 @@ auto GetSecSrc(const json& j) {
 
 void Connection::OnMessageSync(const std::string& msg,
                                const std::string& token) {
+  if (kStopListen) return;
   sent_ = false;
   HandleMessageSync(msg, token);
   if (!sent_ && transport_->stateless) Send(json{"ok"});
@@ -514,17 +516,16 @@ void Connection::HandleMessageSync(const std::string& msg,
         auto n = GetNum(j[2]);
         if (n > interval && n < seconds) interval = n;
       }
-      Send(json{"shutdown",
-                "will shutdown in " + std::to_string(seconds) + " seconds"});
-      kTaskPool.AddTask([seconds, interval]() {
-        usleep(1e5);  // a little time to send response
-        Server::Stop();
-        AlgoManager::Instance().Stop();
+      kStopListen = true;
+      sent_ = true;
+      auto self = shared_from_this();
+      kTaskPool.AddTask([self, seconds, interval]() {
         LOG_INFO("Shutting down");
         auto left = seconds;
         while (left) {
           LOG_INFO("Remaining " << left << " seconds to exit");
           left -= interval;
+          AlgoManager::Instance().Stop();
           std::this_thread::sleep_for(
               std::chrono::milliseconds(static_cast<int>(interval * 1000)));
           GlobalOrderBook::Instance().Cancel();
@@ -535,9 +536,15 @@ void Connection::HandleMessageSync(const std::string& msg,
           it.second->Stop();
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        kDatabaseTaskPool.Stop();
-        kWriteTaskPool.Stop();
-        if (system(("kill -9 " + std::to_string(getpid())).c_str())) return;
+        kDatabaseTaskPool.Stop(true);
+        kWriteTaskPool.Stop(true);
+        self->Send(json{"shutdown", "done"});
+        // let self destructed and flush message out
+        kTaskPool.AddTask([]() {
+          // a little time to send response
+          usleep(1e5);
+          if (system(("kill -9 " + std::to_string(getpid())).c_str())) return;
+        });
       });
     } else if (action == "cancel") {
       auto id = Get<int64_t>(j[1]);
