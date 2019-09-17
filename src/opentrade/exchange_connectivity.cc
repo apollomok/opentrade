@@ -172,6 +172,7 @@ bool ExchangeConnectivityManager::Place(Order* ord) {
         return false;
       }
     }
+    if (ord->type == kMarket) ord->tif = kImmediateOrCancel;
   } else if (ord->price <= 0) {
     kRiskError = "Price can not be empty for limit order";
     HandleConfirmation(ord, kRiskRejected, kRiskError);
