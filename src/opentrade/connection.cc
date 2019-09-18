@@ -636,9 +636,7 @@ void Connection::HandleMessageSync(const std::string& msg,
           s.second += 1;
         }
       }
-      if (jout.size() > 1) {
-        Send(jout);
-      }
+      if (jout.size() > 1) Send(jout);
     } else if (action == "unsub") {
       for (auto i = 1u; i < j.size(); ++i) {
         auto it = subs_.find(GetSecSrc(j[i]));
@@ -1204,69 +1202,71 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   Send(json{"order", "done"});
 }
 
+void Connection::HandleOneSecurity(const Security& s, json& out) {
+  if (user_->is_admin) {
+    json j = {
+        "security",
+        s.id,
+        s.symbol,
+        s.exchange->name,
+        s.type,
+        s.lot_size,
+        s.multiplier,
+        s.rate,
+        s.close_price,
+        s.currency,
+        s.local_symbol,
+        s.adv20,
+        s.market_cap,
+        std::to_string(s.sector),
+        std::to_string(s.industry_group),
+        std::to_string(s.industry),
+        std::to_string(s.sub_industry),
+        s.bbgid,
+        s.cusip,
+        s.sedol,
+        s.isin,
+    };
+    if (transport_->stateless) {
+      out.push_back(j);
+    } else {
+      Send(j);
+    }
+  } else {
+    json j = {
+        "security", s.id,       s.symbol,     s.exchange->name,
+        s.type,     s.lot_size, s.multiplier, s.rate,
+    };
+    if (transport_->stateless) {
+      out.push_back(j);
+    } else {
+      Send(j);
+    }
+  }
+}
+
 void Connection::OnSecurities(const json& j) {
   LOG_DEBUG(GetAddress() << ": Securities requested");
   const Exchange* exch = nullptr;
-  if (j.size() > 1)
+  if (j.size() > 1) {
     exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));
-  std::unordered_set<std::string_view> symbols;
-  std::vector<std::string> symbols_c;  // to retain memory for std::string_view
-  if (j.size() > 2) {
-    auto n = j[2].size();
-    symbols_c.resize(n);
-    for (auto k = 0u; k < n; ++k) {
-      symbols_c[k] = Get<std::string>(j[2][k]);
-      symbols.insert(std::string_view(symbols_c[k]));
-    }
+    if (!exch)
+      throw std::runtime_error("unknown exchange " + Get<std::string>(j[1]));
   }
-  auto& secs = SecurityManager::Instance().securities();
   json out = {"securities"};
-  for (auto& pair : secs) {
-    auto s = pair.second;
-    if (exch && (s->exchange != exch)) continue;
-    if (!symbols.empty() &&
-        symbols.find(std::string_view(s->symbol)) == symbols.end())
-      continue;
-    if (user_->is_admin) {
-      json j = {
-          "security",
-          s->id,
-          s->symbol,
-          s->exchange->name,
-          s->type,
-          s->lot_size,
-          s->multiplier,
-          s->rate,
-          s->close_price,
-          s->currency,
-          s->local_symbol,
-          s->adv20,
-          s->market_cap,
-          std::to_string(s->sector),
-          std::to_string(s->industry_group),
-          std::to_string(s->industry),
-          std::to_string(s->sub_industry),
-          s->bbgid,
-          s->cusip,
-          s->sedol,
-          s->isin,
-      };
-      if (transport_->stateless) {
-        out.push_back(j);
-      } else {
-        Send(j);
-      }
-    } else {
-      json j = {
-          "security", s->id,       s->symbol,     s->exchange->name,
-          s->type,    s->lot_size, s->multiplier, s->rate,
-      };
-      if (transport_->stateless) {
-        out.push_back(j);
-      } else {
-        Send(j);
-      }
+  if (j.size() > 2) {
+    for (auto k = 2u; k < j.size(); ++k) {
+      auto sec = exch->Get(Get<std::string>(j[k]));
+      if (!sec)
+        throw std::runtime_error("unknown security " + Get<std::string>(j[k]));
+      HandleOneSecurity(*sec, out);
     }
+  } else if (j.size() == 2) {
+    for (auto& pair : exch->security_of_name)
+      HandleOneSecurity(*pair.second, out);
+  } else {
+    auto& secs = SecurityManager::Instance().securities();
+    for (auto& pair : secs) HandleOneSecurity(*pair.second, out);
   }
   if (transport_->stateless) {
     Send(out);

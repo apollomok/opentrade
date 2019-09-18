@@ -58,6 +58,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
 
  protected:
   void HandleMessageSync(const std::string&, const std::string& token);
+  void HandleOneSecurity(const Security& s, json& out);
   void PublishMarketdata();
   void PublishMarketStatus();
   void Send(const std::string& msg) {
