@@ -27,7 +27,7 @@ static std::unordered_map<WsConnPtr, Connection::Ptr> kSocketMap;
 static std::mutex kMutex;
 static auto kIoService = std::make_shared<boost::asio::io_service>();
 
-void close(WsConnPtr connection) {
+void Close(WsConnPtr connection) {
   LockGuard lock(kMutex);
   auto it = kSocketMap.find(connection);
   if (it == kSocketMap.end()) return;
@@ -91,6 +91,18 @@ void Server::Publish(const std::string& msg, const SubAccount* acc) {
     LockGuard lock(kMutex);
     for (auto& pair : kSocketMap) {
       pair.second->Send(msg, acc);
+    }
+  });
+}
+
+void Server::CloseConnection(User::IdType id) {
+  kIoService->post([id]() {
+    LockGuard lock(kMutex);
+    for (auto& pair : kSocketMap) {
+      auto user = pair.second->user();
+      if (user && user->id == id) {
+        pair.first->send_close(1011);
+      }
     }
   });
 }
@@ -229,14 +241,14 @@ void Server::Start(int port, int nthreads) {
     LOG_DEBUG("Websocket Server: Closed connection "
               << connection->remote_endpoint_address() << " with status code "
               << status);
-    close(connection);
+    Close(connection);
   };
 
   endpoint.on_error = [](WsConnPtr connection, const SimpleWeb::error_code& e) {
     LOG_DEBUG("Websocket Server: Error in connection "
               << connection->remote_endpoint_address() << ". "
               << "Error: " << e << ", error message: " << e.message());
-    close(connection);
+    Close(connection);
   };
 
   // to make nginx work

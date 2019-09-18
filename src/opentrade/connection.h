@@ -55,6 +55,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   void Close() { closed_ = true; }
   void SendTestMsg(const std::string& token, const std::string& msg,
                    bool stopped);
+  auto user() const { return user_; }
 
  protected:
   void HandleMessageSync(const std::string&, const std::string& token);

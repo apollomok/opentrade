@@ -508,10 +508,17 @@ void Connection::HandleMessageSync(const std::string& msg,
         self->Send(json{"offline_orders", "complete"});
         self->Send(json{"offline", "complete"});
       });
+    } else if (action == "close_connection") {
+      if (!user_->is_admin) throw std::runtime_error("admin required");
+      const User* user;
+      if (j[1].is_number_integer())
+        user = AccountManager::Instance().GetUser(GetNum(j[1]));
+      else
+        user = AccountManager::Instance().GetUser(Get<std::string>(j[1]));
+      if (!user) throw std::runtime_error("unknown user");
+      Server::CloseConnection(user->id);
     } else if (action == "clear_unconfirmed") {
-      if (!user_->is_admin) {
-        throw std::runtime_error("admin required");
-      }
+      if (!user_->is_admin) throw std::runtime_error("admin required");
       int offset = 3;
       if (j.size() > 1) {
         auto n = GetNum(j[1]);
@@ -519,12 +526,11 @@ void Connection::HandleMessageSync(const std::string& msg,
       }
       ExchangeConnectivityManager::Instance().ClearUnformed(offset);
     } else if (action == "stop_listen") {
+      if (!user_->is_admin) throw std::runtime_error("admin required");
       if (j.size() > 1) kStopListen = Get<bool>(j[1]);
       Send(json{"stop_listen", kStopListen});
     } else if (action == "shutdown") {
-      if (!user_->is_admin) {
-        throw std::runtime_error("admin required");
-      }
+      if (!user_->is_admin) throw std::runtime_error("admin required");
       int seconds = 3;
       double interval = 1;
       if (j.size() > 1) {
@@ -945,12 +951,9 @@ void Connection::Send(const Confirmation& cm, bool offline) {
 
 static inline auto ValidateAcc(const User* user, const std::string& acc_name) {
   auto acc = AccountManager::Instance().GetSubAccount(acc_name);
-  if (!acc) {
-    throw std::runtime_error("invalid account name");
-  }
-  if (!user->is_admin && !user->GetSubAccount(acc->id)) {
+  if (!acc) throw std::runtime_error("invalid account name");
+  if (!user->is_admin && !user->GetSubAccount(acc->id))
     throw std::runtime_error("no permission");
-  }
   return acc;
 }
 
@@ -1324,10 +1327,15 @@ void Connection::OnLogin(const std::string& action, const json& j) {
   }
   auto token = boost::uuids::to_string(kUuidGen());
   kTokens[token] = user;
+  auto session = PositionManager::Instance().session();
+  if (!user->is_admin) {
+    auto accs = user->sub_accounts();
+    for (auto& pair : *accs) session += "-" + std::to_string(pair.first);
+  }
   json out = {
       "connection",
       state,
-      {{"session", PositionManager::Instance().session()},
+      {{"session", session},
        {"userId", user->id},
        {"startTime", kStartTime},
        {"sessionToken", token},
@@ -1416,9 +1424,8 @@ void Connection::SendTestMsg(const std::string& token, const std::string& msg,
 void Connection::OnAdmin(const json& j) {
   auto name = Get<std::string>(j[1]);
   auto action = Get<std::string>(j[2]);
-  if (!user_->is_admin && !(name == "sub accounts" && action == "disable")) {
+  if (!user_->is_admin && !(name == "sub accounts" && action == "disable"))
     throw std::runtime_error("admin required");
-  }
   if (!strcasecmp(name.c_str(), "users")) {
     OnAdminUsers(j, name, action);
   } else if (!strcasecmp(name.c_str(), "broker accounts")) {
@@ -1496,6 +1503,7 @@ void Connection::OnAdmin(const json& j) {
       Send(json{"admin", name, action, e.what()});
       return;
     }
+    if (!user->is_admin) Server::CloseConnection(user->id);
     auto accs = user->sub_accounts();
     if (action == "add") {
       auto tmp = boost::make_shared<User::SubAccountMap>(*accs);
