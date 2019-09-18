@@ -1202,7 +1202,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   Send(json{"order", "done"});
 }
 
-void Connection::HandleOneSecurity(const Security& s, json& out) {
+void Connection::HandleOneSecurity(const Security& s, json* out) {
   if (user_->is_admin) {
     json j = {
         "security",
@@ -1227,21 +1227,19 @@ void Connection::HandleOneSecurity(const Security& s, json& out) {
         s.sedol,
         s.isin,
     };
-    if (transport_->stateless) {
-      out.push_back(j);
-    } else {
+    if (transport_->stateless)
+      out->push_back(j);
+    else
       Send(j);
-    }
   } else {
     json j = {
         "security", s.id,       s.symbol,     s.exchange->name,
         s.type,     s.lot_size, s.multiplier, s.rate,
     };
-    if (transport_->stateless) {
-      out.push_back(j);
-    } else {
+    if (transport_->stateless)
+      out->push_back(j);
+    else
       Send(j);
-    }
   }
 }
 
@@ -1259,14 +1257,14 @@ void Connection::OnSecurities(const json& j) {
       auto sec = exch->Get(Get<std::string>(j[k]));
       if (!sec)
         throw std::runtime_error("unknown security " + Get<std::string>(j[k]));
-      HandleOneSecurity(*sec, out);
+      HandleOneSecurity(*sec, &out);
     }
   } else if (j.size() == 2) {
     for (auto& pair : exch->security_of_name)
-      HandleOneSecurity(*pair.second, out);
+      HandleOneSecurity(*pair.second, &out);
   } else {
     auto& secs = SecurityManager::Instance().securities();
-    for (auto& pair : secs) HandleOneSecurity(*pair.second, out);
+    for (auto& pair : secs) HandleOneSecurity(*pair.second, &out);
   }
   if (transport_->stateless) {
     Send(out);
