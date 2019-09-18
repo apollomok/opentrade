@@ -393,9 +393,12 @@ auto GetSecSrc(const json& j) {
   return std::make_pair(id, src);
 }
 
+static inline void CheckStopListen() {
+  if (kStopListen) throw std::runtime_error("listen stopped");
+}
+
 void Connection::OnMessageSync(const std::string& msg,
                                const std::string& token) {
-  if (kStopListen) return;
   sent_ = false;
   HandleMessageSync(msg, token);
   if (!sent_ && transport_->stateless) Send(json{"ok"});
@@ -512,6 +515,9 @@ void Connection::HandleMessageSync(const std::string& msg,
         if (n >= 0) offset = n;
       }
       ExchangeConnectivityManager::Instance().ClearUnformed(offset);
+    } else if (action == "stop_listen") {
+      if (j.size() > 1) kStopListen = Get<bool>(j[1]);
+      Send(json{"stop_listen", kStopListen});
     } else if (action == "shutdown") {
       if (!user_->is_admin) {
         throw std::runtime_error("admin required");
@@ -567,8 +573,10 @@ void Connection::HandleMessageSync(const std::string& msg,
       }
       ExchangeConnectivityManager::Instance().Cancel(*ord);
     } else if (action == "order") {
+      CheckStopListen();
       OnOrder(j, msg);
     } else if (action == "algo") {
+      CheckStopListen();
       OnAlgo(j, msg);
     } else if (action == "pnl") {
       auto tm0 = GetTime() - 7 * 24 * 3600;
