@@ -600,7 +600,7 @@ void Connection::HandleMessageSync(const std::string& msg,
         auto path = kStorePath / ("pnl-" + std::to_string(id));
         auto self = shared_from_this();
         kTaskPool.AddTask([self, tm0, id, path]() {
-          auto now = time(NULL);
+          auto now = GetTime();
           LOG_DEBUG("Reading historical pnl");
           std::ifstream f(path.c_str());
           const int LINE_LENGTH = 100;
