@@ -52,6 +52,7 @@ void SimServer::HandleTick(Security::IdType sec, char type, double px,
       resp.setField(FIX::LastPx(tuple.px));
       auto eid = boost::uuids::to_string(kUuidGen());
       resp.setField(FIX::ExecID(eid));
+      resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
       session_->send(resp);
       if (tuple.leaves <= 0)
         it = actives.erase(it);
@@ -68,7 +69,6 @@ void SimServer::fromApp(const FIX::Message& msg,
         const std::string& msgType =
             msg.getHeader().getField(FIX::FIELD::MsgType);
         auto resp = msg;
-        resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
         if (msgType == "D") {  // new order
           resp.getHeader().setField(FIX::MsgType("8"));
           auto symbol = msg.getField(FIX::FIELD::Symbol);
@@ -79,6 +79,7 @@ void SimServer::fromApp(const FIX::Message& msg,
             resp.setField(FIX::ExecType(FIX::ExecType_REJECTED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_REJECTED));
             resp.setField(FIX::Text("unknown security"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -86,6 +87,7 @@ void SimServer::fromApp(const FIX::Message& msg,
             resp.setField(FIX::ExecType(FIX::ExecType_REJECTED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_REJECTED));
             resp.setField(FIX::Text("Not in trading period"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -94,6 +96,7 @@ void SimServer::fromApp(const FIX::Message& msg,
             resp.setField(FIX::ExecType(FIX::ExecType_REJECTED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_REJECTED));
             resp.setField(FIX::Text("invalid OrderQty"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -106,17 +109,20 @@ void SimServer::fromApp(const FIX::Message& msg,
             resp.setField(FIX::ExecType(FIX::ExecType_REJECTED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_REJECTED));
             resp.setField(FIX::Text("invalid price"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
           resp.setField(FIX::ExecType(FIX::ExecType_PENDING_NEW));
           resp.setField(FIX::OrdStatus(FIX::ExecType_PENDING_NEW));
+          resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
           session_->send(resp);
           auto clordid = msg.getField(FIX::FIELD::ClOrdID);
           if (used_ids_.find(clordid) != used_ids_.end()) {
             resp.setField(FIX::ExecType(FIX::ExecType_REJECTED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_REJECTED));
             resp.setField(FIX::Text("duplicate ClOrdID"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -124,6 +130,7 @@ void SimServer::fromApp(const FIX::Message& msg,
           resp.setField(FIX::FIELD::OrderID, "SIM-" + clordid);
           resp.setField(FIX::ExecType(FIX::ExecType_NEW));
           resp.setField(FIX::OrdStatus(FIX::ExecType_NEW));
+          resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
           session_->send(resp);
           FIX::Side side;
           msg.getField(side);
@@ -146,12 +153,14 @@ void SimServer::fromApp(const FIX::Message& msg,
               resp.setField(FIX::LastPx(px_q));
               auto eid = boost::uuids::to_string(kUuidGen());
               resp.setField(FIX::ExecID(eid));
+              resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
               session_->send(resp);
               if (qty_q >= qty) return;
             }
             resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
             resp.setField(FIX::Text("no quote"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -174,6 +183,7 @@ void SimServer::fromApp(const FIX::Message& msg,
               resp.setField(FIX::LastPx(px_q));
               auto eid = boost::uuids::to_string(kUuidGen());
               resp.setField(FIX::ExecID(eid));
+              resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
               session_->send(resp);
               ord.leaves -= qty_q;
               assert(ord.leaves >= 0);
@@ -186,6 +196,7 @@ void SimServer::fromApp(const FIX::Message& msg,
             resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
             resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
             resp.setField(FIX::Text("no quote"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -200,6 +211,7 @@ void SimServer::fromApp(const FIX::Message& msg,
               opentrade::SecurityManager::Instance().Get(exchange, symbol);
           if (!sec) {
             resp.setField(FIX::Text("unknown security"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -207,6 +219,7 @@ void SimServer::fromApp(const FIX::Message& msg,
           auto clordid = msg.getField(FIX::FIELD::ClOrdID);
           if (used_ids_.find(clordid) != used_ids_.end()) {
             resp.setField(FIX::Text("duplicate ClOrdID"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
@@ -215,14 +228,15 @@ void SimServer::fromApp(const FIX::Message& msg,
           auto it = actives.find(orig);
           if (it == actives.end()) {
             resp.setField(FIX::Text("inactive"));
+            resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
             session_->send(resp);
             return;
           }
           resp = msg;
           resp.getHeader().setField(FIX::MsgType("8"));
-          resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
           resp.setField(FIX::ExecType(FIX::ExecType_CANCELLED));
           resp.setField(FIX::OrdStatus(FIX::ExecType_CANCELLED));
+          resp.setField(FIX::TransactTime(FIX::UTCTIMESTAMP()));
           session_->send(resp);
           actives.erase(it);
         }
