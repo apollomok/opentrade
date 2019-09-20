@@ -561,6 +561,7 @@ void Connection::HandleMessageSync(const std::string& msg,
           it.second->Stop();
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
+        kTimerTaskPool.Stop(false);
         kDatabaseTaskPool.Stop(true);
         kWriteTaskPool.Stop(true);
         self->Send(json{"shutdown", "done"});
