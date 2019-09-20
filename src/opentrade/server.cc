@@ -288,7 +288,7 @@ void Server::Start(int port, int nthreads) {
     kHttpServer.start();
     LOG_INFO("http://0.0.0.0:" << port);
     LOG_INFO("ws://0.0.0.0:" << port << "/ot/");
-    LOG_INFO("htpp://0.0.0.0:" << port << "/api/");
+    LOG_INFO("http://0.0.0.0:" << port << "/api/");
     std::vector<std::thread> threads;
     for (auto i = 0; i < nthreads; ++i) {
       threads.emplace_back([]() { kIoService->run(); });
