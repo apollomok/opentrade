@@ -527,7 +527,10 @@ void Connection::HandleMessageSync(const std::string& msg,
       ExchangeConnectivityManager::Instance().ClearUnformed(offset);
     } else if (action == "stop_listen") {
       if (!user_->is_admin) throw std::runtime_error("admin required");
-      if (j.size() > 1) kStopListen = Get<bool>(j[1]);
+      if (j.size() > 1) {
+        kStopListen = Get<bool>(j[1]);
+        LOG_DEBUG("stop_listen=" << kStopListen);
+      }
       Send(json{"stop_listen", kStopListen});
     } else if (action == "shutdown") {
       if (!user_->is_admin) throw std::runtime_error("admin required");
