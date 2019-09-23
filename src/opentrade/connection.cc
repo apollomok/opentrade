@@ -277,7 +277,7 @@ void Connection::PublishMarketdata() {
     json j = {"md"};
     for (auto& pair : self->subs_) {
       auto sec_src = pair.first;
-      auto& md =
+      auto md =
           MarketDataManager::Instance().GetLite(sec_src.first, sec_src.second);
       GetMarketData(md, pair.second.first, sec_src, &j);
       pair.second.first = md;
@@ -292,7 +292,7 @@ void Connection::PublishMarketdata() {
         continue;
       auto sec_id = pair.first.second;
       auto& pnl0 = self->single_pnls_[pair.first];
-      auto& pos = pair.second;
+      auto pos = pair.second;
       auto c_changed = pos.commission != pnl0.commission;
       auto r_changed = pos.realized_pnl != pnl0.realized;
       if (pos.unrealized_pnl != pnl0.unrealized || c_changed || r_changed) {
@@ -314,8 +314,8 @@ void Connection::PublishMarketdata() {
       auto id = pair.first;
       if (!self->user_->is_admin && !self->user_->GetSubAccount(id)) continue;
       auto& pnl0 = self->pnls_[id];
-      auto& pnl = pair.second;
-      if (pnl.unrealized != pnl0.unrealized) {
+      auto pnl = pair.second;
+      if (pnl.unrealized != pnl0.unrealized || pnl.realized != pnl0.realized) {
         self->Send(json{"Pnl", id, GetTime(), pnl.unrealized, pnl.commission,
                         pnl.realized});
         pnl0 = pnl;
@@ -441,7 +441,7 @@ void Connection::HandleMessageSync(const std::string& msg,
         auto acc = pair.first.first;
         if (!user_->is_admin && !user_->GetSubAccount(acc)) continue;
         auto sec_id = pair.first.second;
-        auto& pos = pair.second;
+        auto pos = pair.second;
         json j = {
             "bod",
             acc,
@@ -640,7 +640,7 @@ void Connection::HandleMessageSync(const std::string& msg,
         auto& s = subs_[sec_src];
         auto sec = SecurityManager::Instance().Get(sec_src.first);
         if (sec) {
-          auto& md = MarketDataManager::Instance().Get(*sec, sec_src.second);
+          auto md = MarketDataManager::Instance().Get(*sec, sec_src.second);
           GetMarketData(md, s.first, sec_src, &jout);
           s.first = md;
           s.second += 1;
@@ -1817,9 +1817,13 @@ void Connection::OnAdminUsers(const json& j, const std::string& name,
           }
           return false;
         },
-        [](const std::string& key, const json& v, User* acc) -> bool {
+        [id](const std::string& key, const json& v, User* acc) -> bool {
           if (key == "is_admin") {
             acc->is_admin = v.is_null() ? false : Get<bool>(v);
+            return true;
+          } else if (key == "is_disabled") {
+            acc->is_disabled = v.is_null() ? false : Get<bool>(v);
+            if (acc->is_disabled) Server::CloseConnection(id);
             return true;
           } else if (key == "password") {
             acc->password = StrDup(sha1(Get<std::string>(v)));

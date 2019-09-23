@@ -426,17 +426,22 @@ void PositionManager::UpdatePnl() {
   auto tm = GetTime();
   for (auto& pair : pnls) {
     auto& pnl0 = pnls_[pair.first];
+    auto& of = pnl0.of;
     auto& pnl = pair.second;
-    if (std::abs(pnl.unrealized - pnl0.unrealized) < 1) continue;
-    if (n % 15 == 0) {
-      if (!pnl0.of) {
-        auto path = kStorePath / ("pnl-" + std::to_string(pair.first));
-        pnl0.of = new std::ofstream(path.c_str(), std::ofstream::app);
-      }
-      *pnl0.of << tm << ' ' << pnl.unrealized << ' ' << pnl.commission << ' '
-               << pnl.realized << std::endl;
-    }
     static_cast<Pnl&>(pnl0) = pnl;
+    if (n % 15 == 0) {
+      static tbb::concurrent_unordered_map<SubAccount::IdType, Pnl> kPnls0;
+      auto& pnl0 = kPnls0[pair.first];
+      if (pnl0.unrealized != pnl.unrealized || pnl0.realized != pnl.realized) {
+        if (!of) {
+          auto path = kStorePath / ("pnl-" + std::to_string(pair.first));
+          of = new std::ofstream(path.c_str(), std::ofstream::app);
+        }
+        *of << tm << ' ' << pnl.unrealized << ' ' << pnl.commission << ' '
+            << pnl.realized << std::endl;
+        pnl0 = pnl;
+      }
+    }
   }
   ++n;
 
