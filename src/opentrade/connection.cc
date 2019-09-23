@@ -930,7 +930,7 @@ void Connection::Send(const Confirmation& cm, bool offline) {
       if (!status) status = "risk_rejected";
       j.push_back(status);
       j.push_back(cm.text);
-      if (cm.exec_type == kRiskRejected) {
+      if (cm.exec_type == kRiskRejected && !cm.order->id) {
         j.push_back(cm.order->sec->id);
         j.push_back(cm.order->algo_id);
         j.push_back(cm.order->user->id);
