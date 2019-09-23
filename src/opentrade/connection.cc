@@ -568,6 +568,7 @@ void Connection::HandleMessageSync(const std::string& msg,
         kDatabaseTaskPool.Stop(true);
         kWriteTaskPool.Stop(true);
         self->Send(json{"shutdown", "done"});
+        Server::CloseConnection(0);
         // let self destructed and flush message out
         kTaskPool.AddTask([]() {
           // a little time to send response

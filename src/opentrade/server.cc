@@ -100,7 +100,7 @@ void Server::CloseConnection(User::IdType id) {
     LockGuard lock(kMutex);
     for (auto& pair : kSocketMap) {
       auto user = pair.second->user();
-      if (user && user->id == id) {
+      if (!id || (user && user->id == id)) {
         pair.first->send_close(1011);
       }
     }
