@@ -32,6 +32,7 @@ struct AccountBase {
   void set_disabled_reason(boost::shared_ptr<const std::string> v = {}) {
     disabled_reason_.store(v, boost::memory_order_release);
   }
+  bool CheckDisabled(const char* name, std::string* err) const;
 
  private:
   // different from is_disabled which is persistent in database,

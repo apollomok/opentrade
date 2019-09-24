@@ -115,20 +115,35 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
   algo->is_active_ = true;  // for permanent in backtest
   algos_.emplace(algo->id_, algo);
   if (!token.empty()) algo_of_token_.emplace(token, algo);
+  std::string disabled;
+  user.CheckDisabled("user", &disabled);
   if (params) {
     for (auto& pair : *params) {
       if (auto pval = std::get_if<SecurityTuple>(&pair.second)) {
-        if (pval->acc && pval->sec) {
-          algos_of_sec_acc_.insert(std::make_pair(
-              std::make_pair(pval->sec->id, pval->acc->id), algo));
+        if (pval->acc) {
+          if (disabled.empty())
+            pval->acc->CheckDisabled("sub_account", &disabled);
+          if (pval->sec) {
+            if (disabled.empty()) {
+              auto broker =
+                  pval->acc->GetBrokerAccount(pval->sec->exchange->id);
+              if (broker) broker->CheckDisabled("broker_account", &disabled);
+            }
+            algos_of_sec_acc_.insert(std::make_pair(
+                std::make_pair(pval->sec->id, pval->acc->id), algo));
+          }
         }
       }
     }
   }
   if (dynamic_cast<IndicatorHandler*>(algo)) return algo;
   Persist(*algo, "new", params ? params_raw : "{\"test\":true}");
-  algo->Async([params, algo]() {
-    kError = params ? algo->OnStart(*params.get()) : algo->Test();
+  algo->Async([params, algo, disabled]() {
+    if (!disabled.empty()) {
+      kError = disabled;
+    } else {
+      kError = params ? algo->OnStart(*params.get()) : algo->Test();
+    }
     if (!kError.empty()) {
       algo->Stop();
 #ifdef BACKTEST
