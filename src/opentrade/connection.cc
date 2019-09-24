@@ -1134,7 +1134,6 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
           params) {
         throw std::runtime_error("unknown algo name: " + algo_name);
       }
-      Send(json{"algo", "done"});
     } catch (const std::exception& err) {
       LOG_DEBUG(GetAddress() << ": " << err.what() << '\n' << msg);
       Send(json{"error", "algo", "invalid params", err.what()});
