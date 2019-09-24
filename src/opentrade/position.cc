@@ -378,22 +378,32 @@ template <typename T1, typename T2>
 void UpdateBalance(T1* positions, T2* accs) {
   std::unordered_map<int64_t, std::pair<double, double>> balances;
   auto& sm = SecurityManager::Instance();
+  std::unordered_map<Security::IdType,
+                     std::vector<std::pair<uint64_t, Position*>>>
+      group;
   for (auto& pair : *positions) {
-    auto acc = pair.first.first;
-    auto sec_id = pair.first.second;
-    auto& pos = pair.second;
-    if (!pos.qty && !pos.unrealized_pnl) continue;
+    group[pair.first.second].push_back(
+        std::make_pair(pair.first.first, &pair.second));
+  }
+  for (auto& pair : group) {
+    auto sec_id = pair.first;
     auto sec = sm.Get(sec_id);
     if (!sec) continue;
     auto price = sec->CurrentPrice();
     if (!price) continue;
-    auto m = sec->rate * sec->multiplier;
-    pos.unrealized_pnl = pos.qty * (price - pos.avg_px) * m;
-    auto qty = pos.qty + pos.total_outstanding_buy - pos.total_outstanding_sell;
-    if (qty > 0)
-      balances[acc].first += qty * price * m;
-    else
-      balances[acc].second -= qty * price * m;
+    for (auto& acc_pos : pair.second) {
+      auto acc = acc_pos.first;
+      auto& pos = *acc_pos.second;
+      if (!pos.qty && !pos.unrealized_pnl) continue;
+      auto m = sec->rate * sec->multiplier;
+      pos.unrealized_pnl = pos.qty * (price - pos.avg_px) * m;
+      auto qty =
+          pos.qty + pos.total_outstanding_buy - pos.total_outstanding_sell;
+      if (qty > 0)
+        balances[acc].first += qty * price * m;
+      else
+        balances[acc].second -= qty * price * m;
+    }
   }
   for (auto& pair : *accs) {
     auto x = balances[pair.first];
