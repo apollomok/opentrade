@@ -1008,19 +1008,24 @@ void Connection::OnTrades(const json& j) {
     json out = {"trades"};
     auto sql = Database::Session();
     LOG_DEBUG("Reading trades");
-    soci::rowset<soci::row> st = sql->prepare << query;
-    for (auto it = st.begin(); it != st.end(); ++it) {
-      auto i = 0;
-      auto id = Database::GetValue(*it, i++, 0);
-      auto sec_id = Database::GetValue(*it, i++, 0);
-      auto qty = Database::GetValue(*it, i++, 0.);
-      auto avg_px = Database::GetValue(*it, i++, 0.);
-      auto realized_pnl = Database::GetValue(*it, i++, 0.);
-      auto commission = Database::GetValue(*it, i++, 0.);
-      auto tm = Database::GetTm(*it, i++);
-      auto info = Database::GetValue(*it, i++, kEmptyStr);
-      out.push_back(
-          json{id, sec_id, tm, qty, avg_px, realized_pnl, commission, info});
+    try {
+      soci::rowset<soci::row> st = sql->prepare << query;
+      for (auto it = st.begin(); it != st.end(); ++it) {
+        auto i = 0;
+        auto id = Database::GetValue(*it, i++, 0ll);
+        auto sec_id = Database::GetValue(*it, i++, 0);
+        auto qty = Database::GetValue(*it, i++, 0.);
+        auto avg_px = Database::GetValue(*it, i++, 0.);
+        auto realized_pnl = Database::GetValue(*it, i++, 0.);
+        auto commission = Database::GetValue(*it, i++, 0.);
+        auto tm = Database::GetTm(*it, i++);
+        auto info = Database::GetValue(*it, i++, kEmptyStr);
+        out.push_back(
+            json{id, sec_id, tm, qty, avg_px, realized_pnl, commission, info});
+      }
+    } catch (const std::exception& e) {
+      self->Send(json{"error", "trades", e.what()});
+      return;
     }
     self->Send(out);
     LOG_DEBUG("Done");
