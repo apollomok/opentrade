@@ -477,6 +477,18 @@ void Connection::HandleMessageSync(const std::string& msg,
       OnAdmin(j);
     } else if (action == "position") {
       OnPosition(j);
+    } else if (action == "positions") {
+      OnPositions(j);
+    } else if (action == "sub_accounts") {
+      json out = json{action};
+      if (user_->is_admin) {
+        for (auto& pair : AccountManager::Instance().sub_accounts_)
+          out.push_back(pair.second->name);
+      } else {
+        for (auto& pair : *user_->sub_accounts())
+          out.push_back(pair.second->name);
+      }
+      Send(out);
     } else if (action == "trades") {
       OnTrades(j);
     } else if (action == "target") {
@@ -964,43 +976,75 @@ static inline auto ValidateAcc(const User* user, const std::string& acc_name) {
 
 void Connection::OnTrades(const json& j) {
   auto self = shared_from_this();
-  auto sec = GetSecurity(j[1]);
-  auto acc = ValidateAcc(user_, Get<std::string>(j[2]));
+  auto acc = ValidateAcc(user_, Get<std::string>(j[1]));
+  const Security* sec = nullptr;
+  if (!j[2].is_null()) sec = GetSecurity(j[2]);
   time_t start_time = GetNum(j[3]);
+  time_t end_time = 0;
+  if (j.size() > 4) end_time = GetNum(j[4]);
+  if ((end_time > 0 ? end_time : GetTime()) - start_time >
+      kSecondsOneDay * 31) {
+    throw std::runtime_error("at most 30 days");
+  }
   sent_ = true;
-  kTaskPool.AddTask([self, sec, acc, start_time]() {
+  kTaskPool.AddTask([self, sec, acc, start_time, end_time]() {
     struct tm tm_info;
     gmtime_r(&start_time, &tm_info);
     char tm_str[256];
     strftime(tm_str, sizeof(tm_str), "%Y-%m-%d %H:%M:%S", &tm_info);
-    auto query = R"(
-    select qty, avg_px, realized_pnl, commission, tm, info
+    std::string query = R"(
+    select id, security_id, qty, avg_px, realized_pnl, commission, tm, info
     from position
-    where sub_account_id = :sub_account_id and security_id = :security_id and tm >= :tm
+    where sub_account_id=
     )";
+    query += std::to_string(acc->id);
+    if (sec) query += " and security_id=" + std::to_string(sec->id);
+    query = query + " and tm>='" + tm_str + "'";
+    if (end_time > 0) {
+      gmtime_r(&end_time, &tm_info);
+      strftime(tm_str, sizeof(tm_str), "%Y-%m-%d %H:%M:%S", &tm_info);
+      query = query + " and tm<'" + tm_str + "'";
+    }
     json out = {"trades"};
     auto sql = Database::Session();
-    soci::rowset<soci::row> st =
-        (sql->prepare << query, soci::use(acc->id), soci::use(sec->id),
-         soci::use(std::string(tm_str)));
+    LOG_DEBUG("Reading trades");
+    soci::rowset<soci::row> st = sql->prepare << query;
     for (auto it = st.begin(); it != st.end(); ++it) {
       auto i = 0;
-      auto m = sec->rate * sec->multiplier;
+      auto id = Database::GetValue(*it, i++, 0);
+      auto sec_id = Database::GetValue(*it, i++, 0);
       auto qty = Database::GetValue(*it, i++, 0.);
       auto avg_px = Database::GetValue(*it, i++, 0.);
-      auto realized_pnl = Database::GetValue(*it, i++, 0.) * m;
-      auto commission = Database::GetValue(*it, i++, 0.) * m;
+      auto realized_pnl = Database::GetValue(*it, i++, 0.);
+      auto commission = Database::GetValue(*it, i++, 0.);
       auto tm = Database::GetTm(*it, i++);
       auto info = Database::GetValue(*it, i++, kEmptyStr);
-      out.push_back(json{tm, qty, avg_px, realized_pnl, commission, info});
+      out.push_back(
+          json{id, sec_id, tm, qty, avg_px, realized_pnl, commission, info});
     }
     self->Send(out);
+    LOG_DEBUG("Done");
   });
 }
 
+void Connection::OnPositions(const json& j) {
+  auto acc = ValidateAcc(user_, Get<std::string>(j[1]));
+  json out = {"positions"};
+  for (auto& pair : PositionManager::Instance().sub_positions()) {
+    if (pair.first.first != acc->id) continue;
+    auto& p = pair.second;
+    out.push_back(
+        json({pair.first.second, p.qty, p.avg_px, p.unrealized_pnl,
+              p.commission, p.realized_pnl, p.total_bought_qty,
+              p.total_sold_qty, p.total_outstanding_buy_qty,
+              p.total_outstanding_sell_qty, p.total_outstanding_sell_qty}));
+  }
+  Send(out);
+}
+
 void Connection::OnPosition(const json& j) {
-  auto sec = GetSecurity(j[1]);
-  auto acc = ValidateAcc(user_, Get<std::string>(j[2]));
+  auto acc = ValidateAcc(user_, Get<std::string>(j[j[1].is_string() ? 1 : 2]));
+  auto sec = GetSecurity(j[j[1].is_string() ? 2 : 1]);
   const Position* p;
   bool broker = j.size() > 3 && Get<bool>(j[3]);
   if (broker) {
