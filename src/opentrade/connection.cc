@@ -622,15 +622,15 @@ void Connection::HandleMessageSync(const std::string& msg,
           auto now = GetTime();
           LOG_DEBUG("Reading historical pnl");
           std::ifstream f(path.c_str());
-          const int LINE_LENGTH = 100;
-          char str[LINE_LENGTH];
+          static const int kLineLength = 128;
+          char line[kLineLength];
           json j2;
           auto expect_tm = tm0;
-          while (f.getline(str, LINE_LENGTH)) {
+          while (f.getline(line, sizeof(line))) {
             double realized, commission, unrealized;
-            auto tm = atol(str);
+            auto tm = atol(line);
             if (tm < expect_tm) continue;
-            auto n = sscanf(str, "%*d %lf %lf %lf", &unrealized, &commission,
+            auto n = sscanf(line, "%*d %lf %lf %lf", &unrealized, &commission,
                             &realized);
             if (n < 3) continue;
             j2.push_back(json{tm, unrealized, commission, realized});
@@ -1328,8 +1328,8 @@ void Connection::HandleOneSecurity(const Security& s, json* out) {
       Send(j);
   } else {
     json j = {
-        "security", s.id,       s.symbol,     s.exchange->name,
-        s.type,     s.lot_size, s.multiplier, s.currency, s.rate,
+        "security", s.id,         s.symbol,   s.exchange->name, s.type,
+        s.lot_size, s.multiplier, s.currency, s.rate,
     };
     if (transport_->stateless)
       out->push_back(j);

@@ -119,15 +119,16 @@ bool LoadTickFile(const std::string& fn, Simulator* sim,
   return true;
 }
 
-Tick ReadTickFile(std::ifstream& ifs, uint32_t to_tm, SecTuples* sts,
-                  Ticks* ticks) {
-  std::string line;
-  while (std::getline(ifs, line)) {
+inline Tick ReadTickFile(std::ifstream& ifs, uint32_t to_tm, SecTuples* sts,
+                         Ticks* ticks) {
+  static const int kLineLength = 128;
+  char line[kLineLength];
+  while (ifs.getline(line, sizeof(line))) {
     Tick t;
     uint32_t i;
     uint32_t hmsm;
-    if (sscanf(line.c_str(), "%u %u %c %lf %lf", &hmsm, &i, &t.type, &t.px,
-               &t.qty) != 5)
+    if (sscanf(line, "%u %u %c %lf %lf", &hmsm, &i, &t.type, &t.px, &t.qty) !=
+        5)
       continue;
     if (i >= sts->size()) continue;
     auto& st = (*sts)[i];
