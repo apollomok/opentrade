@@ -2,6 +2,8 @@
 
 #include "backtest.h"
 
+#include <boost/iostreams/device/mapped_file.hpp>
+
 #include "cross_engine.h"
 #include "indicator_handler.h"
 #include "logger.h"
@@ -11,7 +13,7 @@ namespace fs = boost::filesystem;
 
 namespace opentrade {
 
-decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
+decltype(auto) GetSecurities(std::ifstream& ifs, const char* fn, bool* binary) {
   std::string line;
   if (!std::getline(ifs, line)) {
     LOG_FATAL("Invalid file: " << fn);
@@ -20,10 +22,14 @@ decltype(auto) GetSecurities(std::ifstream& ifs, const std::string& fn) {
   *a = 0;
   char b[256];
   *b = 0;
+  char c[256];
+  *c = 0;
   std::vector<const Security*> out;
-  if (sscanf(line.c_str(), "%s %s", a, b) != 2 || strcasecmp(a, "@begin")) {
+  if (sscanf(line.c_str(), "%s %s %s", a, b, c) < 2 ||
+      strcasecmp(a, "@begin")) {
     LOG_FATAL("Invalid file: " << fn);
   }
+  *binary = !strncasecmp(c, "bin", 3);
   std::unordered_map<std::string, const Security*> sec_map;
   if (!strcasecmp(b, "bbgid")) {
     for (auto& pair : SecurityManager::Instance().securities()) {
@@ -93,14 +99,15 @@ struct Tick {
 };
 typedef std::vector<Tick> Ticks;
 
-bool LoadTickFile(const std::string& fn, Simulator* sim,
+bool LoadTickFile(const char* fn, Simulator* sim,
                   const boost::gregorian::date& date, SecTuples* sts,
-                  std::ifstream& ifs) {
+                  std::ifstream& ifs, bool* binary) {
+  *binary = true;
   ifs.open(fn);
   if (!ifs.good()) return false;
 
   LOG_INFO("Loading " << fn);
-  auto secs0 = GetSecurities(ifs, fn);
+  auto secs0 = GetSecurities(ifs, fn, binary);
   sts->clear();
   sts->resize(secs0.size());
   auto date_num = date.year() * 10000 + date.month() * 100 + date.day();
@@ -119,8 +126,8 @@ bool LoadTickFile(const std::string& fn, Simulator* sim,
   return true;
 }
 
-inline Tick ReadTickFile(std::ifstream& ifs, uint32_t to_tm, SecTuples* sts,
-                         Ticks* ticks) {
+inline Tick ReadTextTickFile(std::ifstream& ifs, uint32_t to_tm, SecTuples* sts,
+                             Ticks* ticks) {
   static const int kLineLength = 128;
   char line[kLineLength];
   while (ifs.getline(line, sizeof(line))) {
@@ -146,6 +153,34 @@ inline Tick ReadTickFile(std::ifstream& ifs, uint32_t to_tm, SecTuples* sts,
   return {};
 }
 
+inline Tick ReadBinaryTickFile(const char** pp, const char* p_end,
+                               uint32_t to_tm, SecTuples* sts, Ticks* ticks) {
+  auto& p = *pp;
+  while (p < p_end) {
+    Tick t;
+    t.ms = *reinterpret_cast<const uint32_t*>(p);
+    p += 4;
+    auto i = *reinterpret_cast<const uint16_t*>(p);
+    p += 2;
+    t.type = *p;
+    p += 1;
+    t.px = *reinterpret_cast<const double*>(p);
+    p += 8;
+    t.qty = *reinterpret_cast<const uint32_t*>(p);
+    p += 4;
+    if (i >= sts->size()) continue;
+    auto& st = (*sts)[i];
+    if (!st.sec) continue;
+    t.st = &st;
+    t.px *= st.adj_px;
+    if (!t.px) continue;
+    t.qty *= st.adj_vol;
+    if (t.ms > to_tm) return t;
+    ticks->push_back(t);
+  }
+  return {};
+}
+
 void Backtest::Play(const boost::gregorian::date& date) {
   skip_ = false;
   boost::posix_time::ptime pt(date);
@@ -159,12 +194,25 @@ void Backtest::Play(const boost::gregorian::date& date) {
   }
 
   char fn[256];
-  std::vector<SecTuples> sts(simulators_.size());
-  std::vector<std::ifstream> ifs(simulators_.size());
+  SecTuples sts[simulators_.size()];
+  std::ifstream ifs[simulators_.size()];
+  bool binaries[simulators_.size()];
+  std::vector<std::pair<const char*, const char*>> fpos(simulators_.size());
   auto n = 0;
   for (auto i = 0u; i < simulators_.size(); ++i) {
     strftime(fn, sizeof(fn), simulators_[i].first.c_str(), &tm);
-    if (LoadTickFile(fn, simulators_[i].second, date, &sts[i], ifs[i])) ++n;
+    if (LoadTickFile(fn, simulators_[i].second, date, &sts[i], ifs[i],
+                     &binaries[i])) {
+      boost::iostreams::mapped_file_source m(fn);
+      auto p = m.data();
+      auto p_end = p + m.size();
+      p += ifs[i].tellg();
+      if ((p_end - p) % 19) {
+        LOG_FATAL("Invalid binary file: " << fn);
+      }
+      fpos[i] = std::make_pair(p, p_end);
+      ++n;
+    }
   }
   if (!n) return;
 
@@ -197,7 +245,9 @@ void Backtest::Play(const boost::gregorian::date& date) {
         if (t.ms > to_tm) continue;
         ticks.push_back(t);
       }
-      t = ReadTickFile(ifs[i], to_tm, &sts[i], &ticks);
+      t = binaries[i] ? ReadBinaryTickFile(&fpos[i].first, fpos[i].second,
+                                           to_tm, &sts[i], &ticks)
+                      : ReadTextTickFile(ifs[i], to_tm, &sts[i], &ticks);
     }
     if (simulators_.size() > 1) std::sort(ticks.begin(), ticks.end());
     for (auto& t : ticks) {
