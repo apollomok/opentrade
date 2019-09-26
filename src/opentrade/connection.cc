@@ -980,36 +980,41 @@ void Connection::OnTrades(const json& j) {
   const Security* sec = nullptr;
   if (!j[2].is_null()) sec = GetSecurity(j[2]);
   time_t start_time = GetNum(j[3]);
-  time_t end_time = 0;
-  if (j.size() > 4) end_time = GetNum(j[4]);
-  if ((end_time > 0 ? end_time : GetTime()) - start_time >
-      kSecondsOneDay * 31) {
+  time_t end_time;
+  if (j.size() > 4)
+    end_time = GetNum(j[4]);
+  else
+    end_time = std::round(NowUtcInMicro() / 1e6);
+  if (end_time - start_time > kSecondsOneDay * 31)
     throw std::runtime_error("at most 30 days");
-  }
   sent_ = true;
-  kTaskPool.AddTask([self, sec, acc, start_time, end_time]() {
+  kTaskPool.AddTask([self, acc, sec, start_time, end_time]() {
     struct tm tm_info;
     gmtime_r(&start_time, &tm_info);
-    char tm_str[256];
-    strftime(tm_str, sizeof(tm_str), "%Y-%m-%d %H:%M:%S", &tm_info);
+    char start_time_str[32];
+    strftime(start_time_str, sizeof(start_time_str), "%Y-%m-%d %H:%M:%S",
+             &tm_info);
     std::string query = R"(
     select id, security_id, qty, avg_px, realized_pnl, commission, tm, info
     from position
-    where sub_account_id=
+    where sub_account_id=:sub_account_id
     )";
-    query += std::to_string(acc->id);
-    if (sec) query += " and security_id=" + std::to_string(sec->id);
-    query = query + " and tm>='" + tm_str + "'";
-    if (end_time > 0) {
-      gmtime_r(&end_time, &tm_info);
-      strftime(tm_str, sizeof(tm_str), "%Y-%m-%d %H:%M:%S", &tm_info);
-      query = query + " and tm<'" + tm_str + "'";
-    }
+    if (sec) query += " and security_id=:security_id";
+    query += " and tm>=:start_time and tm<:end_time";
+    gmtime_r(&end_time, &tm_info);
+    char end_time_str[32];
+    strftime(end_time_str, sizeof(end_time_str), "%Y-%m-%d %H:%M:%S", &tm_info);
     json out = {"trades"};
     auto sql = Database::Session();
     LOG_DEBUG("Reading trades");
     try {
-      soci::rowset<soci::row> st = sql->prepare << query;
+      soci::rowset<soci::row> st =
+          sec ? (sql->prepare << query, soci::use(acc->id), soci::use(sec->id),
+                 soci::use(std::string(start_time_str)),
+                 soci::use(std::string(end_time_str)))
+              : (sql->prepare << query, soci::use(acc->id),
+                 soci::use(std::string(start_time_str)),
+                 soci::use(std::string(end_time_str)));
       for (auto it = st.begin(); it != st.end(); ++it) {
         auto i = 0;
         auto id = Database::GetValue(*it, i++, 0ll);

@@ -60,16 +60,30 @@ class Database {
   template <typename T>
   static T GetValue(soci::row const& row, int index, T default_value) {
     if (row.get_indicator(index) != soci::i_null) {
+      if (!is_sqlite_) return Get<T>(row, index);
       if constexpr (std::is_same_v<std::decay_t<T>, std::string> ||
                     std::is_same_v<std::decay_t<T>, std::tm>) {
         return Get<T>(row, index);
       } else {
         // for sqlite3, because underlying storing data type is not
         // deterministic
-        try {
-          return Get<T, false>(row, index);
-        } catch (const std::bad_cast&) {
-          return boost::lexical_cast<T>(Get<std::string>(row, index));
+        switch (row.get_properties(index).get_data_type()) {
+          case soci::dt_string:
+            return boost::lexical_cast<T>(Get<std::string>(row, index));
+          case soci::dt_double:
+            return Get<double>(row, index);
+            break;
+          case soci::dt_integer:
+            return Get<decltype(0)>(row, index);
+            break;
+          case soci::dt_long_long:
+            return Get<decltype(0ll)>(row, index);
+            break;
+          case soci::dt_unsigned_long_long:
+            return Get<decltype(0ull)>(row, index);
+            break;
+          default:
+            return Get<T>(row, index);
         }
       }
     }
