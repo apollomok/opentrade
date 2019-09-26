@@ -203,6 +203,7 @@ void Backtest::Play(const boost::gregorian::date& date) {
     strftime(fn, sizeof(fn), simulators_[i].first.c_str(), &tm);
     if (LoadTickFile(fn, simulators_[i].second, date, &sts[i], ifs[i],
                      &binaries[i])) {
+      LOG_DEBUG("Start to play back " << fn);
       if (binaries[i]) {
         boost::iostreams::mapped_file_source m(fn);
         auto p = m.data();
@@ -219,7 +220,6 @@ void Backtest::Play(const boost::gregorian::date& date) {
   }
   if (!n) return;
 
-  LOG_DEBUG("Start to play back " << fn);
   AlgoManager::Instance().StartPermanents();
   if (on_start_of_day_) {
     try {
