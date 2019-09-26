@@ -26,7 +26,7 @@ namespace opentrade {
 static time_t kStartTime = GetTime();
 static thread_local boost::uuids::random_generator kUuidGen;
 static tbb::concurrent_unordered_map<std::string, const User*> kTokens;
-static TaskPool kTaskPool;
+static TaskPool kTaskPool(3);
 static bool kStopListen = false;
 
 std::string sha1(const std::string& str) {
@@ -979,42 +979,70 @@ void Connection::OnTrades(const json& j) {
   auto acc = ValidateAcc(user_, Get<std::string>(j[1]));
   const Security* sec = nullptr;
   if (!j[2].is_null()) sec = GetSecurity(j[2]);
-  time_t start_time = GetNum(j[3]);
-  time_t end_time;
-  if (j.size() > 4)
-    end_time = GetNum(j[4]);
-  else
-    end_time = std::round(NowUtcInMicro() / 1e6);
-  if (end_time - start_time > kSecondsOneDay * 31)
+  time_t tm = GetNum(j[3]);
+  time_t end_time = 0;
+  if (j.size() > 4) end_time = GetNum(j[4]);
+  if (end_time && end_time - tm > kSecondsOneDay * 31)
     throw std::runtime_error("at most 30 days");
   sent_ = true;
-  kTaskPool.AddTask([self, acc, sec, start_time, end_time]() {
+  kTaskPool.AddTask([self, acc, sec, tm, end_time]() {
     struct tm tm_info;
-    gmtime_r(&start_time, &tm_info);
-    char start_time_str[32];
-    strftime(start_time_str, sizeof(start_time_str), "%Y-%m-%d %H:%M:%S",
-             &tm_info);
-    std::string query = R"(
-    select id, security_id, qty, avg_px, realized_pnl, commission, tm, info
-    from position
-    where sub_account_id=:sub_account_id
-    )";
-    if (sec) query += " and security_id=:security_id";
-    query += " and tm>=:start_time and tm<:end_time";
-    gmtime_r(&end_time, &tm_info);
+    gmtime_r(&tm, &tm_info);
+    char tm_str[32];
+    strftime(tm_str, sizeof(tm_str), "%Y-%m-%d %H:%M:%S", &tm_info);
     char end_time_str[32];
-    strftime(end_time_str, sizeof(end_time_str), "%Y-%m-%d %H:%M:%S", &tm_info);
+    std::string query;
+    if (end_time) {
+      query = R"(
+      select id, security_id, qty, avg_px, realized_pnl, commission, tm, info, broker_account_id
+      from position
+      where sub_account_id=:sub_account_id
+      )";
+      if (sec) query += " and security_id=:security_id";
+      query += " and tm>=:start_time and tm<:end_time";
+      gmtime_r(&end_time, &tm_info);
+      strftime(end_time_str, sizeof(end_time_str), "%Y-%m-%d %H:%M:%S",
+               &tm_info);
+    } else {
+      if (sec) {
+        query = R"(
+          select id, security_id, qty, avg_px, realized_pnl, commission, tm, info, broker_account_id 
+          where sub_account_id=:sub_account_id and security_id=:security_id and tm<:tm
+          )";
+      } else {
+        if (Database::is_sqlite()) {
+          query = R"(
+          select id, A.security_id, qty, avg_px, realized_pnl, commission, A.tm, info, broker_account_id
+          from position as A inner join
+          (select sub_account_id, security_id, max(tm) as tm from position where sub_account_id=:sub_account_id and tm < :tm group by security_id) as B
+          on A.sub_account_id = B.sub_account_id and A.security_id = B.security_id and A.tm = B.tm
+          )";
+        } else {
+          query = R"(
+          select distinct on (security_id)
+          id, security_id, qty, avg_px, realized_pnl, commission, tm, info, broker_account_id
+          from position
+          where sub_account_id=:sub_account_id and tm < :tm
+          order by security_id, tm desc
+          )";
+        }
+      }
+    }
     json out = {"trades"};
-    auto sql = Database::Session();
     LOG_DEBUG("Reading trades");
     try {
+      auto sql = Database::Session();
       soci::rowset<soci::row> st =
-          sec ? (sql->prepare << query, soci::use(acc->id), soci::use(sec->id),
-                 soci::use(std::string(start_time_str)),
-                 soci::use(std::string(end_time_str)))
-              : (sql->prepare << query, soci::use(acc->id),
-                 soci::use(std::string(start_time_str)),
-                 soci::use(std::string(end_time_str)));
+          end_time ? (sec ? (sql->prepare << query, soci::use(acc->id),
+                             soci::use(sec->id), soci::use(std::string(tm_str)),
+                             soci::use(std::string(end_time_str)))
+                          : (sql->prepare << query, soci::use(acc->id),
+                             soci::use(std::string(tm_str)),
+                             soci::use(std::string(end_time_str))))
+                   : (sec ? (sql->prepare << query, soci::use(acc->id),
+                             soci::use(sec->id), soci::use(std::string(tm_str)))
+                          : (sql->prepare << query, soci::use(acc->id),
+                             soci::use(std::string(tm_str))));
       for (auto it = st.begin(); it != st.end(); ++it) {
         auto i = 0;
         auto id = Database::GetValue(*it, i++, 0ll);
@@ -1025,8 +1053,11 @@ void Connection::OnTrades(const json& j) {
         auto commission = Database::GetValue(*it, i++, 0.);
         auto tm = Database::GetTm(*it, i++);
         auto info = Database::GetValue(*it, i++, kEmptyStr);
-        out.push_back(
-            json{id, sec_id, tm, qty, avg_px, realized_pnl, commission, info});
+        auto broker_account = AccountManager::Instance().GetBrokerAccount(
+            Database::GetValue(*it, i++, 0));
+        auto broker_name = broker_account ? broker_account->name : "";
+        out.push_back(json{id, sec_id, tm, qty, avg_px, realized_pnl,
+                           commission, broker_name, info});
       }
     } catch (const std::exception& e) {
       self->Send(json{"error", "trades", e.what()});
