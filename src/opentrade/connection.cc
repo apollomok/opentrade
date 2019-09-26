@@ -473,6 +473,8 @@ void Connection::HandleMessageSync(const std::string& msg,
       }
     } else if (action == "securities") {
       OnSecurities(j);
+    } else if (action == "rates") {
+      Send(SecurityManager::Instance().rates());
     } else if (action == "admin") {
       OnAdmin(j);
     } else if (action == "position") {
@@ -1305,9 +1307,9 @@ void Connection::HandleOneSecurity(const Security& s, json* out) {
         s.type,
         s.lot_size,
         s.multiplier,
+        s.currency,
         s.rate,
         s.close_price,
-        s.currency,
         s.local_symbol,
         s.adv20,
         s.market_cap,
@@ -1327,7 +1329,7 @@ void Connection::HandleOneSecurity(const Security& s, json* out) {
   } else {
     json j = {
         "security", s.id,       s.symbol,     s.exchange->name,
-        s.type,     s.lot_size, s.multiplier, s.rate,
+        s.type,     s.lot_size, s.multiplier, s.currency, s.rate,
     };
     if (transport_->stateless)
       out->push_back(j);

@@ -211,6 +211,7 @@ void SecurityManager::LoadFromDatabase() {
       underlying_map[s] = underlying_id;
     }
     s->rate = Database::GetValue(*it, i++, s->rate);
+    if (s->rate > 0 && *s->currency) rates_[s->currency] = s->rate;
     if (s->rate <= 0) s->rate = 1;
     s->multiplier = Database::GetValue(*it, i++, s->multiplier);
     if (s->multiplier <= 0) s->multiplier = 1;
@@ -251,7 +252,7 @@ void SecurityManager::UpdateCheckSum() {
   for (auto& pair : securities_) {
     auto s = pair.second;
     ss << pair.first << s->symbol << s->exchange->name << s->type << s->lot_size
-       << s->multiplier;
+       << s->multiplier << s->currency;
   }
   check_sum_ = strdup(sha1(ss.str()).c_str());
 }

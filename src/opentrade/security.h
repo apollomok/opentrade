@@ -184,6 +184,7 @@ class SecurityManager : public Singleton<SecurityManager> {
   typedef tbb::concurrent_unordered_map<Exchange::IdType, Exchange*>
       ExchangeMap;
   const ExchangeMap& exchanges() const { return exchanges_; }
+  auto& rates() const { return rates_; }
 
  protected:
   void UpdateCheckSum();
@@ -194,6 +195,7 @@ class SecurityManager : public Singleton<SecurityManager> {
   SecurityMap securities_;
   const char* check_sum_ = "";
   friend class Connection;
+  std::unordered_map<std::string, double> rates_;
 };
 
 }  // namespace opentrade
