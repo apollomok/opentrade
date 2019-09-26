@@ -203,14 +203,17 @@ void Backtest::Play(const boost::gregorian::date& date) {
     strftime(fn, sizeof(fn), simulators_[i].first.c_str(), &tm);
     if (LoadTickFile(fn, simulators_[i].second, date, &sts[i], ifs[i],
                      &binaries[i])) {
-      boost::iostreams::mapped_file_source m(fn);
-      auto p = m.data();
-      auto p_end = p + m.size();
-      p += ifs[i].tellg();
-      if ((p_end - p) % 19) {
-        LOG_FATAL("Invalid binary file: " << fn);
+      if (binaries[i]) {
+        boost::iostreams::mapped_file_source m(fn);
+        auto p = m.data();
+        auto p_end = p + m.size();
+        p += ifs[i].tellg();
+        ifs[i].close();
+        if ((p_end - p) % 19) {
+          LOG_FATAL("Invalid binary file: " << fn);
+        }
+        fpos[i] = std::make_pair(p, p_end);
       }
-      fpos[i] = std::make_pair(p, p_end);
       ++n;
     }
   }
