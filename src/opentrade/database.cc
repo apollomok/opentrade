@@ -194,10 +194,12 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   }
   for (auto i = 0u; i < pool_size; ++i) {
     auto& sql = pool_->at(i);
-    if (is_sqlite_)
+    if (is_sqlite_) {
       sql.open(soci::sqlite3, "db=" + url + " shared_cache=true");
-    else
+      sql << "PRAGMA journal_mode=WAL;";
+    } else {
       sql.open(soci::postgresql, url);
+    }
     sql.set_log_stream(&log);
   }
   LOG_INFO("Database connected");
