@@ -264,7 +264,6 @@ void Server::Start(int port, int nthreads) {
     connection->query_string = std::move(request->query_string);
     connection->http_version = std::move(request->http_version);
     connection->header = std::move(request->header);
-    connection->remote_endpoint = std::move(*request->remote_endpoint);
     kWsServer.upgrade(connection);
   };
 
