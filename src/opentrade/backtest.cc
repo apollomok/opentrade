@@ -198,6 +198,7 @@ void Backtest::Play(const boost::gregorian::date& date) {
   std::ifstream ifs[simulators_.size()];
   bool binaries[simulators_.size()];
   std::vector<std::pair<const char*, const char*>> fpos(simulators_.size());
+  boost::iostreams::mapped_file_source mmfiles[simulators_.size()];
   auto n = 0;
   for (auto i = 0u; i < simulators_.size(); ++i) {
     strftime(fn, sizeof(fn), simulators_[i].first.c_str(), &tm);
@@ -205,9 +206,9 @@ void Backtest::Play(const boost::gregorian::date& date) {
                      &binaries[i])) {
       LOG_DEBUG("Start to play back " << fn);
       if (binaries[i]) {
-        boost::iostreams::mapped_file_source m(fn);
-        auto p = m.data();
-        auto p_end = p + m.size();
+        mmfiles[i].open(fn);
+        auto p = mmfiles[i].data();
+        auto p_end = p + mmfiles[i].size();
         p += ifs[i].tellg();
         ifs[i].close();
         if ((p_end - p) % 19) {
