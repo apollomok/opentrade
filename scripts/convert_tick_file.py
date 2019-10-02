@@ -48,7 +48,7 @@ def parse(fn, callback, pre_callback=None, post_callback=None):
   fn = sys.argv[1]
   if fn == '-': infile = sys.stdin
   elif fn.endswith('xz'): infile = os.popen('xzcat ' + fn)
-  else: infile = open(fn, 'r+b')
+  else: infile = open(fn)
   line = infile.readline()
   offset = len(line)
   toks = line.strip().split()
@@ -64,8 +64,8 @@ def parse(fn, callback, pre_callback=None, post_callback=None):
     for line in infile:
       toks = line.strip().split()
       hmsm = int(toks[0])
-      hms = hmsm / 1000
-      ms = (hms / 10000 * 3600 + hms % 10000 / 100 * 60 +
+      hms = hmsm // 1000
+      ms = (hms // 10000 * 3600 + hms % 10000 // 100 * 60 +
             hms % 100) * 1000 + hmsm % 1000
       sec = int(toks[1])
       t = toks[2][0]
@@ -73,6 +73,8 @@ def parse(fn, callback, pre_callback=None, post_callback=None):
       size = int(toks[4])
       callback(symbols, ms, sec, t, px, size)
   else:
+    infile.close()
+    infile = open(fn, 'r+b')
     mm = mmap.mmap(infile.fileno(), 0)
     while offset < len(mm):
       ms = struct.unpack('I', mm[offset:offset + 4])[0]
