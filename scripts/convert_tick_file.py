@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import struct
+import os
 import sys
 import mmap
 
@@ -10,7 +11,7 @@ dump_binary = None
 
 def main():
   if len(sys.argv) < 3:
-    print('usages: convert_tick_file <intput_tick_file> <output_tick_file>')
+    print('usage: convert_tick_file.py <intput_tick_file> <output_tick_file>')
     return
   parse(sys.argv[1], callback, pre_callback, post_callback)
 
@@ -26,25 +27,26 @@ def pre_callback(symbols, symbol_type, is_text):
   outfile.write('@end\n')
 
 
-def callback(symbols, ms, sec, tick_type, px, size):
+def callback(symbols, ms, isec, tick_type, px, size):
   global outfile, dump_binary
   if dump_binary:
     raw = struct.pack('I', ms) + struct.pack(
-        'H', sec) + tick_type + struct.pack('d', px) + struct.pack('I', size)
+        'H', isec) + tick_type + struct.pack('d', px) + struct.pack('I', size)
   else:
     ms = '%02d%02d%02d%03d' % (ms // 3600000, ms % 3600000 // 60000,
                                ms % 60000 // 1000, ms % 1000)
-    raw = '{} {} {} {} {}\n'.format(ms, sec, tick_type, px, size)
+    raw = '{} {} {} {} {}\n'.format(ms, isec, tick_type, px, size)
   outfile.write(raw)
 
 
-def post_callback():
+def post_callback(symbols):
   global outfile
   outfile.close()
 
 
 def parse(fn, callback, pre_callback=None, post_callback=None):
-  infile = open(sys.argv[1], 'r+b')
+  if sys.argv[1].endswith('xz'): infile = os.popen('xzcat ' + sys.argv[1])
+  else: infile = open(sys.argv[1], 'r+b')
   line = infile.readline()
   offset = len(line)
   toks = line.strip().split()
@@ -56,7 +58,6 @@ def parse(fn, callback, pre_callback=None, post_callback=None):
     if line.lower().startswith('@end'): break
     symbols.append(line.strip())
   if pre_callback: pre_callback(symbols, symbol_type, is_text)
-  symbols = dict([(i, ' '.join(x.split()[1:])) for i, x in enumerate(symbols)])
   if is_text:
     for line in infile:
       toks = line.strip().split()
@@ -83,7 +84,7 @@ def parse(fn, callback, pre_callback=None, post_callback=None):
       size = struct.unpack('I', mm[offset:offset + 4])[0]
       offset += 4
       callback(symbols, ms, sec, t, px, size)
-  if post_callback: post_callback()
+  if post_callback: post_callback(symbols)
 
 
 if __name__ == '__main__':
