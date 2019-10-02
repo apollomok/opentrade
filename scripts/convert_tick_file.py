@@ -11,7 +11,7 @@ dump_binary = None
 
 def main():
   if len(sys.argv) < 3:
-    print('usage: convert_tick_file.py <intput_tick_file> <output_tick_file>')
+    print('usage: convert_tick_file.py <input_tick_file> <output_tick_file>')
     return
   parse(sys.argv[1], callback, pre_callback, post_callback)
 
@@ -45,8 +45,10 @@ def post_callback(symbols):
 
 
 def parse(fn, callback, pre_callback=None, post_callback=None):
-  if sys.argv[1].endswith('xz'): infile = os.popen('xzcat ' + sys.argv[1])
-  else: infile = open(sys.argv[1], 'r+b')
+  fn = sys.argv[1]
+  if fn == '-': infile = sys.stdin
+  elif fn.endswith('xz'): infile = os.popen('xzcat ' + fn)
+  else: infile = open(fn, 'r+b')
   line = infile.readline()
   offset = len(line)
   toks = line.strip().split()
