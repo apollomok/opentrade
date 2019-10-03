@@ -9,6 +9,7 @@
 #include <ctime>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -139,8 +140,10 @@ static inline const char* GetNowStr() {
   return out;
 }
 
-// not thread-safe and highly compatibility, but work well on linux
+inline std::mutex kTzMutex;
+
 static inline int GetUtcTimeOffset(const char* tz) {
+  std::lock_guard<std::mutex> lock(kTzMutex);
   auto orig_tz = getenv("TZ");
   setenv("TZ", tz, 1);
   tzset();
@@ -153,6 +156,20 @@ static inline int GetUtcTimeOffset(const char* tz) {
     unsetenv("TZ");
   tzset();
   return tm.tm_gmtoff;
+}
+
+static inline time_t MakeTime(std::tm* tm, const char* tz) {
+  std::lock_guard<std::mutex> lock(kTzMutex);
+  auto orig_tz = getenv("TZ");
+  setenv("TZ", tz, 1);
+  tzset();
+  auto out = mktime(tm);
+  if (orig_tz)
+    setenv("TZ", orig_tz, 1);
+  else
+    unsetenv("TZ");
+  tzset();
+  return out;
 }
 
 static const int kSecondsOneDay = 3600 * 24;

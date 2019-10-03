@@ -19,7 +19,7 @@ time_t Database::GetTm(soci::row const& row, int index) {
   } else {
     std::tm std_tm;
     std_tm = GetValue(row, index, std_tm);
-    return mktime(&std_tm);
+    return MakeTime(&std_tm, "UTC");
   }
 }
 
