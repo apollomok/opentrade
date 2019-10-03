@@ -1011,6 +1011,7 @@ void Connection::OnTrades(const json& j) {
           select id, security_id, qty, avg_px, realized_pnl, commission, tm, info, broker_account_id 
           from position
           where sub_account_id=:sub_account_id and security_id=:security_id and tm<:tm
+          order by tm desc limit 1
           )";
       } else {
         if (Database::is_sqlite()) {
