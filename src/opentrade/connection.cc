@@ -1072,11 +1072,11 @@ void Connection::OnTrades(const json& j) {
   });
 }
 
-void Connection::OnPositions(const json& j) {
-  auto acc = ValidateAcc(user_, Get<std::string>(j[1]));
+template <typename A, typename B>
+json DumpPositions(const A& acc, const B& positions) {
   json out = {"positions"};
-  for (auto& pair : PositionManager::Instance().sub_positions()) {
-    if (pair.first.first != acc->id) continue;
+  for (auto& pair : positions) {
+    if (pair.first.first != acc.id) continue;
     auto& p = pair.second;
     out.push_back(
         json({pair.first.second, p.qty, p.avg_px, p.unrealized_pnl,
@@ -1084,7 +1084,21 @@ void Connection::OnPositions(const json& j) {
               p.total_sold_qty, p.total_outstanding_buy_qty,
               p.total_outstanding_sell_qty, p.total_outstanding_sell_qty}));
   }
-  Send(out);
+  return out;
+}
+
+void Connection::OnPositions(const json& j) {
+  bool broker = j.size() > 2 && Get<bool>(j[2]);
+  auto acc_name = Get<std::string>(j[1]);
+  if (broker) {
+    if (!user_->is_admin) throw std::runtime_error("admin required");
+    auto acc = AccountManager::Instance().GetBrokerAccount(acc_name);
+    if (!acc) throw std::runtime_error("invalid broker account name");
+    Send(DumpPositions(*acc, PositionManager::Instance().broker_positions()));
+  } else {
+    auto acc = ValidateAcc(user_, acc_name);
+    Send(DumpPositions(*acc, PositionManager::Instance().sub_positions()));
+  }
 }
 
 void Connection::OnPosition(const json& j) {
