@@ -27,7 +27,7 @@ def pre_callback(symbols, symbol_type, is_text):
   outfile.write('@end\n')
 
 
-def callback(symbols, ms, isec, tick_type, px, size):
+def callback(symbols, ms, isec, tick_type, px, size, *more):
   global outfile, dump_binary
   if dump_binary:
     raw = struct.pack('I', ms) + struct.pack(
@@ -71,7 +71,7 @@ def parse(fn, callback, pre_callback=None, post_callback=None):
       t = toks[2][0]
       px = float(toks[3])
       size = int(toks[4])
-      callback(symbols, ms, sec, t, px, size)
+      callback(symbols, ms, sec, t, px, size, *toks[5:])
   else:
     infile.close()
     infile = open(fn, 'r+b')
