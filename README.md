@@ -70,8 +70,6 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
     liblog4cxx-dev
   ```
 
-  * checkout [install_centos.sh](https://github.com/opentradesolutions/opentrade/blob/master/install_centos.sh) for CentOS 8
-
   * Build
   ```bash
   git clone https://github.com/opentradesolutions/opentrade
@@ -121,6 +119,11 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    # username/password: test/test
    http://localhost:9111
    ```
+   
+# CentOS 8
+
+ Please checkout [install_centos.sh](https://github.com/opentradesolutions/opentrade/blob/master/install_centos.sh)
+
 # Internal Latency
   ```
   make test-latency
