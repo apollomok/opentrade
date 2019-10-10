@@ -68,8 +68,10 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
     libquickfix-dev \
     libtbb-dev \
     liblog4cxx-dev
-
   ```
+
+  * checkout [install_centos.sh](https://github.com/opentradesolutions/opentrade/blob/master/install_centos.sh) for CentOS 8
+
   * Build
   ```bash
   git clone https://github.com/opentradesolutions/opentrade
@@ -77,7 +79,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
   make debug
   ```
   
- * **Setup database**
+* **Setup database**
    * Sqlite3
    ```bash
    wget https://github.com/opentradesolutions/data/raw/master/test.sqlite3
@@ -97,7 +99,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    exit # become yourself again
    ```
  
- * **Run opentrade**
+* **Run opentrade**
    * Download tick data files
    ```bash
    cd opentrade
@@ -114,7 +116,7 @@ OpenTrade is an open source OEMS, and algorithmic trading platform, designed for
    ./opentrade
    ```
    
- * **Open Web UI**
+* **Open Web UI**
    ```
    # username/password: test/test
    http://localhost:9111
