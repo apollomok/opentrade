@@ -150,7 +150,7 @@ void Trade::OnRspError(CThostFtdcRspInfoField* rsp_info, int request_id,
                    << ", requestId=" << request_id << ", chain=" << is_last);
 }
 
-#define STRCPY(a, b) strncpy(a, b, sizeof(a))
+#define STRCPY(a, b) strncpy(a, b, sizeof(a) - 1)
 
 void Trade::OnFrontConnected() {
   if (!product_info_.empty() && !auth_code_.empty())

@@ -198,9 +198,9 @@ void Data::OnRtnForQuoteRsp(CThostFtdcForQuoteRspField *data) {}
 
 void Data::OnFrontConnected() {
   CThostFtdcReqUserLoginField login{};
-  strncpy(login.BrokerID, broker_id_.c_str(), sizeof(login.BrokerID));
-  strncpy(login.UserID, user_id_.c_str(), sizeof(login.UserID));
-  strncpy(login.Password, password_.c_str(), sizeof(login.Password));
+  strncpy(login.BrokerID, broker_id_.c_str(), sizeof(login.BrokerID) - 1);
+  strncpy(login.UserID, user_id_.c_str(), sizeof(login.UserID) - 1);
+  strncpy(login.Password, password_.c_str(), sizeof(login.Password) - 1);
   // 发出登陆请求
   LOG_INFO(name() << ": Connected, send login");
   api_->ReqUserLogin(&login, ++request_counter_);
