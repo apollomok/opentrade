@@ -192,13 +192,22 @@ static inline decltype(auto) ParseParams(const json& params) {
   return m;
 }
 
+static std::atomic<int> kConnCounter = 0;
+static std::atomic<int> kActiveConn = 0;
+
 Connection::~Connection() {
-  LOG_DEBUG(GetAddress() << ": Connection destructed");
+  LOG_DEBUG('#' << id_ << ": #" << id_
+                << " Connection destructed, active=" << --kActiveConn);
 }
 
 Connection::Connection(Transport::Ptr transport,
                        std::shared_ptr<boost::asio::io_service> service)
-    : transport_(transport), strand_(*service), timer_(*service) {}
+    : transport_(transport), strand_(*service), timer_(*service) {
+  id_ = ++kConnCounter;
+  LOG_DEBUG('#' << id_ << ": " << GetAddress()
+                << ", Connection constructed, stateless="
+                << transport_->stateless << ", active=" << ++kActiveConn);
+}
 
 void Connection::PublishMarketStatus() {
   auto& ecs = ExchangeConnectivityManager::Instance().adapters();
@@ -508,16 +517,16 @@ void Connection::HandleMessageSync(const std::string& msg,
       auto seq_algo = -1;
       if (j.size() > 2) {
         seq_algo = Get<int64_t>(j[2]);
-        LOG_DEBUG(self->GetAddress()
-                  << ": Offline algos requested: " << seq_algo);
+        LOG_DEBUG('#' << self->id_
+                      << ": Offline algos requested: " << seq_algo);
       }
       kTaskPool.AddTask([self, seq_confirmation, seq_algo]() {
         if (seq_algo >= 0) {
           AlgoManager::Instance().LoadStore(seq_algo, self.get());
           self->Send(json{"offline_algos", "complete"});
         }
-        LOG_DEBUG(self->GetAddress()
-                  << ": Offline confirmations requested: " << seq_confirmation);
+        LOG_DEBUG('#' << self->id_ << ": Offline confirmations requested: "
+                      << seq_confirmation);
         GlobalOrderBook::Instance().LoadStore(seq_confirmation, self.get());
         self->Send(json{"offline_orders", "complete"});
         self->Send(json{"offline", "complete"});
@@ -595,7 +604,7 @@ void Connection::HandleMessageSync(const std::string& msg,
       auto ord = GlobalOrderBook::Instance().Get(id);
       if (!ord) {
         json j = {"error", "cancel", "invalid order id: " + std::to_string(id)};
-        LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+        LOG_DEBUG('#' << id_ << ": " << j << '\n' << msg);
         Send(j);
         return;
       }
@@ -748,16 +757,16 @@ void Connection::HandleMessageSync(const std::string& msg,
       Send(json{"error", action, "unknown action"});
     }
   } catch (nlohmann::detail::parse_error& e) {
-    LOG_DEBUG(GetAddress() << ": invalid json string: " << msg);
+    LOG_DEBUG('#' << id_ << ": invalid json string: " << msg);
     Send(json{"error", "", "invalid json string", "json", msg});
   } catch (nlohmann::detail::exception& e) {
-    LOG_DEBUG(GetAddress() << ": json error: " << e.what() << ", " << msg);
+    LOG_DEBUG('#' << id_ << ": json error: " << e.what() << ", " << msg);
     std::string error = "json error: ";
     error += e.what();
     Send(json{"error", "", error, "json", msg});
   } catch (std::exception& e) {
-    LOG_DEBUG(GetAddress() << ": Connection::OnMessage: " << e.what() << ", "
-                           << msg);
+    LOG_DEBUG('#' << id_ << ": Connection::OnMessage: " << e.what() << ", "
+                  << msg);
     Send(json{"error", "", e.what(), "Connection::OnMessage", msg});
   }
 }
@@ -1144,7 +1153,7 @@ void Connection::OnTarget(const json& j, const std::string& msg) {
   auto acc = AccountManager::Instance().GetSubAccount(sub_account);
   if (!acc) {
     json j = {"error", "target", "invalid sub_account: " + sub_account};
-    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    LOG_DEBUG('#' << id_ << ": " << j << '\n' << msg);
     Send(j);
     return;
   }
@@ -1207,7 +1216,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
           "algo",
           "duplicate token: " + token,
       };
-      LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+      LOG_DEBUG('#' << id_ << ": " << j << '\n' << msg);
       Send(j);
       return;
     }
@@ -1238,7 +1247,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
         throw std::runtime_error("unknown algo name: " + algo_name);
       }
     } catch (const std::exception& err) {
-      LOG_DEBUG(GetAddress() << ": " << err.what() << '\n' << msg);
+      LOG_DEBUG('#' << id_ << ": " << err.what() << '\n' << msg);
       Send(json{"error", "algo", "invalid params", err.what()});
     }
   } else {
@@ -1251,7 +1260,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   auto acc = AccountManager::Instance().GetSubAccount(sub_account);
   if (!acc) {
     json j = {"error", "order", "invalid sub_account: " + sub_account};
-    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    LOG_DEBUG('#' << id_ << ": " << j << '\n' << msg);
     Send(j);
     return;
   }
@@ -1273,7 +1282,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
         "order",
         "invalid side: " + side_str,
     };
-    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    LOG_DEBUG('#' << id_ << ": " << j << '\n' << msg);
     Send(j);
     return;
   }
@@ -1291,7 +1300,7 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
         "order",
         "miss stop price for stop order",
     };
-    LOG_DEBUG(GetAddress() << ": " << j << '\n' << msg);
+    LOG_DEBUG('#' << id_ << ": " << j << '\n' << msg);
     Send(j);
     return;
   }
@@ -1354,7 +1363,7 @@ void Connection::HandleOneSecurity(const Security& s, json* out) {
 }
 
 void Connection::OnSecurities(const json& j) {
-  LOG_DEBUG(GetAddress() << ": Securities requested");
+  LOG_DEBUG('#' << id_ << ": Securities requested");
   const Exchange* exch = nullptr;
   if (j.size() > 1) {
     exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));

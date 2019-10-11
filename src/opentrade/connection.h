@@ -98,6 +98,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   bool sub_pnl_ = false;
   bool closed_ = false;
   bool sent_ = false;
+  int id_ = 0;
   friend class AlgoManager;
   friend class GlobalOrderBook;
 };

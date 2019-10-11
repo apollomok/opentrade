@@ -226,8 +226,6 @@ void Server::Start(int port, int nthreads) {
   };
 
   endpoint.on_open = [](WsConnPtr connection) {
-    LOG_DEBUG("Websocket Server: Opened connection "
-              << connection->remote_endpoint_address());
     auto p = std::make_shared<Connection>(
         std::make_shared<WsSocketWrapper>(connection), kIoService);
     {
@@ -238,16 +236,13 @@ void Server::Start(int port, int nthreads) {
 
   endpoint.on_close = [](WsConnPtr connection, int status,
                          const std::string& /*reason*/) {
-    LOG_DEBUG("Websocket Server: Closed connection "
-              << connection->remote_endpoint_address() << " with status code "
-              << status);
+    LOG_DEBUG("endpoint.on_close"
+              << " status code " << status);
     Close(connection);
   };
 
   endpoint.on_error = [](WsConnPtr connection, const SimpleWeb::error_code& e) {
-    LOG_DEBUG("Websocket Server: Error in connection "
-              << connection->remote_endpoint_address() << ". "
-              << "Error: " << e << ", error message: " << e.message());
+    LOG_DEBUG("endpoint.on_error message: " << e.message());
     Close(connection);
   };
 
