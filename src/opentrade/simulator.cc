@@ -80,13 +80,16 @@ void Simulator::HandleTick(const Security& sec, char type, double px,
   switch (type) {
     case 'T': {
       Update(sec.id, px, qty);
+      if (sec.type == kForexPair) {
+        if (!kHasFxTrade) kHasFxTrade = true;
+        break;  // not try fill for FX trade tick
+      }
       if (actives_of_sec->all.empty()) return;
       if (px > 0 && qty > 0 &&
           rand_r(&seed_) % 100 / 100. >= (1 - trade_hit_ratio)) {
         qty = TryFillBuy(px, qty, actives_of_sec);
         TryFillSell(px, qty, actives_of_sec);
       }
-      if (sec.type == kForexPair && !kHasFxTrade) kHasFxTrade = true;
     } break;
     case 'A':
       Update(sec.id, px, qty, false);
