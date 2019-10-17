@@ -384,12 +384,9 @@ auto GetSecSrc(const json& j) {
   auto id = 0u;
   auto src = 0u;
   if (j.size() >= 2) {
-    id = GetSecurity(j)->id;
-    auto n = j[0].is_number_integer() ? 1u : 2u;
-    if (j.size() > n) {
-      auto tmp = Get<std::string>(j[n]);
-      if (strcasecmp(tmp.c_str(), "default")) src = DataSrc::GetId(tmp.c_str());
-    }
+    id = GetSecurity(j[0])->id;
+    auto tmp = Get<std::string>(j[1]);
+    if (strcasecmp(tmp.c_str(), "default")) src = DataSrc::GetId(tmp.c_str());
   } else {
     if (j.is_string()) {
       auto tmp = Split(Get<std::string>(j), " ");

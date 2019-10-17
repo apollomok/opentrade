@@ -61,9 +61,16 @@ class FixAdapter : public FIX::Application,
       LOG_FATAL(name() << ": Faield to open: " << config_file);
 
     auto market_depth = config("market_depth");
-    if (!market_depth.empty()) market_depth_ = atoi(market_depth.c_str());
+    if (!market_depth.empty()) {
+      market_depth_ = atoi(market_depth.c_str());
+      LOG_INFO(name() << ": market_depth=" << market_depth_);
+    }
     auto md_update_type = config("md_update_type");
-    if (!md_update_type.empty()) md_update_type_ = atoi(md_update_type.c_str());
+    if (!md_update_type.empty()) {
+      md_update_type_ = atoi(md_update_type.c_str());
+      LOG_INFO(name() << ": md_update_type="
+                      << (md_update_type_ ? "INCREMENTAL" : "FULL"));
+    }
 
     update_fx_price_ = config<bool>("update_fx_price");
     if (update_fx_price_) {
@@ -452,7 +459,7 @@ class FixAdapter : public FIX::Application,
   tbb::concurrent_unordered_map<int,
                                 std::pair<MarketDataAdapter*, const Security*>>
       reqs_;
-  FIX::MarketDepth market_depth_ = 1;
+  FIX::MarketDepth market_depth_ = 0;
   // 0 for full refresh, 1 for incremental refresh
   FIX::MDUpdateType md_update_type_ = FIX::MDUpdateType_INCREMENTAL_REFRESH;
   bool update_fx_price_ = false;
