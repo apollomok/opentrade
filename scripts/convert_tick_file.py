@@ -45,7 +45,6 @@ def post_callback(symbols):
 
 
 def parse(fn, callback, pre_callback=None, post_callback=None):
-  fn = sys.argv[1]
   if fn == '-': infile = sys.stdin
   elif fn.endswith('xz'): infile = os.popen('xzcat ' + fn)
   else: infile = open(fn)
