@@ -8,5 +8,5 @@ if len(sys.argv) < 2:
   sys.exit(1)
 
 h = hashlib.sha1()
-h.update(sys.argv[1])
+h.update(sys.argv[1].encode())
 print(h.hexdigest())
