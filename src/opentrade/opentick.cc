@@ -10,20 +10,7 @@ struct OpenTickLogger : public opentick::Logger {
 };
 
 void OpenTick::Initialize(const std::string& url) {
-  auto strs1 = Split(url, "@");
-  if (strs1.size() < 1) {
-    LOG_FATAL("Invalid opentick url '" << url << "'");
-  }
-  std::string dbname = "opentrade";
-  if (strs1.size() > 1) dbname = strs1[1];
-  auto strs2 = Split(strs1[0], ":");
-  if (strs2.size() < 1) {
-    LOG_FATAL("Invalid opentick url '" << url << "'");
-  }
-  auto port = 1116;
-  if (strs2.size() > 2) port = atol(strs2[1].c_str());
-  auto host = strs2[0];
-  conn_ = opentick::Connection::Create(host, port, dbname);
+  conn_ = opentick::Connection::Create(url);
   conn_->SetLogger(std::make_shared<OpenTickLogger>());
   conn_->SetAutoReconnect(3);
   conn_->Start();
