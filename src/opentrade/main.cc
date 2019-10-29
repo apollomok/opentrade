@@ -49,7 +49,6 @@ int main(int argc, char *argv[]) {
   std::string tick_file;
   auto start_date = 0u;
   auto end_date = 0u;
-  auto latency = 0.;
 #else
   auto io_threads = 0;
   auto port = 0;
@@ -70,8 +69,7 @@ int main(int argc, char *argv[]) {
             "start_date,s", bpo::value<uint32_t>(&start_date),
             "start date, in 'YYYYmmdd' format")(
             "end_date,e", bpo::value<uint32_t>(&end_date),
-            "end date, in 'YYYYmmdd' format")(
-            "latency,l", bpo::value<double>(&latency), "latency in seconds")
+            "end date, in 'YYYYmmdd' format")
 #else
         ("db_create_tables",
          bpo::value<bool>(&db_create_tables)->default_value(false),
@@ -284,7 +282,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef BACKTEST
   auto &bt = opentrade::Backtest::Instance();
-  bt.Start(backtest_file, latency, tick_file);
+  bt.Start(backtest_file, tick_file);
   boost::gregorian::date dt(start_date / 10000, start_date % 10000 / 100,
                             start_date % 100);
   boost::gregorian::date end(end_date / 10000, end_date % 10000 / 100,

@@ -13,7 +13,8 @@ namespace fs = boost::filesystem;
 
 namespace opentrade {
 
-decltype(auto) GetSecurities(std::ifstream& ifs, const char* fn, bool* binary) {
+decltype(auto) GetSecurities(std::ifstream& ifs, const char* fn, bool* binary,
+                             const std::set<std::string>& used_symbols) {
   std::string line;
   if (!std::getline(ifs, line)) {
     LOG_FATAL("Invalid file: " << fn);
@@ -69,11 +70,13 @@ decltype(auto) GetSecurities(std::ifstream& ifs, const char* fn, bool* binary) {
   while (std::getline(ifs, line)) {
     if (!strcasecmp(line.c_str(), "@end")) break;
     auto sec = sec_map[line];
-    out.push_back(sec);
     if (!sec) {
       LOG_ERROR("Unknown security on line " << line << " of " << fn);
       continue;
     }
+    if (used_symbols.size() && used_symbols.find(line) == used_symbols.end())
+      sec = nullptr;
+    out.push_back(sec);
   }
   LOG_INFO(out.size() << " securities in " << fn);
 
@@ -101,13 +104,14 @@ typedef std::vector<Tick> Ticks;
 
 bool LoadTickFile(const char* fn, Simulator* sim,
                   const boost::gregorian::date& date, SecTuples* sts,
-                  std::ifstream& ifs, bool* binary) {
+                  std::ifstream& ifs, bool* binary,
+                  const std::set<std::string>& used_symbols) {
   *binary = true;
   ifs.open(fn);
   if (!ifs.good()) return false;
 
   LOG_INFO("Loading " << fn);
-  auto secs0 = GetSecurities(ifs, fn, binary);
+  auto secs0 = GetSecurities(ifs, fn, binary, used_symbols);
   sts->clear();
   sts->resize(secs0.size());
   auto date_num = date.year() * 10000 + date.month() * 100 + date.day();
@@ -203,7 +207,7 @@ void Backtest::Play(const boost::gregorian::date& date) {
   for (auto i = 0u; i < simulators_.size(); ++i) {
     strftime(fn, sizeof(fn), simulators_[i].first.c_str(), &tm);
     if (LoadTickFile(fn, simulators_[i].second, date, &sts[i], ifs[i],
-                     &binaries[i])) {
+                     &binaries[i], used_symbols_)) {
       LOG_DEBUG("Start to play back " << fn);
       if (binaries[i]) {
         mmfiles[i].open(fn);
@@ -231,11 +235,6 @@ void Backtest::Play(const boost::gregorian::date& date) {
     }
   }
 
-  trade_hit_ratio_ = 0.5;
-  auto trade_hit_ratio_str = getenv("TRADE_HIT_RATIO");
-  if (trade_hit_ratio_str) {
-    trade_hit_ratio_ = atof(trade_hit_ratio_str);
-  }
   std::vector<Tick> last_ticks(simulators_.size());
   static const uint32_t kNSteps = 240;
   static const uint32_t kStep = (kSecondsOneDay * 1000) / kNSteps;
@@ -360,10 +359,9 @@ SubAccount* Backtest::CreateSubAccount(const std::string& name,
   return s;
 }
 
-void Backtest::Start(const std::string& py, double latency,
+void Backtest::Start(const std::string& py,
                      const std::string& default_tick_file) {
   obj_ = bp::object(bp::ptr(this));
-  latency_ = latency;
 
   for (auto& pair : SecurityManager::Instance().securities()) {
     pair.second->close_price = 0;
@@ -396,6 +394,23 @@ void Backtest::Start(const std::string& py, double latency,
     on_start_(obj_);
   } catch (const bp::error_already_set& err) {
     PrintPyError("on_start", true);
+  }
+
+  auto trade_hit_ratio_str = getenv("TRADE_HIT_RATIO");
+  if (trade_hit_ratio_str) {
+    trade_hit_ratio_ = atof(trade_hit_ratio_str);
+  }
+  LOG_INFO("TRADE_HIT_RATIO=" << trade_hit_ratio_);
+
+  auto latency_str = getenv("LATENCY");
+  if (latency_str) {
+    latency_ = atof(latency_str);
+  }
+  LOG_INFO("LATENCY=" << latency_);
+
+  auto used_symbols_str = getenv("USED_SYMBOLS");
+  if (used_symbols_str) {
+    for (auto& str : Split(used_symbols_str, ",")) used_symbols_.insert(str);
   }
 }
 

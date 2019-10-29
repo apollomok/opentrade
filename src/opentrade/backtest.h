@@ -5,6 +5,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <cstdlib>
 #include <fstream>
+#include <set>
 
 #include "python.h"
 #include "security.h"
@@ -17,8 +18,7 @@ class Backtest : public Singleton<Backtest> {
  public:
   Backtest() : of_(PythonOr(std::getenv("TRADES_OUTFILE"), "trades.txt")) {}
   void Play(const boost::gregorian::date& date);
-  void Start(const std::string& py, double latency,
-             const std::string& default_tick_file);
+  void Start(const std::string& py, const std::string& default_tick_file);
   SubAccount* CreateSubAccount(const std::string& name,
                                const BrokerAccount* broker = nullptr);
   void End();
@@ -34,10 +34,11 @@ class Backtest : public Singleton<Backtest> {
   bp::object on_end_of_day_;
   bp::object on_end_;
   double latency_ = 0;  // in seconds
-  double trade_hit_ratio_ = 0;
+  double trade_hit_ratio_ = 0.5;
   std::ofstream of_;
   bool skip_;
   std::vector<std::pair<std::string, Simulator*>> simulators_;
+  std::set<std::string> used_symbols_;
 };
 
 }  // namespace opentrade
