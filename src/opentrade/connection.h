@@ -38,6 +38,12 @@ class Connection : public std::enable_shared_from_this<Connection> {
   void OnAdmin(const json& j);
   void OnAdminUsers(const json& j, const std::string& name,
                     const std::string& action);
+  void OnAdminStopBook(const json& j, const std::string& name,
+                       const std::string& action);
+  void OnAdminSubAccountOfUser(const json& j, const std::string& name,
+                               const std::string& action);
+  void OnAdminBrokerAccountOfSubAccount(const json& j, const std::string& name,
+                                        const std::string& action);
   void OnAdminBrokerAccounts(const json& j, const std::string& name,
                              const std::string& action);
   void OnAdminSubAccounts(const json& j, const std::string& name,

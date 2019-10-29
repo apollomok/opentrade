@@ -18,6 +18,7 @@
 #include "position.h"
 #include "security.h"
 #include "server.h"
+#include "stop_book.h"
 
 namespace fs = boost::filesystem;
 
@@ -977,9 +978,14 @@ void Connection::Send(const Confirmation& cm, bool offline) {
   Send(j);
 }
 
-static inline auto ValidateAcc(const User* user, const std::string& acc_name) {
-  auto acc = AccountManager::Instance().GetSubAccount(acc_name);
-  if (!acc) throw std::runtime_error("invalid account name");
+static inline auto ValidateAcc(const User* user, json j) {
+  const SubAccount* acc;
+  if (j.is_string()) {
+    acc = AccountManager::Instance().GetSubAccount(Get<std::string>(j));
+  } else {
+    acc = AccountManager::Instance().GetSubAccount(GetNum(j));
+  }
+  if (!acc) throw std::runtime_error("invalid account name or id");
   if (!user->is_admin && !user->GetSubAccount(acc->id))
     throw std::runtime_error("no permission");
   return acc;
@@ -987,7 +993,7 @@ static inline auto ValidateAcc(const User* user, const std::string& acc_name) {
 
 void Connection::OnTrades(const json& j) {
   auto self = shared_from_this();
-  auto acc = ValidateAcc(user_, Get<std::string>(j[1]));
+  auto acc = ValidateAcc(user_, j[1]);
   const Security* sec = nullptr;
   if (!j[2].is_null()) sec = GetSecurity(j[2]);
   time_t tm = GetNum(j[3]);
@@ -1098,20 +1104,20 @@ json DumpPositions(const A& acc, const B& positions) {
 
 void Connection::OnPositions(const json& j) {
   bool broker = j.size() > 2 && Get<bool>(j[2]);
-  auto acc_name = Get<std::string>(j[1]);
   if (broker) {
     if (!user_->is_admin) throw std::runtime_error("admin required");
-    auto acc = AccountManager::Instance().GetBrokerAccount(acc_name);
+    auto acc =
+        AccountManager::Instance().GetBrokerAccount(Get<std::string>(j[1]));
     if (!acc) throw std::runtime_error("invalid broker account name");
     Send(DumpPositions(*acc, PositionManager::Instance().broker_positions()));
   } else {
-    auto acc = ValidateAcc(user_, acc_name);
+    auto acc = ValidateAcc(user_, j[1]);
     Send(DumpPositions(*acc, PositionManager::Instance().sub_positions()));
   }
 }
 
 void Connection::OnPosition(const json& j) {
-  auto acc = ValidateAcc(user_, Get<std::string>(j[j[1].is_string() ? 1 : 2]));
+  auto acc = ValidateAcc(user_, j[j[1].is_string() ? 1 : 2]);
   auto sec = GetSecurity(j[j[1].is_string() ? 2 : 1]);
   const Position* p;
   bool broker = j.size() > 3 && Get<bool>(j[3]);
@@ -1441,6 +1447,7 @@ void Connection::OnLogin(const std::string& action, const json& j) {
     Send(json{"connection", state});
     return;
   }
+  LOG_DEBUG("#" << id_ << ": " << user->name << " logged in");
   auto token = boost::uuids::to_string(kUuidGen());
   kTokens[token] = user;
   auto session = PositionManager::Instance().session();
@@ -1556,181 +1563,11 @@ void Connection::OnAdmin(const json& j) {
       Server::Trigger(json{"securities"}.dump());
     }
   } else if (!strcasecmp(name.c_str(), "sub accounts of user")) {
-    auto& inst = AccountManager::Instance();
-    if (action == "ls") {
-      json out;
-      json users;
-      for (auto& pair : inst.users_) {
-        users.push_back(pair.second->name);
-        for (auto& pair2 : *pair.second->sub_accounts()) {
-          json tmp = {pair.second->name, pair2.second->name};
-          out.push_back(tmp);
-        }
-      }
-      json subs;
-      for (auto& pair : inst.sub_accounts_) {
-        subs.push_back(pair.second->name);
-      }
-      Send(json{"admin", name, action, {out, users, subs}});
-      return;
-    }
-    auto values = j[3];
-    std::string user_name;
-    std::string sub_name;
-    for (auto i = 0u; i < values.size(); ++i) {
-      auto v = values[i];
-      auto name = Get<std::string>(v[0]);
-      auto value = Get<std::string>(v[1]);
-      if (name == "user") {
-        user_name = value;
-      } else if (name == "sub") {
-        sub_name = value;
-      }
-    }
-    auto user = const_cast<User*>(inst.GetUser(user_name));
-    if (!user) {
-      Send(
-          json{"admin", name, action, "unknown user name '" + user_name + "'"});
-      return;
-    }
-    auto user_id = user->id;
-    auto sub = inst.GetSubAccount(sub_name);
-    if (!sub) {
-      Send(json{"admin", name, action,
-                "unknown sub broker name '" + sub_name + "'"});
-      return;
-    }
-    auto sub_id = sub->id;
-    std::stringstream ss;
-    if (action == "add") {
-      ss << "insert into user_sub_account_map(user_id, sub_account_id) "
-            "values("
-         << user_id << ", " << sub_id << ")";
-    } else if (action == "delete") {
-      ss << "delete from user_sub_account_map where user_id=" << user_id
-         << " and sub_account_id=" << sub_id;
-    }
-    auto str = ss.str();
-    if (str.empty()) return;
-    try {
-      auto sql = Database::Session();
-      *sql << str;
-    } catch (const std::exception& e) {
-      Send(json{"admin", name, action, e.what()});
-      return;
-    }
-    if (!user->is_admin) Server::CloseConnection(user->id);
-    auto accs = user->sub_accounts();
-    if (action == "add") {
-      auto tmp = boost::make_shared<User::SubAccountMap>(*accs);
-      tmp->emplace(sub->id, sub);
-      user->set_sub_accounts(tmp);
-    } else if (action == "delete") {
-      auto tmp = boost::make_shared<User::SubAccountMap>();
-      for (auto& pair : *accs) {
-        if (pair.first == sub_id) continue;
-        tmp->emplace(pair.first, pair.second);
-      }
-      user->set_sub_accounts(tmp);
-    }
-    Send(json{"admin", name, action});
+    OnAdminSubAccountOfUser(j, name, action);
   } else if (!strcasecmp(name.c_str(), "broker accounts of sub account")) {
-    auto& inst = AccountManager::Instance();
-    if (action == "ls") {
-      json out;
-      json subs;
-      for (auto& pair : inst.sub_accounts_) {
-        subs.push_back(pair.second->name);
-        for (auto& pair2 : *pair.second->broker_accounts()) {
-          auto e = SecurityManager::Instance().GetExchange(pair2.first);
-          assert(e);
-          if (!e) continue;
-          json tmp = {pair.second->name, e->name, pair2.second->name};
-          out.push_back(tmp);
-        }
-      }
-      json exchs;
-      for (auto& pair : SecurityManager::Instance().exchanges_) {
-        exchs.push_back(pair.second->name);
-      }
-      json brokers;
-      for (auto& pair : inst.broker_accounts_) {
-        brokers.push_back(pair.second->name);
-      }
-      Send(json{"admin", name, action, {out, subs, exchs, brokers}});
-      return;
-    }
-    std::string sub_name;
-    std::string exch_name;
-    std::string broker_name;
-    auto values = j[3];
-    for (auto i = 0u; i < values.size(); ++i) {
-      auto v = values[i];
-      auto name = Get<std::string>(v[0]);
-      auto value = Get<std::string>(v[1]);
-      if (name == "exchange") {
-        exch_name = value;
-      } else if (name == "sub") {
-        sub_name = value;
-      } else if (name == "broker") {
-        broker_name = value;
-      }
-    }
-    auto sub = const_cast<SubAccount*>(inst.GetSubAccount(sub_name));
-    if (!sub) {
-      Send(json{"admin", name, action,
-                "unknown sub broker name '" + sub_name + "'"});
-      return;
-    }
-    auto sub_id = sub->id;
-    auto exch = SecurityManager::Instance().GetExchange(exch_name);
-    if (!exch) {
-      Send(json{"admin", name, action,
-                "unknown exchange name '" + exch_name + "'"});
-      return;
-    }
-    auto exch_id = exch->id;
-    auto broker = inst.GetBrokerAccount(broker_name);
-    if (!broker) {
-      Send(json{"admin", name, action,
-                "unknown broker account name '" + broker_name + "'"});
-      return;
-    }
-    auto broker_id = broker->id;
-    std::stringstream ss;
-    if (action == "add") {
-      ss << "insert into sub_account_broker_account_map(sub_account_id, "
-            "exchange_id, broker_account_id) "
-            "values("
-         << sub_id << ", " << exch_id << ", " << broker_id << ")";
-    } else if (action == "delete") {
-      ss << "delete from sub_account_broker_account_map where sub_account_id="
-         << sub_id << " and exchange_id=" << exch_id
-         << " and broker_account_id=" << broker_id;
-    }
-    auto str = ss.str();
-    if (str.empty()) return;
-    try {
-      auto sql = Database::Session();
-      *sql << str;
-    } catch (const std::exception& e) {
-      Send(json{"admin", name, action, e.what()});
-      return;
-    }
-    auto accs = sub->broker_accounts();
-    if (action == "add") {
-      auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>(*accs);
-      tmp->emplace(exch->id, broker);
-      sub->set_broker_accounts(tmp);
-    } else if (action == "delete") {
-      auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>();
-      for (auto& pair : *accs) {
-        if (pair.first == exch_id) continue;
-        tmp->emplace(pair.first, pair.second);
-      }
-      sub->set_broker_accounts(tmp);
-    }
-    Send(json{"admin", name, action});
+    OnAdminBrokerAccountOfSubAccount(j, name, action);
+  } else if (!strcasecmp(name.c_str(), "stop book")) {
+    OnAdminStopBook(j, name, action);
   }
 }
 
@@ -1897,6 +1734,224 @@ static inline json AddAcc(
   accs->emplace(acc->id, acc);
   (*acc_of_name)[acc->name] = acc;
   return json{"admin", name, action, acc->id};
+}
+
+void Connection::OnAdminBrokerAccountOfSubAccount(const json& j,
+                                                  const std::string& name,
+                                                  const std::string& action) {
+  auto& inst = AccountManager::Instance();
+  if (action == "ls") {
+    json out;
+    json subs;
+    for (auto& pair : inst.sub_accounts_) {
+      subs.push_back(pair.second->name);
+      for (auto& pair2 : *pair.second->broker_accounts()) {
+        auto e = SecurityManager::Instance().GetExchange(pair2.first);
+        assert(e);
+        if (!e) continue;
+        json tmp = {pair.second->name, e->name, pair2.second->name};
+        out.push_back(tmp);
+      }
+    }
+    json exchs;
+    for (auto& pair : SecurityManager::Instance().exchanges_) {
+      exchs.push_back(pair.second->name);
+    }
+    json brokers;
+    for (auto& pair : inst.broker_accounts_) {
+      brokers.push_back(pair.second->name);
+    }
+    Send(json{"admin", name, action, {out, subs, exchs, brokers}});
+    return;
+  }
+  std::string sub_name;
+  std::string exch_name;
+  std::string broker_name;
+  auto values = j[3];
+  for (auto i = 0u; i < values.size(); ++i) {
+    auto v = values[i];
+    auto name = Get<std::string>(v[0]);
+    auto value = Get<std::string>(v[1]);
+    if (name == "exchange") {
+      exch_name = value;
+    } else if (name == "sub") {
+      sub_name = value;
+    } else if (name == "broker") {
+      broker_name = value;
+    }
+  }
+  auto sub = const_cast<SubAccount*>(inst.GetSubAccount(sub_name));
+  if (!sub) {
+    Send(json{"admin", name, action,
+              "unknown sub broker name '" + sub_name + "'"});
+    return;
+  }
+  auto sub_id = sub->id;
+  auto exch = SecurityManager::Instance().GetExchange(exch_name);
+  if (!exch) {
+    Send(json{"admin", name, action,
+              "unknown exchange name '" + exch_name + "'"});
+    return;
+  }
+  auto exch_id = exch->id;
+  auto broker = inst.GetBrokerAccount(broker_name);
+  if (!broker) {
+    Send(json{"admin", name, action,
+              "unknown broker account name '" + broker_name + "'"});
+    return;
+  }
+  auto broker_id = broker->id;
+  std::stringstream ss;
+  if (action == "add") {
+    ss << "insert into sub_account_broker_account_map(sub_account_id, "
+          "exchange_id, broker_account_id) "
+          "values("
+       << sub_id << ", " << exch_id << ", " << broker_id << ")";
+  } else if (action == "delete") {
+    ss << "delete from sub_account_broker_account_map where sub_account_id="
+       << sub_id << " and exchange_id=" << exch_id
+       << " and broker_account_id=" << broker_id;
+  }
+  auto str = ss.str();
+  if (str.empty()) return;
+  try {
+    auto sql = Database::Session();
+    *sql << str;
+  } catch (const std::exception& e) {
+    Send(json{"admin", name, action, e.what()});
+    return;
+  }
+  auto accs = sub->broker_accounts();
+  if (action == "add") {
+    auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>(*accs);
+    tmp->emplace(exch->id, broker);
+    sub->set_broker_accounts(tmp);
+  } else if (action == "delete") {
+    auto tmp = boost::make_shared<SubAccount::BrokerAccountMap>();
+    for (auto& pair : *accs) {
+      if (pair.first == exch_id) continue;
+      tmp->emplace(pair.first, pair.second);
+    }
+    sub->set_broker_accounts(tmp);
+  }
+  Send(json{"admin", name, action});
+}
+
+void Connection::OnAdminSubAccountOfUser(const json& j, const std::string& name,
+                                         const std::string& action) {
+  auto& inst = AccountManager::Instance();
+  if (action == "ls") {
+    json out;
+    json users;
+    for (auto& pair : inst.users_) {
+      users.push_back(pair.second->name);
+      for (auto& pair2 : *pair.second->sub_accounts()) {
+        json tmp = {pair.second->name, pair2.second->name};
+        out.push_back(tmp);
+      }
+    }
+    json subs;
+    for (auto& pair : inst.sub_accounts_) {
+      subs.push_back(pair.second->name);
+    }
+    Send(json{"admin", name, action, {out, users, subs}});
+    return;
+  }
+  auto values = j[3];
+  std::string user_name;
+  std::string sub_name;
+  for (auto i = 0u; i < values.size(); ++i) {
+    auto v = values[i];
+    auto name = Get<std::string>(v[0]);
+    auto value = Get<std::string>(v[1]);
+    if (name == "user") {
+      user_name = value;
+    } else if (name == "sub") {
+      sub_name = value;
+    }
+  }
+  auto user = const_cast<User*>(inst.GetUser(user_name));
+  if (!user) {
+    Send(json{"admin", name, action, "unknown user name '" + user_name + "'"});
+    return;
+  }
+  auto user_id = user->id;
+  auto sub = inst.GetSubAccount(sub_name);
+  if (!sub) {
+    Send(json{"admin", name, action,
+              "unknown sub broker name '" + sub_name + "'"});
+    return;
+  }
+  auto sub_id = sub->id;
+  std::stringstream ss;
+  if (action == "add") {
+    ss << "insert into user_sub_account_map(user_id, sub_account_id) "
+          "values("
+       << user_id << ", " << sub_id << ")";
+  } else if (action == "delete") {
+    ss << "delete from user_sub_account_map where user_id=" << user_id
+       << " and sub_account_id=" << sub_id;
+  }
+  auto str = ss.str();
+  if (str.empty()) return;
+  try {
+    auto sql = Database::Session();
+    *sql << str;
+  } catch (const std::exception& e) {
+    Send(json{"admin", name, action, e.what()});
+    return;
+  }
+  if (!user->is_admin) Server::CloseConnection(user->id);
+  auto accs = user->sub_accounts();
+  if (action == "add") {
+    auto tmp = boost::make_shared<User::SubAccountMap>(*accs);
+    tmp->emplace(sub->id, sub);
+    user->set_sub_accounts(tmp);
+  } else if (action == "delete") {
+    auto tmp = boost::make_shared<User::SubAccountMap>();
+    for (auto& pair : *accs) {
+      if (pair.first == sub_id) continue;
+      tmp->emplace(pair.first, pair.second);
+    }
+    user->set_sub_accounts(tmp);
+  }
+  Send(json{"admin", name, action});
+}
+
+void Connection::OnAdminStopBook(const json& j, const std::string& name,
+                                 const std::string& action) {
+  auto& inst = StopBookManager::Instance();
+  if (action == "ls") {
+    json book;
+    for (auto& pair : inst.Get()) {
+      if (!pair.second) continue;
+      book.push_back(json{pair.first.first, pair.first.second});
+    }
+    Send(json{"admin", name, action, book});
+  } else {
+    auto sec = GetSecurity(j[3]);
+    auto acc = ValidateAcc(user_, j[4]);
+    std::stringstream ss;
+    if (action == "add") {
+      ss << "insert into stop_book(security_id, sub_account_id) values("
+         << sec->id << ", " << acc->id << ")";
+    } else if (action == "delete") {
+      ss << "delete from stop_book where security_id=" << sec->id
+         << " and sub_account_id=" << acc->id;
+    }
+    auto str = ss.str();
+    if (str.empty()) return;
+    try {
+      auto sql = Database::Session();
+      *sql << str;
+    } catch (const std::exception& e) {
+      Send(json{"admin", name, action, e.what()});
+      return;
+    }
+    LOG_DEBUG('#' << id_ << ": OnAdminStopBook " << str);
+    inst.Set(sec->id, acc->id, action == "add");
+    Send(json{"admin", name, action});
+  }
 }
 
 void Connection::OnAdminUsers(const json& j, const std::string& name,

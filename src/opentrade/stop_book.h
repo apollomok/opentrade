@@ -11,8 +11,13 @@ namespace opentrade {
 class StopBookManager : public Singleton<StopBookManager> {
  public:
   static void Initialize();
+
   const auto Get(Security::IdType sec, Security::IdType acc) const {
     return FindInMap(stop_book_, std::make_pair(sec, acc));
+  }
+
+  void Set(Security::IdType sec, Security::IdType acc, bool value) {
+    stop_book_[std::make_pair(sec, acc)] = value;
   }
 
   const auto& Get() const { return stop_book_; }
