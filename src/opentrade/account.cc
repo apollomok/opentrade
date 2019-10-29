@@ -134,15 +134,15 @@ std::string BrokerAccount::SetParams(const std::string& params) {
 bool AccountBase::CheckDisabled(const char* name, std::string* err) const {
   char buf[256];
   if (is_disabled) {
-    snprintf(buf, sizeof(buf), "%s %s is disabled", name, name);
+    snprintf(buf, sizeof(buf), "%s \"%s\" is disabled", name, this->name);
     *err = buf;
     return false;
   }
 
   auto disabled_reason = this->disabled_reason();
   if (disabled_reason) {
-    snprintf(buf, sizeof(buf), "%s \"%s\" is disabled by \"%s\"", name, name,
-             disabled_reason->c_str());
+    snprintf(buf, sizeof(buf), "%s \"%s\" is disabled by \"%s\"", name,
+             this->name, disabled_reason->c_str());
     *err = buf;
     return false;
   }

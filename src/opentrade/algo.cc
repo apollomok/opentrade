@@ -12,6 +12,7 @@
 #include "logger.h"
 #include "python.h"
 #include "server.h"
+#include "stop_book.h"
 
 namespace fs = boost::filesystem;
 
@@ -128,6 +129,10 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
               auto broker =
                   pval->acc->GetBrokerAccount(pval->sec->exchange->id);
               if (broker) broker->CheckDisabled("broker_account", &disabled);
+            }
+            if (disabled.empty()) {
+              StopBookManager::Instance().CheckStop(*pval->sec, pval->acc,
+                                                    &disabled);
             }
             algos_of_sec_acc_.insert(std::make_pair(
                 std::make_pair(pval->sec->id, pval->acc->id), algo));

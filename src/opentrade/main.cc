@@ -22,6 +22,7 @@
 #include "risk.h"
 #include "security.h"
 #include "server.h"
+#include "stop_book.h"
 #include "test_latency.h"
 
 namespace bpo = boost::program_options;
@@ -220,6 +221,7 @@ int main(int argc, char *argv[]) {
 
   AlgoManager::Initialize();
   opentrade::AccountManager::Initialize();
+  opentrade::StopBookManager::Initialize();
   PositionManager::Initialize();
   opentrade::GlobalOrderBook::Initialize();
 

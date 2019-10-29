@@ -167,7 +167,7 @@ static const char create_tables_sql[] = R"(
     user_id int2 references "user"(id), -- on update cascade on delete cascade,
     sub_account_id int2 references sub_account(id), -- on update cascade on delete cascade,
     broker_account_id int2 references broker_account(id), -- on update cascade on delete cascade,
-    security_id int2 references security(id), -- on update cascade on delete cascade,
+    security_id int4 references security(id), -- on update cascade on delete cascade,
     tm timestamp not null,
     qty float8 not null,
     cx_qty float8,
@@ -177,6 +177,12 @@ static const char create_tables_sql[] = R"(
     info json
   );
   create index if not exists position__index_acc_sec_tm on position(sub_account_id, security_id, tm desc);
+
+  create table if not exists stop_book(
+    security_id int4 not null references security(id), -- on update cascade on delete cascade,
+    sub_account_id int2 references sub_account(id), -- on update cascade on delete cascade,
+    primary key(security_id, sub_account_id)
+  );
 )";
 
 void Database::Initialize(const std::string& url, uint8_t pool_size,
@@ -205,7 +211,7 @@ void Database::Initialize(const std::string& url, uint8_t pool_size,
   LOG_INFO("Database connected");
   if (!create_tables) {
     try {
-      *Session() << "select * from exchange limit 1";
+      *Session() << "select * from stop_book limit 1";
     } catch (const soci::soci_error& e) {
       create_tables = true;
     }

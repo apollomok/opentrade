@@ -1,6 +1,7 @@
 #include "risk.h"
 
 #include "position.h"
+#include "stop_book.h"
 
 namespace opentrade {
 
@@ -247,6 +248,10 @@ bool RiskManager::Check(const Order& ord) {
   assert(ord.sec);
   assert(ord.user);
   assert(ord.broker_account);
+
+  if (!StopBookManager::Instance().CheckStop(*ord.sec, ord.sub_account,
+                                             &kRiskError))
+    return false;
 
   if (!opentrade::Check(
           "sub_account", ord, *ord.sub_account,
