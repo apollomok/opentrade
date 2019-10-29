@@ -180,7 +180,7 @@ static const char create_tables_sql[] = R"(
 
   create table if not exists stop_book(
     security_id int4 not null references security(id), -- on update cascade on delete cascade,
-    sub_account_id int2 references sub_account(id), -- on update cascade on delete cascade,
+    sub_account_id int2 not null references sub_account(id), -- on update cascade on delete cascade,
     primary key(security_id, sub_account_id)
   );
 )";

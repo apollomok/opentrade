@@ -1929,15 +1929,29 @@ void Connection::OnAdminStopBook(const json& j, const std::string& name,
     }
     Send(json{"admin", name, action, book});
   } else {
-    auto sec = GetSecurity(j[3]);
-    auto acc = ValidateAcc(user_, j[4]);
+    auto values = j[3];
+    const Security* sec = nullptr;
+    const SubAccount* acc = nullptr;
+    for (auto i = 0u; i < values.size(); ++i) {
+      auto v = values[i];
+      auto name = Get<std::string>(v[0]);
+      if (name == "sec") {
+        sec = GetSecurity(v[1]);
+      } else if (name == "sub") {
+        acc = ValidateAcc(user_, v[1]);
+      }
+    }
+    if (!sec) {
+      Send(json{"admin", name, action, "security required"});
+      return;
+    }
     std::stringstream ss;
     if (action == "add") {
       ss << "insert into stop_book(security_id, sub_account_id) values("
-         << sec->id << ", " << acc->id << ")";
+         << sec->id << ", " << (acc ? acc->id : 0) << ")";
     } else if (action == "delete") {
       ss << "delete from stop_book where security_id=" << sec->id
-         << " and sub_account_id=" << acc->id;
+         << " and sub_account_id=" << (acc ? acc->id : 0);
     }
     auto str = ss.str();
     if (str.empty()) return;
