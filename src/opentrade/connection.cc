@@ -559,7 +559,7 @@ void Connection::HandleMessageSync(const std::string& msg,
     } else if (action == "stop_listen") {
       if (!user_->is_admin) throw std::runtime_error("admin required");
       if (j.size() > 1) {
-        kStopListen = Get<int>(j[1]);
+        kStopListen = Get<int64_t>(j[1]);
         if (kStopListen < 0 || kStopListen > 2) {
           throw std::runtime_error(
               "invalid value, 0: kListen, 1: kStopListenEveryOne, 2: "
