@@ -348,9 +348,16 @@ void AlgoManager::Stop(const std::string& token) {
 }
 
 void AlgoManager::Stop(Security::IdType sec, SubAccount::IdType acc) {
-  auto range = algos_of_sec_acc_.equal_range(std::make_pair(sec, acc));
-  for (auto it = range.first; it != range.second; ++it) {
-    if (it->second->is_active()) Stop(it->second->id());
+  if (sec > 0) {
+    auto range = algos_of_sec_acc_.equal_range(std::make_pair(sec, acc));
+    for (auto it = range.first; it != range.second; ++it) {
+      if (it->second->is_active()) Stop(it->second->id());
+    }
+  } else {
+    for (auto& pair : algos_of_sec_acc_) {
+      if (pair.first.second == acc && pair.second->is_active())
+        Stop(pair.second->id());
+    }
   }
 }
 

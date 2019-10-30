@@ -626,7 +626,6 @@ void Connection::HandleMessageSync(const std::string& msg,
       CheckStopListen();
       OnOrder(j, msg);
     } else if (action == "algo") {
-      CheckStopListen();
       OnAlgo(j, msg);
     } else if (action == "pnl") {
       auto tm0 = GetTime() - 7 * 24 * 3600;
@@ -1129,8 +1128,8 @@ void Connection::OnPositions(const json& j) {
 }
 
 void Connection::OnPosition(const json& j) {
-  auto acc = ValidateAcc(user_, j[j[1].is_string() ? 1 : 2]);
-  auto sec = GetSecurity(j[j[1].is_string() ? 2 : 1]);
+  auto acc = ValidateAcc(user_, j[1]);
+  auto sec = GetSecurity(j[2]);
   const Position* p;
   bool broker = j.size() > 3 && Get<bool>(j[3]);
   if (broker) {
@@ -1205,19 +1204,14 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
     }
     AlgoManager::Instance().Stop(Get<int64_t>(j[2]));
   } else if (action == "cancel_all") {
-    auto sec = GetSecurity(j[2]);
-    auto acc_name = Get<std::string>(j[3]);
-    auto acc = AccountManager::Instance().GetSubAccount(acc_name);
-    if (!acc) {
-      Send(json{"error", "algo", "unknown account: " + acc_name});
-      return;
+    auto acc = ValidateAcc(user_, j[2]);
+    Security::IdType sec_id = 0;
+    if (j.size() > 3) {
+      sec_id = GetSecurity(j[3])->id;
     }
-    if (!user_->GetSubAccount(acc->id)) {
-      Send(json{"error", "algo", "no permission of account: " + acc_name});
-      return;
-    }
-    AlgoManager::Instance().Stop(sec->id, acc->id);
+    AlgoManager::Instance().Stop(sec_id, acc->id);
   } else if (action == "modify") {
+    CheckStopListen();
     auto params = ParseParams(j[3]);
     if (j[2].is_string()) {
       AlgoManager::Instance().Modify(Get<std::string>(j[2]), params);
@@ -1225,6 +1219,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
     }
     AlgoManager::Instance().Modify(Get<int64_t>(j[2]), params);
   } else if (action == "new" || action == "test") {
+    CheckStopListen();
     auto algo_name = Get<std::string>(j[2]);
     auto token = Get<std::string>(j[3]);
     auto algo = AlgoManager::Instance().Get(token);
