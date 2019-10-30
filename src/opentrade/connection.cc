@@ -28,7 +28,12 @@ static time_t kStartTime = GetTime();
 static thread_local boost::uuids::random_generator kUuidGen;
 static tbb::concurrent_unordered_map<std::string, const User*> kTokens;
 static TaskPool kTaskPool(3);
-static bool kStopListen = false;
+enum {
+  kListen = 0,
+  kStopListenEveryOne = 1,
+  kStopListenNonAdmin = 2,
+};
+static int kStopListen = kListen;
 
 std::string sha1(const std::string& str) {
   boost::uuids::detail::sha1 s;
@@ -406,8 +411,10 @@ auto GetSecSrc(const json& j) {
   return std::make_pair(id, src);
 }
 
-static inline void CheckStopListen() {
-  if (kStopListen) throw std::runtime_error("listen stopped");
+inline void Connection::CheckStopListen() {
+  if (kStopListen == kStopListenEveryOne ||
+      (kStopListen == kStopListenNonAdmin && !user_->is_admin))
+    throw std::runtime_error("listen stopped");
 }
 
 void Connection::OnMessageSync(const std::string& msg,
@@ -552,7 +559,12 @@ void Connection::HandleMessageSync(const std::string& msg,
     } else if (action == "stop_listen") {
       if (!user_->is_admin) throw std::runtime_error("admin required");
       if (j.size() > 1) {
-        kStopListen = Get<bool>(j[1]);
+        kStopListen = Get<int>(j[1]);
+        if (kStopListen < 0 || kStopListen > 2) {
+          throw std::runtime_error(
+              "invalid value, 0: kListen, 1: kStopListenEveryOne, 2: "
+              "kStopListenNonAdmin");
+        }
         LOG_DEBUG("stop_listen=" << kStopListen);
       }
       Send(json{"stop_listen", kStopListen});
@@ -568,7 +580,7 @@ void Connection::HandleMessageSync(const std::string& msg,
         auto n = GetNum(j[2]);
         if (n > interval && n < seconds) interval = n;
       }
-      kStopListen = true;
+      kStopListen = kStopListenEveryOne;
       sent_ = true;
       auto self = shared_from_this();
       kTaskPool.AddTask([self, seconds, interval]() {

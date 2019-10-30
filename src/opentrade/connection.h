@@ -80,6 +80,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
             const std::string& body, uint32_t seq, bool offline);
   std::string GetAddress() const { return transport_->GetAddress(); }
   bool Disable(const json& j, AccountBase* acc);
+  void CheckStopListen();
   static std::string GetDisabledSubAccounts();
 
  private:
