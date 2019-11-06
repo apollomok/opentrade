@@ -489,7 +489,9 @@ void Connection::HandleMessageSync(const std::string& msg,
         return;
       }
     } else if (action == "securities") {
-      OnSecurities(j);
+      OnSecurities(j, action);
+    } else if (action == "security_params") {
+      OnSecurities(j, action);
     } else if (action == "rates") {
       Send(SecurityManager::Instance().rates());
     } else if (action == "admin") {
@@ -1334,7 +1336,18 @@ void Connection::OnOrder(const json& j, const std::string& msg) {
   Send(json{"order", "done"});
 }
 
-void Connection::HandleOneSecurity(const Security& s, json* out) {
+void Connection::HandleOneSecurity(const Security& s, json* out,
+                                   bool request_params) {
+  if (request_params) {
+    assert(transport_->stateless);
+    auto params = s.params();
+    if (!params || params->empty()) return;
+    json j;
+    for (auto& pair : *params) j[pair.first] = pair.second;
+    j["id"] = s.id;
+    out->push_back(j);
+    return;
+  }
   if (user_->is_admin) {
     json j = {
         "security",
@@ -1375,34 +1388,36 @@ void Connection::HandleOneSecurity(const Security& s, json* out) {
   }
 }
 
-void Connection::OnSecurities(const json& j) {
-  LOG_DEBUG('#' << id_ << ": Securities requested");
+void Connection::OnSecurities(const json& j, const std::string& action) {
+  LOG_DEBUG('#' << id_ << ": " << action << " requested");
   const Exchange* exch = nullptr;
+  bool request_params = action == "security_params";
   if (j.size() > 1) {
     exch = SecurityManager::Instance().GetExchange(Get<std::string>(j[1]));
     if (!exch)
       throw std::runtime_error("unknown exchange " + Get<std::string>(j[1]));
   }
-  json out = {"securities"};
+  json out = {action};
   if (j.size() > 2) {
     for (auto k = 2u; k < j.size(); ++k) {
       auto sec = exch->Get(Get<std::string>(j[k]));
       if (!sec)
         throw std::runtime_error("unknown security " + Get<std::string>(j[k]));
-      HandleOneSecurity(*sec, &out);
+      HandleOneSecurity(*sec, &out, request_params);
     }
   } else if (j.size() == 2) {
     for (auto& pair : exch->security_of_name)
-      HandleOneSecurity(*pair.second, &out);
+      HandleOneSecurity(*pair.second, &out, request_params);
   } else {
     auto& secs = SecurityManager::Instance().securities();
-    for (auto& pair : secs) HandleOneSecurity(*pair.second, &out);
+    for (auto& pair : secs)
+      HandleOneSecurity(*pair.second, &out, request_params);
   }
   if (transport_->stateless) {
     Send(out);
     return;
   }
-  out = {"securities", "complete"};
+  out = {action, "complete"};
   Send(out);
 }
 

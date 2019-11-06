@@ -31,7 +31,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
   void OnMessageSync(const std::string&, const std::string& token = "");
   void OnAlgo(const json& j, const std::string& msg);
   void OnOrder(const json& j, const std::string& msg);
-  void OnSecurities(const json& j);
+  void OnSecurities(const json& j, const std::string& action);
   void OnAdmin(const json& j);
   void OnAdminUsers(const json& j, const std::string& name,
                     const std::string& action);
@@ -63,7 +63,7 @@ class Connection : public std::enable_shared_from_this<Connection> {
 
  protected:
   void HandleMessageSync(const std::string&, const std::string& token);
-  void HandleOneSecurity(const Security& s, json* out);
+  void HandleOneSecurity(const Security& s, json* out, bool request_params);
   void PublishMarketdata();
   void PublishMarketStatus();
   void Send(const std::string& msg) {
