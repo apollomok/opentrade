@@ -7,11 +7,14 @@
 #include <boost/smart_ptr/atomic_shared_ptr.hpp>
 #include <string>
 #include <unordered_map>
+#include "3rd/json.hpp"
 
 #include "task_pool.h"
 #include "utility.h"
 
 namespace opentrade {
+
+using json = nlohmann::json;
 
 static inline const std::string kEmptyStr;
 namespace fs = boost::filesystem;
@@ -29,14 +32,33 @@ struct ParamsBase {
   StrMapPtr params() const { return params_.load(boost::memory_order_relaxed); }
 
   std::string SetParams(const std::string& params) {
+    if (params.empty()) return {};
     StrMap tmp;
-    for (auto& str : Split(params, ",;\n")) {
-      char k[str.size()];
-      char v[str.size()];
-      if (sscanf(str.c_str(), "%[^=]=%s", k, v) != 2) {
-        return "Invalid params format, expect <name>=<value>[,;<new line>]...";
+    if (params[0] == '{') {
+      try {
+        auto j = json::parse(params);
+        std::stringstream ss;
+        for (auto& it : j.items()) {
+          ss.str("");
+          if (it.value().is_string())
+            ss << it.value().get<std::string>();
+          else
+            ss << it.value();
+          tmp.emplace(it.key(), ss.str());
+        }
+      } catch (std::exception& e) {
+        return e.what();
       }
-      tmp.emplace((const char*)k, (const char*)v);
+    } else {
+      for (auto& str : Split(params, ",;\n")) {
+        char k[str.size()];
+        char v[str.size()];
+        if (sscanf(str.c_str(), "%[^=]=%s", k, v) != 2) {
+          return "Invalid params format, expect <name>=<value>[,;<new "
+                 "line>]...";
+        }
+        tmp.emplace((const char*)k, (const char*)v);
+      }
     }
     params_.store(StrMapPtr(new StrMap(std::move(tmp))),
                   boost::memory_order_release);

@@ -6,14 +6,11 @@
 #include <memory>
 #include <unordered_map>
 
-#include "3rd/json.hpp"
 #include "account.h"
 #include "algo.h"
 #include "market_data.h"
 #include "order.h"
 #include "security.h"
-
-using json = nlohmann::json;
 
 namespace opentrade {
 
