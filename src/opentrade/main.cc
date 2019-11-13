@@ -213,8 +213,8 @@ int main(int argc, char *argv[]) {
 #ifdef TEST_LATENCY
   ExchangeConnectivityManager::Instance().AddAdapter(
       new opentrade::TestLatencyEc);
-  MarketDataManager::Instance().AddAdapter<opentrade::TestLatencyMd>();
-  AlgoManager::Instance().AddAdapter<opentrade::TestlatencyAlgo>();
+  MarketDataManager::Instance().AddAdapterTmpl<opentrade::TestLatencyMd>();
+  AlgoManager::Instance().AddAdapterTmpl<opentrade::TestlatencyAlgo>();
 #endif
 
   AlgoManager::Initialize();
@@ -265,8 +265,8 @@ int main(int argc, char *argv[]) {
   if (opentick_url.size())
     opentrade::OpenTick::Instance().Initialize(opentick_url);
 
-  AlgoManager::Instance().AddAdapter<opentrade::BarHandler<>>();
-  AlgoManager::Instance().AddAdapter<opentrade::ConsolidationHandler>();
+  AlgoManager::Instance().AddAdapterTmpl<opentrade::BarHandler<>>();
+  AlgoManager::Instance().AddAdapterTmpl<opentrade::ConsolidationHandler>();
 
   for (auto &p : MarketDataManager::Instance().adapters()) {
     p.second->Start();
@@ -297,6 +297,9 @@ int main(int argc, char *argv[]) {
     LOG_FATAL("At least one market data adapter required");
     return -1;
   }
+#ifdef TEST_LATENCY
+  while (true) sleep(1);
+#endif
   // wait for some time to get last price updated
   // to-do: update last price from opentick
   auto wait = getenv("UPDATE_PNL_WAIT");

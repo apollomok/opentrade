@@ -81,9 +81,9 @@ template <typename T, AdapterPrefix prefix = kEmptyPrefix>
 class AdapterManager {
  public:
   typedef std::unordered_map<std::string, T*> AdapterMap;
-  void AddAdapter(T* adapter) { adapters_[adapter->name()] = adapter; }
+  virtual void AddAdapter(T* adapter) { adapters_[adapter->name()] = adapter; }
   template <typename B>
-  void AddAdapter() {
+  void AddAdapterTmpl() {
     static_assert(std::is_base_of<T, B>::value);
     auto adapter = new B;
     adapter->set_create_func([]() { return new B; });
