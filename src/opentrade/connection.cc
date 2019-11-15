@@ -1205,7 +1205,7 @@ void Connection::OnAlgo(const json& j, const std::string& msg) {
       return;
     }
     AlgoManager::Instance().Stop(Get<int64_t>(j[2]));
-  } else if (action == "cancel_all") {
+  } else if (action == "cancel_acc") {
     auto acc = ValidateAcc(user_, j[2]);
     Security::IdType sec_id = 0;
     if (j.size() > 3) {
