@@ -53,6 +53,7 @@ struct DataSrc {
 
 struct MarketData;
 struct TradeTickHook {
+  virtual ~TradeTickHook() {}
   // OnTrade is not ensured to be called in the same thread of its algo
   virtual void OnTrade(DataSrc::IdType src, Security::IdType id,
                        const MarketData* md, time_t tm, double px,
