@@ -15,6 +15,8 @@ void SimServer::HandleTick(Security::IdType sec, char type, double px,
     auto& actives = active_orders_[sec];
     if (actives.empty()) return;
     auto it = actives.begin();
+    if (type == 'T' && rand_r(&seed_) % 100 / 100. < (1 - trade_hit_ratio_))
+      return;
     while (it != actives.end() && size > 0) {
       auto& tuple = it->second;
       bool ok;
@@ -245,6 +247,13 @@ void SimServer::fromApp(const FIX::Message& msg,
 }
 
 void SimServer::StartFix(const opentrade::Adapter& adapter) {
+  auto trade_hit_ratio_str = getenv("TRADE_HIT_RATIO");
+  if (trade_hit_ratio_str) {
+    trade_hit_ratio_ = atof(trade_hit_ratio_str);
+  }
+
+  LOG_INFO("TRADE_HIT_RATIO=" << trade_hit_ratio_);
+
   latency_ = atoi(adapter.config("latency").c_str());
   LOG_INFO(adapter.name() << ": latency=" << latency_ << "us");
 
