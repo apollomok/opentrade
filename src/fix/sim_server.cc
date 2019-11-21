@@ -252,7 +252,7 @@ void SimServer::StartFix(const opentrade::Adapter& adapter) {
   if (config_file.empty())
     LOG_FATAL(adapter.name() << ": config_file not given");
   if (!std::ifstream(config_file.c_str()).good())
-    LOG_FATAL(adapter.name() << ": Faield to open: " << config_file);
+    LOG_FATAL(adapter.name() << ": Failed to open: " << config_file);
 
   fix_settings_.reset(new FIX::SessionSettings(config_file));
   fix_store_factory_.reset(new FIX::NullStoreFactory);

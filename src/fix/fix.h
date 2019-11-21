@@ -58,7 +58,7 @@ class FixAdapter : public FIX::Application,
     auto config_file = config("config_file");
     if (config_file.empty()) LOG_FATAL(name() << ": config_file not given");
     if (!std::ifstream(config_file.c_str()).good())
-      LOG_FATAL(name() << ": Faield to open: " << config_file);
+      LOG_FATAL(name() << ": Failed to open: " << config_file);
 
     auto market_depth = config("market_depth");
     if (!market_depth.empty()) {
