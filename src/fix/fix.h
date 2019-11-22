@@ -1,42 +1,7 @@
 #ifndef FIX_FIX_H_
 #define FIX_FIX_H_
 
-#include <tbb/concurrent_unordered_map.h>
-#include <fstream>
-#include <memory>
-#define throw(...)
-#include <quickfix/MessageCracker.h>
-#include <quickfix/NullStore.h>
-#include <quickfix/Session.h>
-#include <quickfix/ThreadedSocketInitiator.h>
-#include <quickfix/fix42/ExecutionReport.h>
-#include <quickfix/fix42/MarketDataIncrementalRefresh.h>
-#include <quickfix/fix42/MarketDataRequest.h>
-#include <quickfix/fix42/MarketDataRequestReject.h>
-#include <quickfix/fix42/MarketDataSnapshotFullRefresh.h>
-#include <quickfix/fix42/NewOrderSingle.h>
-#include <quickfix/fix42/OrderCancelReject.h>
-#include <quickfix/fix42/OrderCancelReplaceRequest.h>
-#include <quickfix/fix42/OrderCancelRequest.h>
-#include <quickfix/fix42/OrderStatusRequest.h>
-#include <quickfix/fix42/Reject.h>
-#include <quickfix/fix42/TradingSessionStatus.h>
-#include <quickfix/fix44/ExecutionReport.h>
-#include <quickfix/fix44/MarketDataIncrementalRefresh.h>
-#include <quickfix/fix44/MarketDataRequest.h>
-#include <quickfix/fix44/MarketDataRequestReject.h>
-#include <quickfix/fix44/MarketDataSnapshotFullRefresh.h>
-#include <quickfix/fix44/NewOrderSingle.h>
-#include <quickfix/fix44/OrderCancelReject.h>
-#include <quickfix/fix44/OrderCancelReplaceRequest.h>
-#include <quickfix/fix44/OrderCancelRequest.h>
-#include <quickfix/fix44/OrderStatusRequest.h>
-#include <quickfix/fix44/Reject.h>
-#include <quickfix/fix44/TradingSessionStatus.h>
-#undef throw
-
-#include "filelog.h"
-#include "filestore.h"
+#include "application.h"
 #include "opentrade/consolidation.h"
 #include "opentrade/exchange_connectivity.h"
 #include "opentrade/logger.h"
@@ -48,7 +13,7 @@ namespace opentrade {
 static inline const std::string kRemoveTag = "<remove>";
 static inline const std::string kTagPrefix = "tag";
 
-class FixAdapter : public FIX::Application,
+class FixAdapter : public Application,
                    public FIX::MessageCracker,
                    public ExchangeConnectivityAdapter,
                    public MarketDataAdapter {
@@ -100,10 +65,6 @@ class FixAdapter : public FIX::Application,
 
   void Stop() noexcept override { threaded_socket_initiator_->stop(); }
 
-  void onCreate(const FIX::SessionID& session_id) override {
-    if (!session_) session_ = FIX::Session::lookupSession(session_id);
-  }
-
   void onLogon(const FIX::SessionID& session_id) override {
     if (session_ != FIX::Session::lookupSession(session_id)) return;
     connected_ = -1;
@@ -140,7 +101,6 @@ class FixAdapter : public FIX::Application,
     crack(msg, session_id);
   }
 
-  void fromAdmin(const FIX::Message&, const FIX::SessionID&) override {}
   virtual void ToLogon(FIX::Message&, const FIX::SessionID&) noexcept {}
   virtual void SetSymbol(const Security& sec, FIX::FieldMap* msg) noexcept {
     msg->setField(FIX::Symbol(sec.symbol));
@@ -448,12 +408,6 @@ class FixAdapter : public FIX::Application,
   }
 
  protected:
-  std::unique_ptr<FIX::SessionSettings> fix_settings_;
-  std::unique_ptr<FIX::MessageStoreFactory> fix_store_factory_;
-  std::unique_ptr<FIX::LogFactory> fix_log_factory_;
-  std::unique_ptr<FIX::ThreadedSocketInitiator> threaded_socket_initiator_;
-  FIX::Session* session_ = nullptr;
-
   int64_t transact_time_ = 0;
   std::vector<MarketDataAdapter*> srcs_;
   tbb::concurrent_unordered_map<int,
