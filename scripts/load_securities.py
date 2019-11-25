@@ -50,7 +50,7 @@ def main():
     # bbgids[r[1]] = r[0]
     symbols[str(r[2]) + ' ' + r[3]] = r[0]
 
-  df = pd.read_csv(opts.file)
+  df = pd.read_csv(opts.file, dtype={'symbol': object})
   cols = df.columns
   if 'exchange' not in cols or 'symbol' not in cols:
     print('exchange and symbol required in the csv')
