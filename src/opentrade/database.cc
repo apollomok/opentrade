@@ -55,7 +55,7 @@ static const char create_tables_sql[] = R"(
     "ib_name" varchar(50),
     "bb_name" varchar(50),
     "tz" varchar(20),
-    params json
+    params json,
     odd_lot_allowed boolean,
     trade_period varchar(32), -- e.g. 09:30-15:00
     break_period varchar(32), -- e.g. 11:30-13:00
