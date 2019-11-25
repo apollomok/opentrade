@@ -31,6 +31,12 @@ enum OrderType : char {
   kCX = 'x',  // internal cross order
 };
 
+enum PositionEffect : char {
+  kPositionEffectUnknown = 0,
+  kClosePosition = 'C',
+  kOpenPosition = 'O',
+};
+
 enum OrderStatus : char {
   kOrderStatusUnknown = 0,
   kNew = '0',
@@ -94,12 +100,16 @@ struct Contract {
   // one primary exchange have many venues (ECN or LP), you need to set
   // destination manually.
   std::string destination;
-  std::unordered_map<std::string, std::variant<bool, int64_t, double, char,
-                                               std::string, std::any>>*
-      optional = nullptr;
+  typedef std::unordered_map<
+      std::string,
+      std::variant<bool, int64_t, double, char, std::string, std::any>>
+      Option;
+  typedef std::shared_ptr<Option> OptionPtr;
+  OptionPtr optional;
   OrderSide side = kBuy;
   OrderType type = kLimit;
   TimeInForce tif = kDay;
+  PositionEffect position_effect = kPositionEffectUnknown;
 
   bool IsBuy() const { return opentrade::IsBuy(side); }
   bool IsShort() const { return opentrade::IsShort(side); }

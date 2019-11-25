@@ -88,7 +88,8 @@ void AlgoManager::Modify(Algo* algo, Algo::ParamMapPtr params) {
 
 Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
                          const User& user, const std::string& params_raw,
-                         const std::string& token) {
+                         const std::string& token,
+                         Contract::OptionPtr optional) {
   Algo* algo = nullptr;
   if (params) {
     auto adapter = GetAdapter(name);
@@ -114,6 +115,7 @@ Algo* AlgoManager::Spawn(Algo::ParamMapPtr params, const std::string& name,
   algo->user_ = &user;
   algo->token_ = token;
   algo->is_active_ = true;  // for permanent in backtest
+  algo->optional_ = optional;
   algos_.emplace(algo->id_, algo);
   if (!token.empty()) algo_of_token_.emplace(token, algo);
   std::string disabled;
@@ -496,6 +498,7 @@ Order* Algo::Place(const Contract& contract, Instrument* inst) {
   ord->user = user_;
   ord->inst = inst;
   ord->sec = &inst->sec();
+  if (!contract.optional && optional_) ord->optional = optional_;
   auto ok = ExchangeConnectivityManager::Instance().Place(ord);
   if (!ok) return nullptr;
   if (contract.type == kCX) return ord;

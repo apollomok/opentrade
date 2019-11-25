@@ -110,6 +110,7 @@ class Algo : public Adapter {
   IdType id_ = 0;
   std::string token_;
   std::unordered_set<Instrument*> instruments_;
+  Contract::OptionPtr optional_;
   friend class AlgoManager;
   friend class Backtest;
 };
@@ -220,7 +221,7 @@ class AlgoManager : public AdapterManager<Algo>, public Singleton<AlgoManager> {
   static void Initialize();
   Algo* Spawn(Algo::ParamMapPtr params, const std::string& name,
               const User& user, const std::string& params_raw,
-              const std::string& token);
+              const std::string& token, Contract::OptionPtr optional = {});
   template <typename T>
   void Modify(const T& id, Algo::ParamMapPtr params) {
     Modify(Get(id), params);
