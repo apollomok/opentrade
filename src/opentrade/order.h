@@ -212,6 +212,78 @@ static inline bool GetOrderSide(const std::string& side_str, OrderSide* side) {
   return true;
 }
 
+static inline const char* GetOrderSide(OrderSide c) {
+  auto side = "";
+  switch (c) {
+    case kBuy:
+      side = "buy";
+      break;
+    case kSell:
+      side = "sell";
+      break;
+    case kShort:
+      side = "short";
+      break;
+    default:
+      break;
+  }
+  return side;
+}
+
+static inline const char* GetOrderType(OrderType c) {
+  auto type = "";
+  switch (c) {
+    case kLimit:
+      type = "limit";
+      break;
+    case kMarket:
+      type = "market";
+      break;
+    case kStop:
+      type = "stop";
+      break;
+    case kStopLimit:
+      type = "stop_limit";
+      break;
+    case kOTC:
+      type = "otc";
+      break;
+    case kCX:
+      type = "cx";
+      break;
+    default:
+      break;
+  }
+  return type;
+}
+
+static inline const char* GetTif(TimeInForce c) {
+  auto tif = "";
+  switch (c) {
+    case kDay:
+      tif = "Day";
+      break;
+    case kImmediateOrCancel:
+      tif = "IOC";
+      break;
+    case kGoodTillCancel:
+      tif = "GTC";
+      break;
+    case kAtTheOpening:
+      tif = "OPG";
+      break;
+    case kFillOrKill:
+      tif = "FOK";
+      break;
+    case kGoodTillCrossing:
+      tif = "GTX";
+      break;
+    default:
+      break;
+  }
+  return tif;
+}
+
 }  // namespace opentrade
 
 #endif  // OPENTRADE_ORDER_H_

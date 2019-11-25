@@ -819,78 +819,6 @@ void Connection::Send(Algo::IdType id, time_t tm, const std::string& token,
   Send(json{offline ? "Algo" : "algo", seq, id, tm, token, name, status, body});
 }
 
-static inline const char* GetSide(OrderSide c) {
-  auto side = "";
-  switch (c) {
-    case kBuy:
-      side = "buy";
-      break;
-    case kSell:
-      side = "sell";
-      break;
-    case kShort:
-      side = "short";
-      break;
-    default:
-      break;
-  }
-  return side;
-}
-
-static inline const char* GetType(OrderType c) {
-  auto type = "";
-  switch (c) {
-    case kLimit:
-      type = "limit";
-      break;
-    case kMarket:
-      type = "market";
-      break;
-    case kStop:
-      type = "stop";
-      break;
-    case kStopLimit:
-      type = "stop_limit";
-      break;
-    case kOTC:
-      type = "otc";
-      break;
-    case kCX:
-      type = "cx";
-      break;
-    default:
-      break;
-  }
-  return type;
-}
-
-static inline const char* GetTif(TimeInForce c) {
-  auto tif = "";
-  switch (c) {
-    case kDay:
-      tif = "Day";
-      break;
-    case kImmediateOrCancel:
-      tif = "IOC";
-      break;
-    case kGoodTillCancel:
-      tif = "GTC";
-      break;
-    case kAtTheOpening:
-      tif = "OPG";
-      break;
-    case kFillOrKill:
-      tif = "FOK";
-      break;
-    case kGoodTillCrossing:
-      tif = "GTX";
-      break;
-    default:
-      break;
-  }
-  return tif;
-}
-
 void Connection::Send(const Confirmation& cm, bool offline) {
   assert(cm.order);
   auto cmd = offline ? "Order" : "order";
@@ -912,8 +840,8 @@ void Connection::Send(const Confirmation& cm, bool offline) {
       j.push_back(cm.order->broker_account->id);
       j.push_back(cm.order->qty);
       j.push_back(cm.order->price);
-      j.push_back(GetSide(cm.order->side));
-      j.push_back(GetType(cm.order->type));
+      j.push_back(GetOrderSide(cm.order->side));
+      j.push_back(GetOrderType(cm.order->type));
       j.push_back(GetTif(cm.order->tif));
       break;
 
@@ -975,8 +903,8 @@ void Connection::Send(const Confirmation& cm, bool offline) {
         j.push_back(cm.order->sub_account->id);
         j.push_back(cm.order->qty);
         j.push_back(cm.order->price);
-        j.push_back(GetSide(cm.order->side));
-        j.push_back(GetType(cm.order->type));
+        j.push_back(GetOrderSide(cm.order->side));
+        j.push_back(GetOrderType(cm.order->type));
         j.push_back(GetTif(cm.order->tif));
         if (cm.order->orig_id) {
           j.push_back(cm.order->orig_id);
