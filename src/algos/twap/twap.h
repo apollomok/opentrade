@@ -56,6 +56,7 @@ class TWAP : public Algo {
   double max_pov_ = 0;
   double initial_volume_ = 0;
   Aggression agg_ = kAggLow;
+  bool not_lower_than_last_px_ = false;
 };
 
 }  // namespace opentrade

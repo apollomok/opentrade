@@ -17,12 +17,14 @@
 namespace opentrade {
 
 enum OrderSide : char {
+  kOrderSideUnknown = 0,
   kBuy = '1',
   kSell = '2',
   kShort = '5',
 };
 
 enum OrderType : char {
+  kOrderTypeUnknown = 0,
   kMarket = '1',
   kLimit = '2',
   kStop = '3',
@@ -63,6 +65,7 @@ enum OrderStatus : char {
 };
 
 enum TimeInForce : char {
+  kTimeInForceUnknonw = 0,
   kDay = '0',
   kGoodTillCancel = '1',     // GTC
   kAtTheOpening = '2',       // OPG
@@ -73,6 +76,7 @@ enum TimeInForce : char {
 };
 
 enum ExecTransType : char {
+  kExecTransTypeUnknown = 0,
   kTransNew = '0',
   kTransCancel = '1',
   kTransCorrect = '2',

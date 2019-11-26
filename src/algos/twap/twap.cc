@@ -15,6 +15,9 @@ std::string TWAP::OnStart(const ParamMap& params) noexcept {
   assert(st_.acc);
   assert(st_.side);
   assert(st_.qty > 0);
+  not_lower_than_last_px_ = st_.position_effect == kOpenPosition &&
+                            !IsBuy(st_.side) && kCN == sec->exchange->country &&
+                            kStock == sec->type;
 
   inst_ = Subscribe();
   initial_volume_ = inst_->md().trade.volume;
@@ -203,6 +206,8 @@ void TWAP::Timer() {
        (!IsBuy(st_.side) && c.price < price_))) {
     c.price = price_;
   }
+  c.position_effect = st_.position_effect;
+  if (not_lower_than_last_px_ && c.price < last_px) c.price = last_px;
   Place(&c);
 }
 

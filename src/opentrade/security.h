@@ -109,6 +109,8 @@ inline const std::string kCombo = "BAG";
 inline const std::string kWarrant = "WAR";
 inline const std::string kBond = "BOND";
 
+inline const std::string kCN = "CN";
+
 struct Security : public ParamsBase {
   typedef uint32_t IdType;
   IdType id = 0;

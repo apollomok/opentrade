@@ -32,8 +32,9 @@ struct SecurityTuple {
   DataSrc src;
   const Security* sec = nullptr;
   const SubAccount* acc = nullptr;
-  OrderSide side = kBuy;
+  OrderSide side = kOrderSideUnknown;
   double qty = 0;
+  PositionEffect position_effect = kPositionEffectUnknown;
 };
 
 struct ParamDef {

@@ -133,7 +133,8 @@ static inline T ParseParamScalar(const json& j) {
     DataSrc src;
     const Security* sec = nullptr;
     const SubAccount* acc = nullptr;
-    OrderSide side = static_cast<OrderSide>(0);
+    auto side = kOrderSideUnknown;
+    auto pos = kPositionEffectUnknown;
     double qty = 0;
     for (auto& it : j.items()) {
       if (it.key() == "qty") {
@@ -147,6 +148,14 @@ static inline T ParseParamScalar(const json& j) {
         src = Get<std::string>(it.value());
       } else if (it.key() == "sec") {
         sec = GetSecurity(it.value());
+      } else if (it.key() == "pos") {
+        auto pos_str = Get<std::string>(it.value());
+        if (!strcasecmp(pos_str.c_str(), "open"))
+          pos = kOpenPosition;
+        else if (!strcasecmp(pos_str.c_str(), "close"))
+          pos = kClosePosition;
+        else
+          throw std::runtime_error("unknown position effect: " + pos_str);
       } else if (it.key() == "acc") {
         if (it.value().is_number_integer()) {
           auto v = Get<int64_t>(it.value());
@@ -161,7 +170,7 @@ static inline T ParseParamScalar(const json& j) {
         }
       }
     }
-    auto s = SecurityTuple{src, sec, acc, side, qty};
+    auto s = SecurityTuple{src, sec, acc, side, qty, pos};
     if (qty <= 0) {
       throw std::runtime_error("Empty quantity");
     }
