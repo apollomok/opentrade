@@ -124,43 +124,7 @@ void TWAP::Timer() {
   auto mid_px = 0.;
   if (ask > bid && bid > 0) mid_px = RoundPrice((ask + bid) / 2);
 
-  if (!inst_->active_orders().empty()) {
-    for (auto ord : inst_->active_orders()) {
-      if (IsBuy(st_.side)) {
-        if (ord->price < bid && (price_ <= 0 || ord->price < price_)) {
-          Cancel(*ord);
-        }
-      } else {
-        if (ask > 0 && ord->price > ask &&
-            (price_ <= 0 || ord->price > price_)) {
-          Cancel(*ord);
-        }
-      }
-    }
-    return;
-  }
-
-  auto volume = md.trade.volume - initial_volume_;
-  if (volume > 0 && max_pov_ > 0) {
-    if (inst_->total_qty() - inst_->total_cx_qty() > max_pov_ * volume) return;
-  }
-  auto leaves = GetLeaves();
-  if (leaves <= 0) return;
-  auto total_leaves = st_.qty - inst_->total_exposure();
-  auto lot_size = inst_->sec().lot_size;
-  auto odd_ok = inst_->sec().exchange->odd_lot_allowed || (lot_size <= 0);
-  if (lot_size <= 0) lot_size = std::max(1, min_size_);
-  auto max_qty =
-      odd_ok ? total_leaves : std::floor(total_leaves / lot_size) * lot_size;
-  if (max_qty <= 0) return;
-  auto would_qty = std::ceil(leaves / lot_size) * lot_size;
-  if (would_qty < min_size_) would_qty = min_size_;
-  if (max_floor_ > 0 && would_qty > max_floor_) would_qty = max_floor_;
-  if (would_qty > max_qty) would_qty = max_qty;
   Contract c;
-  c.side = st_.side;
-  c.qty = would_qty;
-  c.sub_account = st_.acc;
   switch (agg_) {
     case kAggLow:
       if (IsBuy(st_.side)) {
@@ -206,8 +170,41 @@ void TWAP::Timer() {
        (!IsBuy(st_.side) && c.price < price_))) {
     c.price = price_;
   }
-  c.position_effect = st_.position_effect;
   if (not_lower_than_last_px_ && c.price < last_px) c.price = last_px;
+
+  if (!inst_->active_orders().empty()) {
+    for (auto ord : inst_->active_orders()) {
+      if (c.price <= 0 || c.price == ord->price) continue;
+      if (IsBuy(st_.side)) {
+        if (ord->price < bid) Cancel(*ord);
+      } else {
+        if (ask > 0 && ord->price > ask) Cancel(*ord);
+      }
+    }
+    return;
+  }
+
+  auto volume = md.trade.volume - initial_volume_;
+  if (volume > 0 && max_pov_ > 0) {
+    if (inst_->total_qty() - inst_->total_cx_qty() > max_pov_ * volume) return;
+  }
+  auto leaves = GetLeaves();
+  if (leaves <= 0) return;
+  auto total_leaves = st_.qty - inst_->total_exposure();
+  auto lot_size = inst_->sec().lot_size;
+  auto odd_ok = inst_->sec().exchange->odd_lot_allowed || (lot_size <= 0);
+  if (lot_size <= 0) lot_size = std::max(1, min_size_);
+  auto max_qty =
+      odd_ok ? total_leaves : std::floor(total_leaves / lot_size) * lot_size;
+  if (max_qty <= 0) return;
+  auto would_qty = std::ceil(leaves / lot_size) * lot_size;
+  if (would_qty < min_size_) would_qty = min_size_;
+  if (max_floor_ > 0 && would_qty > max_floor_) would_qty = max_floor_;
+  if (would_qty > max_qty) would_qty = max_qty;
+  c.side = st_.side;
+  c.qty = would_qty;
+  c.sub_account = st_.acc;
+  c.position_effect = st_.position_effect;
   Place(&c);
 }
 
